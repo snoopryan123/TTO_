@@ -57,22 +57,34 @@ dates_in_order = unique(D %>% arrange(DATE) %>% select(DATE,YEAR))
 
 
 
-# for (k in 1:length(dates_in_order)) {
-#   print(k)
-#   
-#   date = dates_in_order[k,]$DATE
-#   year = dates_in_order[k,]$YEAR
-#   
-#   DD <- D %>% filter(YEAR == year, DATE <= date)
-#   
-#   E <- DD %>% group_by(BAT_ID) %>%
-#               mutate(X1 = asin(sqrt( (cumu.woba.sum+0.25)/(cumu.pa.sum+0.5) )),
-#                      sig.sq1 = 0.25/cumu.pa.sum ) %>%
-#               ungroup()
-#   
-#   
-#   if (k >= 2) browser()
-# }
+D <- D %>% mutate(X1 = asin(sqrt( (cumu.woba.sum+0.25)/(cumu.pa.sum+0.5) )),
+                 sig.sq1 = 0.25/cumu.pa.sum )
+# View(D %>% filter(is.na(X1) | sig.sq1 == Inf))
+E <- tibble()
+
+for (k in 1:nrow(dates_in_order)) {
+  print(k)
+
+  date = dates_in_order[k,]$DATE
+  year = dates_in_order[k,]$YEAR
+
+  # make sure only one appearance per person (their last appearance)! and only use past data!
+  # no data bleed!
+  DD <- D %>% filter(YEAR == year, DATE < date) %>% 
+              filter(!is.na(X1) | !is.infinite(sig.sq1)) %>%
+              group_by(BAT_ID) %>%
+              slice(n()) %>%   # keep only each batter's last appearance to use as the X1 and sig.sq1 data..
+              ungroup()
+
+  DD <- DD %>% mutate(JS_BAT = js(DD$X1, DD$sig.sq1))
+  DD1 <- DD %>% select(BAT_ID, JS_BAT)
+  
+  # join
+  L = left_join(D %>% filter(DATE == date), DD1, by="BAT_ID")
+  E <- bind_rows(E, L)
+  
+  if (k==10) browser()
+}
 
 
 
