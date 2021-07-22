@@ -12,13 +12,13 @@ manipulate.data.1 <- function(E,P,R) {
   away_name = E$info$info[which(E$info$category == "visteam")]
   home_name = E$info$info[which(E$info$category == "hometeam")]
   
-  # add E$id to G
   if (length(E$id) >= 2) {
     # data is in a non-standard form, so ignore this case!
-    print("ignore this game...")
+    print("error in retrosheet data, so ignore this game...")
     return(tibble()) 
   }
-  id = E$id #E$id[[1]]
+  # add E$id to G
+  id = E$id 
   G = G %>% mutate(game_id = id)
   # add E$info to G 
   E2 = tibble()
@@ -30,37 +30,63 @@ manipulate.data.1 <- function(E,P,R) {
   E3 = bind_rows(E$start, E$sub) %>% select(!c(team))
   G = left_join(G,E3,by="retroID")
   # keep certain columns
-  G = G %>% select(!c(usedh, umphome, ump1b, ump2b, ump3b, howscored, oscorer, temp, winddir, windspeed, fieldcond, precip,
+  G = G %>% mutate(usedh = NA, umphome = NA, ump1b = NA, ump2b = NA, ump3b = NA, howscored = NA, oscorer = NA, temp = NA, winddir = NA, 
+                   windspeed = NA, fieldcond = NA, precip = NA, save = NA, daynight = NA, timeofgame = NA, attendance = NA, wp = NA, lp = NA) %>%
+            select(!c(usedh, umphome, ump1b, ump2b, ump3b, howscored, oscorer, temp, winddir, windspeed, fieldcond, precip,
                       save, daynight, timeofgame, attendance, wp, lp))
-  # keep at bats only against the starting pitcher
-  # split home & away team PA
-  # also, add starting pitcher era from E$data
-    # note: a substitution event is indicated by "NP" in the "Play" column
-  i = min(which(G$play == "NP" & G$fieldPos == 1 & G$team == 1))
-  i = if (i == Inf) nrow(G)+1 else i
-  G0 = G[1:(i-1), ] %>% filter(team == 0)
-  sp.retroID = (E$start %>% filter(team == 1, fieldPos == 1))$retroID
-  sp.name = (E$start %>% filter(team == 1, fieldPos == 1))$name
-  sp.era = (E$data %>% filter(retroID == sp.retroID))$ER
-  sp.hand = (P[[home_name]] %>% filter(retroID == sp.retroID))$Throw
-  G0 = G0 %>% mutate(sp.retroID = sp.retroID, sp.name = sp.name, sp.era = sp.era, sp.hand = sp.hand)
-  G0 = left_join(G0, R[[away_name]], by = "retroID")
-  ### 
-  i = min(which(G$play == "NP" & G$fieldPos == 1 & G$team == 0))
-  i = if (i == Inf) nrow(G)+1 else i
-  G1 = G[1:(i-1), ] %>% filter(team == 1)
-  sp.retroID = (E$start %>% filter(team == 0, fieldPos == 1))$retroID
-  sp.name = (E$start %>% filter(team == 0, fieldPos == 1))$name
-  sp.era = (E$data %>% filter(retroID == sp.retroID))$ER
-  sp.hand = (P[[away_name]] %>% filter(retroID == sp.retroID))$Throw
-  G1 = G1 %>% mutate(sp.retroID = sp.retroID, sp.name = sp.name, sp.era = sp.era, sp.hand = sp.hand)
-  G1 = left_join(G1, R[[home_name]], by = "retroID")
-  # remove superfluous objects from memory
-  # keep G0, G1
-  rm(E2)
-  rm(E3)
-  rm(G)
-  return(bind_rows(G0,G1))
+  
+  # add starting pitcher data
+  sp0 <- E$start %>% filter(team == 0, fieldPos == 1)
+  sp1 <- E$start %>% filter(team == 1, fieldPos == 1)
+  sp0.hand = (P[[away_name]] %>% filter(retroID == sp0$retroID))$Throw
+  sp1.hand = (P[[home_name]] %>% filter(retroID == sp1$retroID))$Throw
+  G <- G %>% mutate(pit.retroID = ifelse(team == 0, sp1$retroID, sp0$retroID), 
+                    pit.name = ifelse(team == 0, sp1$name, sp0$name), 
+                    pit.hand = ifelse(team == 0, sp1.hand, sp0.hand), 
+                    sp.ind = 1)
+  
+  # remove substitution rows which involve a player on the field changing his position !!! important for cataloging pitcher subs...
+  na_rows = which(G$play == "NP")
+  subs = E$sub
+  sub_rows = if (length(na_rows) >= 1) c(na_rows[1]) else na_rows
+  if (length(na_rows) >= 2) {
+    for (i in 2:length(na_rows)) {
+      curr = G[na_rows[i],]
+      prev = G[last(sub_rows),] #G[na_rows[i-1],]
+      if (curr$retroID == prev$retroID & curr$inning == prev$inning & curr$fieldPos != prev$fieldPos) {
+        # this substitution is merely a player on the field changing his position
+      } else {
+        sub_rows = c(sub_rows, na_rows[i])
+      }
+    }
+  }
+  
+  # add relief pitcher data
+  a = length(sub_rows)
+  b = if (is.null(subs)) 0 else nrow(subs)
+  if (a != b) { # check if the number of substitutions makes sense given the plate-appearance data
+    print("subs num doesnt line up, so ignore this game...")
+    print(length(sub_rows)); print(nrow(subs))
+    return(tibble())
+    # G <- G %>% mutate(pit.retroID = NA, pit.name = NA, pit.hand = NA, sp.ind = NA) # if we wanted to keep this game...
+  } else if (a > 0) { # add relief pitcher data
+      for (i in 1:length(sub_rows)) {
+      r = sub_rows[i] # row in G to document the substitution; need only do this for the Pitcher column
+      pit.sub = subs[i,]
+      pit.sub.hand = ifelse(pit.sub$team == 0, 
+                            (P[[away_name]] %>% filter(retroID == pit.sub$retroID))$Throw,
+                            (P[[home_name]] %>% filter(retroID == pit.sub$retroID))$Throw)
+      
+      if (pit.sub$fieldPos == 1) { # we are recording Pitcher substitutions
+        G <- G %>% mutate(pit.retroID = ifelse(row_number() >= r & team != pit.sub$team, pit.sub$retroID, pit.retroID), 
+                     pit.name = ifelse(row_number() >= r & team != pit.sub$team, pit.sub$name, pit.name), 
+                     pit.hand = ifelse(row_number() >= r & team != pit.sub$team, pit.sub.hand, pit.hand), 
+                     sp.ind = ifelse(row_number() >= r & team != pit.sub$team, 0, sp.ind))
+      }
+    }
+  }
+
+  return(G)
 }
 
 create.dataset.1 <- function(year) {
@@ -86,57 +112,57 @@ create.dataset.1 <- function(year) {
     rm(D)
   }
   
-  filename = paste0("data1_", year, "_sp.csv")
+  filename = paste0("retro_PA_1_", year, ".csv")
   write_csv(result, filename)
 }
 
 ##################################################
-################ Years 2010 - 2019 ###############
+################ Years 2000 - 2019 ###############
 ##################################################
 
-for (yr in 2010:2019) {
+for (yr in 2000:2002) {
   create.dataset.1(yr)
 }
 
-########################################################################
+#####################################################################
 
 #####################################################################
 ################ EXAMPLE: 2012 Dodgers, 1st Home Game ###############
 #####################################################################
 
-D <- get_retrosheet("play", 2012, "LAN")
-R <- get_retrosheet("roster", 2012) 
-P <- R
-for (i in 1:length(R)) {
-  P[[i]] =  R[[i]] %>% select(retroID, Throw)
-  R[[i]] = R[[i]] %>% select(retroID, Bat)
-}
-result <- tibble()
-###########
-E <- D[[1]]
-result <- bind_rows(result, manipulate.data.1(E))
-rm(E)
+# D <- get_retrosheet("play", 2012, "LAN")
+# R <- get_retrosheet("roster", 2012)
+# P <- R
+# for (i in 1:length(R)) {
+#   P[[i]] =  R[[i]] %>% select(retroID, Throw)
+#   R[[i]] = R[[i]] %>% select(retroID, Bat)
+# }
+# result <- tibble()
+# ###########
+# E <- D[[1]]
+# result <- bind_rows(result, manipulate.data.1(E,P,R))
+# rm(E)
 
 #####################################################################
 ################ EXAMPLE: All games from 2012 Dodgers ###############
 #####################################################################
 
-result <- tibble()
-
-L = length(D)
-for (i in 1:L) {
-  print(i)
-  E <- D[[i]]
-  result <- suppress_warnings( bind_rows(result, manipulate.data.1(E)), "Inf")
-  rm(E)
-}
+# result <- tibble()
+# 
+# L = length(D)
+# for (i in 1:L) {
+#   print(i)
+#   E <- D[[i]]
+#   result <- suppress_warnings( bind_rows(result, manipulate.data.1(E)), "Inf")
+#   rm(E)
+# }
 
 #################################################################################
 ################ EXAMPLE: All games from a given year (say, 2012) ###############
 #################################################################################
 
-create.dataset.1(2012)
-B = read_csv("data1_2012_sp.csv")
+# create.dataset.1(2012)
+# B = read_csv("data1_2012_sp.csv")
 
 
 
