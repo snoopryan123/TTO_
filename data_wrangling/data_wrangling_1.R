@@ -6,6 +6,7 @@ library(pkgcond)
 #########################################
 ################# THE CODE ##############
 #########################################
+bad_subs_games = character(0)
 
 manipulate.data.1 <- function(E,P,R) {
   G <- E$play
@@ -15,7 +16,7 @@ manipulate.data.1 <- function(E,P,R) {
   E_was_weird = FALSE
   if (length(E$id) >= 2) {
     # this retrosheet game data contains a `badj` and so is imported weird by the R package...
-    print("`BADJ` FIX .....")
+    print("`BADJ` [fixed] .....")
     E_was_weird = TRUE
     # fix E !!!
     E$id = E$id[[1]]
@@ -77,8 +78,11 @@ manipulate.data.1 <- function(E,P,R) {
   b = if (is.null(subs)) 0 else nrow(subs)
   if (a != b) { # check if the number of substitutions makes sense given the plate-appearance data
     print("SUBS ERROR... subs num doesnt line up, so ignore this game...")
-    print(length(sub_rows)); print(nrow(subs))
-    browser()
+    #print(length(sub_rows)); print(nrow(subs))
+    bad_subs_games <<- c(bad_subs_games, E$id)
+    print("")
+    print(bad_subs_games)
+    print("")
     return(tibble())
     # G <- G %>% mutate(pit.retroID = NA, pit.name = NA, pit.hand = NA, sp.ind = NA) # if we wanted to keep this game...
   } else if (a > 0) { # add relief pitcher data
@@ -133,7 +137,8 @@ create.dataset.1 <- function(year) {
 ################ Years 2000 - 2019 ###############
 ##################################################
 
-for (yr in 2010:2010) { create.dataset.1(yr) }
+for (yr in 2000:2019) { create.dataset.1(yr) }
+write_csv(tibble(bad_subs_games), "bad_subs_games.csv")
 
 #####################################################################
 
