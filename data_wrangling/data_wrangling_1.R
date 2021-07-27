@@ -12,10 +12,21 @@ manipulate.data.1 <- function(E,P,R) {
   away_name = E$info$info[which(E$info$category == "visteam")]
   home_name = E$info$info[which(E$info$category == "hometeam")]
   
+  E_was_weird = FALSE
   if (length(E$id) >= 2) {
-    # data is in a non-standard form, so ignore this case!
-    print("error in retrosheet data, so ignore this game...")
-    return(tibble()) 
+    # this retrosheet game data contains a `badj` and so is imported weird by the R package...
+    print("`BADJ` FIX .....")
+    E_was_weird = TRUE
+    # fix E !!!
+    E$id = E$id[[1]]
+    E$version = E$version[[1]]
+    E$com = E$com[[1]]
+    E$info = E$info %>% filter(E$info$category != "<NA>")
+    E$start = E$start %>% filter(E$start$retroID != "<NA>")
+    E$play = E$play %>%filter(E$play$inning != "NA")
+    E$sub = E$sub %>% filter(E$sub$retroID != "<NA>")
+    E$data = E$data %>% filter(E$data$retroID != "<NA>")
+    #return(tibble()) 
   }
   # add E$id to G
   id = E$id 
@@ -65,8 +76,9 @@ manipulate.data.1 <- function(E,P,R) {
   a = length(sub_rows)
   b = if (is.null(subs)) 0 else nrow(subs)
   if (a != b) { # check if the number of substitutions makes sense given the plate-appearance data
-    print("subs num doesnt line up, so ignore this game...")
+    print("SUBS ERROR... subs num doesnt line up, so ignore this game...")
     print(length(sub_rows)); print(nrow(subs))
+    browser()
     return(tibble())
     # G <- G %>% mutate(pit.retroID = NA, pit.name = NA, pit.hand = NA, sp.ind = NA) # if we wanted to keep this game...
   } else if (a > 0) { # add relief pitcher data
@@ -86,6 +98,7 @@ manipulate.data.1 <- function(E,P,R) {
     }
   }
 
+  G = if (E_was_weird) G %>% filter(inning != "NA") else G
   return(G)
 }
 
@@ -120,9 +133,7 @@ create.dataset.1 <- function(year) {
 ################ Years 2000 - 2019 ###############
 ##################################################
 
-for (yr in 2000:2002) {
-  create.dataset.1(yr)
-}
+for (yr in 2010:2010) { create.dataset.1(yr) }
 
 #####################################################################
 
