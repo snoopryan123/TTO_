@@ -31,7 +31,7 @@ library(tidyverse)
 
 D <- read_csv("data3_2010-19_sp.csv")
 
-
+D <- D %>% filter(YEAR == 2010) ###FIXME
 
 ##### INDIVIDUAL BATTER'S QUALITY
 
@@ -83,9 +83,13 @@ for (k in 1:nrow(dates_in_order)) {
   L = left_join(D %>% filter(DATE == date), DD1, by="BAT_ID")
   E <- bind_rows(E, L)
   
-  if (k==10) browser()
+  #if (k==10) browser()
 }
 
+
+## check
+EE <- E %>% filter(BAT_NAME == "Erick Aybar") %>% select(X1, JS_BAT)
+View(EE) ### BAD!
 
 
 
