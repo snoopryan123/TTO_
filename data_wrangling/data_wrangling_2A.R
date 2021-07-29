@@ -318,8 +318,8 @@ create.dataset.2A <- function(D,filename) {
 ##############################
 ########### RUNNIT ###########
 ##############################
-Dog = read_csv("retro1_PA_1990-2020.csv")
-D = Dog %>% filter(startsWith(as.character(date), "2012"))
+D = read_csv("retro1_PA_1990-2020.csv")
+# D = Dog %>% filter(startsWith(as.character(date), "2012"))
 # takes about ~45 mins to run on 30 years worth of data
 create.dataset.2A(D,"retro2A_PA_1990-2020.csv")
 E = read_csv("retro2A_PA_1990-2020.csv")
@@ -359,12 +359,6 @@ E = read_csv("retro2A_PA_1990-2020.csv")
 
 
 
-
-# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# COLUMNS I left out but perhaps could've put in:
-# xxxxx BAT_FLD_CD === batter fielding code 1:10 -> not needed 
-# xxxxx BAT_LINEUP_POS -> this is just BATTER_SEQ_NUM 1,2,3,4,5,6,7,8,9
-# PH_IND === 1 if pinch hitter else 0 [*****] [depends on BAT_FLD_CD] ----> would be nice, but not too necessary
 
 
 

@@ -6,8 +6,6 @@ library(stringr)
 
 # -> add new columns to Dataset_2, to create Dataset_3, for a given year 
 ########################################################################
-# YEAR
-# BATTER_SEQ_NUM 
 # EVENT_PITCH_COUNT== pitch count per event
 # PITCH_COUNT_CUMU === pitch count up to this point in the game
 # PITCH_COUNT_FINAL === final pitch count of the game for each starter
@@ -30,12 +28,12 @@ W = read_csv("woba_weights_Fangraphs.csv")
 Div = read_csv("mlb_divisions_dataset.csv")
 
 create.dataset.3 <- function(D, year) {
-    # YEAR
-    D1 = D %>% mutate(YEAR = substr(DATE,start=1,stop=4))
-    # BATTER_SEQ_NUM 
-    D2 = D1 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
-                mutate(BATTER_SEQ_NUM = row_number()) %>%
-                ungroup()
+    # # YEAR
+    # D1 = D %>% mutate(YEAR = substr(DATE,start=1,stop=4))
+    # # BATTER_SEQ_NUM 
+    # D2 = D1 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
+    #             mutate(BATTER_SEQ_NUM = row_number()) %>%
+    #             ungroup()
     # EVENT_PITCH_COUNT== pitch count per event
     # https://www.retrosheet.org/datause.txt    --> field 5
     compute_event_pitch_count <- function(pitch_tx) {

@@ -1,5 +1,5 @@
 #install.packages("retrosheet")
-library(retrosheet)
+#library(retrosheet)
 library(tidyverse)
 library(pkgcond)
 library(stringr)
@@ -87,10 +87,13 @@ create.dataset.2B <- function(D, filename) {
 ##############################
 D = read_csv("retro2_PA_1990-2020.csv")
 # D = Dog %>% filter(startsWith(as.character(date), "2012"))
-create.dataset.2B(D,"retro2B_PA_1990-2020.csv")
-E = read_csv("retro2B_PA_1990-2020.csv")
-
-
+filename = "retro2B_PA_1990-2020.csv"
+create.dataset.2B(D, filename)
+##############################
+E = read_csv(filename)
+# fix E (duplicate rows created somehow...)
+E = E %>% distinct()
+write_csv(E, filename)
 
 
 
