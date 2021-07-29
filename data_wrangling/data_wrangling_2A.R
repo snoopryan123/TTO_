@@ -4,9 +4,7 @@ library(tidyverse)
 library(pkgcond)
 library(stringr)
 
-# -> create new columns
-# ignore: "sp.era", "number","starttime", "sky" 
-# ignore: EVENT_CD [?????]
+# create new columns
 #######################################################
 # GAME_ID === unique id of this game [game_id]
 # PARK === this park the game is played at [site]
@@ -18,17 +16,13 @@ library(stringr)
 # PITCH_SEQ_TX === pitch sequence as text [pitches]
 # BAT_ID === batter [retroID]
 # BAT_NAME === batter name [name]
-# BAT_HAND === L or R [Bat]
-# PIT_ID === pitcher [sp.retroID]
-# PIT_NAME === pitcher name [sp.name]
-# PIT_HAND === L or R [sp.hand]
+# PIT_ID === pitcher [pit.retroID]
+# PIT_NAME === pitcher name [pit.name]
+# PIT_HAND === L or R [pit.hand]
 # COUNT === pitch count [count]
 # EVENT_TX === play event text [play]
-# BAT_FLD_CD === batter fielding code 1:10 [fieldPos]
-# BAT_LINEUP_POS [batPos]
 # PA_IND === 1 if it is an at-bat-event, i.e. a plate appearance (so, not a substitution or stolen base) [*****]
 # HIT_VAL === hit or not, and type of hit, c(0,1,2,3,4) [*****]
-# PH_IND === 1 if pinch hitter else 0 [*****]
 # AB_IND === TRUE if it is an at-bat else FALSE [*****]
 # EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR) [*****]
 # EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR) [*****]
@@ -41,7 +35,7 @@ library(stringr)
 ########### THE CODE ###########
 ################################
 
-create.dataset.2 <- function(D, year) {
+create.dataset.2A <- function(D,filename) {
   
     D1 = D %>% rename(GAME_ID = game_id,
                       PARK = site, 
@@ -53,18 +47,15 @@ create.dataset.2 <- function(D, year) {
                       PITCH_SEQ_TX = pitches, 
                       BAT_ID = retroID,
                       BAT_NAME = name,
-                      BAT_HAND = Bat,
-                      PIT_ID = sp.retroID,
-                      PIT_NAME = sp.name,
-                      PIT_HAND = sp.hand,
+                      PIT_ID = pit.retroID,
+                      PIT_NAME = pit.name,
+                      PIT_HAND = pit.hand,
                       COUNT = count,
-                      EVENT_TX = play,
-                      BAT_FLD_CD = fieldPos,
-                      BAT_LINEUP_POS = batPos) %>%
-              select(!c("sp.era", "number","starttime", "sky"))
+                      EVENT_TX = play) %>%
+              select(!c("number"))
     
     ### make sure that we don't have duplicate rows! This error actually occurs a lot in Retrosheet! !!!!!!
-    D1.5 = D1 %>% group_by(GAME_ID, INNING, BAT_ID, PITCH_SEQ_TX, EVENT_TX) %>% filter(row_number() == 1) %>% ungroup()
+    #D1.5 = D1 %>% group_by(GAME_ID, INNING, BAT_ID, PITCH_SEQ_TX, EVENT_TX) %>% filter(row_number() == 1) %>% ungroup()
     
     #######################################################
     
@@ -77,7 +68,8 @@ create.dataset.2 <- function(D, year) {
       !startsWith(event_tx, "PO") & !startsWith(event_tx, "POCS") &
       !startsWith(event_tx, "SB") & !startsWith(event_tx, "NP")
     }
-    D2 = D1.5 %>% mutate(PA_IND = sapply(EVENT_TX, is_pa_helper))
+    D2 = D1 %>% mutate(PA_IND = sapply(EVENT_TX, is_pa_helper))
+    print("D2")
     # HIT_VAL === hit or not, and type of hit, c(0,1,2,3,4)
     compute_hit_val <- function(event_tx) {
       if (startsWith(event_tx, "S") & !startsWith(event_tx, "SB") & !startsWith(event_tx, "SF")) {
@@ -93,8 +85,11 @@ create.dataset.2 <- function(D, year) {
       }
     }
     D3 = D2 %>% mutate(HIT_VAL = sapply(EVENT_TX, compute_hit_val))
+    print("D3")
     # PH_IND === 1 if pinch hitter else 0
-    D4 = D3 %>% mutate(PH_IND = (BAT_FLD_CD == 11))
+    #D4 = D3 %>% mutate(PH_IND = (BAT_FLD_CD == 11))
+    D4 = D3
+    print("D4")
     # AB_IND === TRUE if it is an at-bat else FALSE
     is_at_bat_helper <- function(event_tx) {
       if (startsWith(event_tx, "W") | startsWith(event_tx, "I") | startsWith(event_tx, "C") |
@@ -106,6 +101,7 @@ create.dataset.2 <- function(D, year) {
       } 
     }
     D5 = D4 %>% mutate(AB_IND = (PA_IND & sapply(EVENT_TX, is_at_bat_helper)))
+    print("D5")
     # EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR)
     # EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR)
     # EVENT_RUNS === number of runs recorded during this event
@@ -135,7 +131,7 @@ create.dataset.2 <- function(D, year) {
     D6 = D5 %>% mutate(EVENT_ER_CT = sapply(EVENT_TX, compute_er),
                        EVENT_RBI_CT = sapply(EVENT_TX, compute_rbi),
                        EVENT_RUNS = sapply(EVENT_TX, compute_event_runs))
-    
+    print("D6")
     ########################################################
     # EVENT_OUTS_CT
     ########################################################
@@ -302,6 +298,8 @@ create.dataset.2 <- function(D, year) {
       
     D7 = D6 %>% mutate(EVENT_OUTS_CT = sapply(EVENT_TX, compute_event_outs_ct))
     
+    print("D7")
+    
     ########################################################
     
     # OUTS_CT === number of outs PRIOR TO the play
@@ -310,40 +308,25 @@ create.dataset.2 <- function(D, year) {
                 ungroup() %>%
                 mutate(OUTS_CT = OUTS_CT_after - EVENT_OUTS_CT) %>%
                 select(!c(OUTS_CT_after))
+    print("D8")
     
     result = D8
-    filename = paste0("data2_", year, "_sp.csv")
     write_csv(result, filename)
-    
-    rm(D1)
-    rm(D1.5)
-    rm(D2)
-    rm(D3)
-    rm(D4)
-    rm(D5)
-    rm(D6)
-    rm(D7)
 }
 
-##################################################
-################ Years 2010 - 2019 ###############
-##################################################
 
-for (yr in 2010:2019) {
-  print(yr)
-  s = paste0("data1_",yr,"_sp.csv")
-  D = read_csv(s)
-  create.dataset.2(D, yr)
-}
+##############################
+########### RUNNIT ###########
+##############################
+Dog = read_csv("retro1_PA_1990-2020.csv")
+D = Dog %>% filter(startsWith(as.character(date), "2012"))
+# takes about ~45 mins to run on 30 years worth of data
+create.dataset.2A(D,"retro2A_PA_1990-2020.csv")
+E = read_csv("retro2A_PA_1990-2020.csv")
+
 
 ########################################################################
 
-########################################################
-########### EXAMPLE: CREATE DATASET FOR 2012 ###########
-########################################################
-D = read_csv("data1_2012_sp.csv")
-create.dataset.2(D, "2012")
-E = read_csv("data2_2012_sp.csv")
 
 ########################################################
 ########### SANITY CHECKS FOR EVENT_OUTS_CT ############
@@ -372,6 +355,16 @@ E = read_csv("data2_2012_sp.csv")
   # View(E %>% filter(GAME_ID == game) %>% 
   #        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 }
+
+
+
+
+
+# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# COLUMNS I left out but perhaps could've put in:
+# xxxxx BAT_FLD_CD === batter fielding code 1:10 -> not needed 
+# xxxxx BAT_LINEUP_POS -> this is just BATTER_SEQ_NUM 1,2,3,4,5,6,7,8,9
+# PH_IND === 1 if pinch hitter else 0 [*****] [depends on BAT_FLD_CD] ----> would be nice, but not too necessary
 
 
 
