@@ -102,20 +102,24 @@ E6 <- E5 %>%  group_by(GAME_ID, BAT_HOME_IND) %>%
                      PA_IND = x) %>% select(!c(x)) %>%
               ungroup() 
 print("E6")
-RR = E6 %>% filter(YEAR==2010,BAT_NAME=="David Ortiz") %>% select(INNING,BAT_HOME_IND,GAME_ID,HOME_TEAM_ID,AWAY_TEAM_ID,BAT_NAME,PIT_NAME,EVENT_TX,AB_IND,PA_IND)
-View(RR)
+# Check
+#RR = E6 %>% filter(YEAR==2010,BAT_NAME=="David Ortiz") %>% select(INNING,BAT_HOME_IND,GAME_ID,HOME_TEAM_ID,AWAY_TEAM_ID,BAT_NAME,PIT_NAME,EVENT_TX,PA_IND)
+#View(RR)
 
 
-E6 <- E5 %>% mutate(PA_IND =  !str_detect(EVENT_TX, "^BK") & !str_detect(EVENT_TX, "^CS") & !str_detect(EVENT_TX, "^DI") & 
-                              !str_detect(EVENT_TX, "^OA") & !str_detect(EVENT_TX, "^PB") & !str_detect(EVENT_TX, "^WP") & 
-                              !str_detect(EVENT_TX, "^PO") & !str_detect(EVENT_TX, "^SB") & !str_detect(EVENT_TX, "^NP"))
+# E6 <- E5 %>% mutate(PA_IND =  !str_detect(EVENT_TX, "^BK") & !str_detect(EVENT_TX, "^CS") & !str_detect(EVENT_TX, "^DI") & 
+#                               !str_detect(EVENT_TX, "^OA") & !str_detect(EVENT_TX, "^PB") & !str_detect(EVENT_TX, "^WP") & 
+#                               !str_detect(EVENT_TX, "^PO") & !str_detect(EVENT_TX, "^SB") & !str_detect(EVENT_TX, "^NP"))
+
 
 # AB_IND (at bat)
-E7 <- E6 %>% mutate(x = !str_detect(EVENT_TX, "^W") & !str_detect(EVENT_TX, "^I") & !str_detect(EVENT_TX, "^C") &
-                        !str_detect(EVENT_TX, "SF") & !str_detect(EVENT_TX, "SH"),
-                    AB_IND = PA_IND & x) %>% select(!c(x))
-
+# AT-BAT is a PLATE-APPEARANCE without {SF,SH(sacBunt),W,IW,HP,C(catcher interference)}
+E7 <- E6 %>% mutate(AB_IND = PA_IND & !str_detect(EVENT_TX, "SF") & !str_detect(EVENT_TX, "SH") & !str_detect(EVENT_TX, "^W") & 
+                        !str_detect(EVENT_TX, "^IW") & !str_detect(EVENT_TX, "^HP") & !str_detect(EVENT_TX, "^C"))
+print("E7")
 # Check
+RR1 = E7 %>% filter(YEAR==2010,BAT_NAME=="David Ortiz") %>% select(INNING,BAT_HOME_IND,GAME_ID,HOME_TEAM_ID,AWAY_TEAM_ID,BAT_NAME,PIT_NAME,EVENT_TX,AB_IND,PA_IND)
+View(RR1)
 
 D0 <- E7
 ################################
