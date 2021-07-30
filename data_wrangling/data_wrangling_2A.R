@@ -74,7 +74,7 @@ create.dataset.2A <- function(D,filename) {
     compute_hit_val <- function(event_tx) {
       if (startsWith(event_tx, "S") & !startsWith(event_tx, "SB") & !startsWith(event_tx, "SF")) {
         1
-      } else if (startsWith(event_tx, "D")) {
+      } else if (startsWith(event_tx, "D") & !startsWith(event_tx, "DI")) {
         2
       } else if (startsWith(event_tx, "T")) {
         3
