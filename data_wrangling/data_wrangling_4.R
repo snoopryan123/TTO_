@@ -57,8 +57,8 @@ write_csv(result, filename)
 
 {
     # 
-    y = 2010
-    WW = read_csv("woba_weights_Fangraphs.csv") 
+    WW = read_csv("woba_weights_Fangraphs.csv")
+    y = 1990
     w = WW[WW$Season == y,]
     
     # CHECK WOBA_CUMU_BAT
@@ -68,9 +68,9 @@ write_csv(result, filename)
     View(R1)
     
     # check Albert Pujols' wOBA inputs
-    # "Jose Bautista" "Miguel Cabrera" "Erick Aybar" 
+    # "Albert Pujols" "Jose Bautista" "Miguel Cabrera" "Erick Aybar" "Robinson Cano"
     # https://www.fangraphs.com/players/albert-pujols/1177/stats?position=1B
-    R2 = R %>% filter(YEAR==y, BAT_NAME=="Albert Pujols") %>% 
+    R2 = R %>% filter(YEAR==y, BAT_NAME=="Robinson Cano") %>% 
       summarise(S=sum(HIT_VAL==1), D=sum(HIT_VAL==2), T= sum(HIT_VAL==3), HR= sum(HIT_VAL==4),
                 W= sum(EVENT_CODE=="W"), HP= sum(EVENT_CODE=="HP"), PA = last(cumu.pa.minus.iw.sum.b), 
                 IW=sum(EVENT_CODE=="IW"), wOBA = (S*w$w1B + D*w$w2B + T*w$w3B + HR*w$wHR + W*w$wBB + HP*w$wHBP)/(PA))
