@@ -12,9 +12,6 @@ library(stringr)
 # TEAM_MATCH {IN_DIV, IN_LEAG}
 # EVENT_WOBA === wOBA of this event
 # EVENT_PITCH_COUNT== pitch count per event
-# PITCH_COUNT_CUMU === pitch count up to this point in the game
-# PITCH_COUNT_FINAL === final pitch count of the game for each starter
-# ORDER_CT === time thru the order number {1,2,3,..}
 # HIT_BINARY === 1 if hit else 0
 ########################################################################
 
@@ -59,8 +56,8 @@ create.dataset.3 <- function(D, filename) {
     
     # EVENT_WOBA === wOBA of this event
     # https://www.fangraphs.com/guts.aspx?type=cn
-    # HP, is included in AB_IND and PA_IND
-    # SH, SF, IW, W are included in PA_IND but not AB_IND
+    # HP, is an AB and PA.
+    # SH, SF, IW, W are PA but not AB
     # an event is a WOBA_EVENT iff it is an {AB, W, SH, SF, HP} but not {IW}. Equivalently, {PA}\{IW}
     # ---> include all plate appearances as wOBA except intentional walks !!!
     D3 = D2 %>% group_by(YEAR) %>%
@@ -86,24 +83,14 @@ create.dataset.3 <- function(D, filename) {
     }
     D4 = D3 %>% mutate(EVENT_PITCH_COUNT = sapply(PITCH_SEQ_TX, compute_event_pitch_count))
     print("D4")
-    
-    # PITCH_COUNT_CUMU === pitch count up to this point in the game
-    # PITCH_COUNT_FINAL === final pitch count of the game for each starter
-    # ORDER_CT === time thru the order number {1,2,3,..}
-    D5 = D4 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
-      mutate(PITCH_COUNT_CUMU = cumsum(replace_na(EVENT_PITCH_COUNT, 0)),
-             PITCH_COUNT_FINAL = sum(EVENT_PITCH_COUNT, na.rm=TRUE),
-             ORDER_CT = 1 + (BATTER_SEQ_NUM-1) %/% 9) %>%
-      ungroup()
-    print("D5")
-    
+
     # HIT_BINARY === 1 if hit else 0
-    D6 = D5 %>% mutate(HIT_BINARY = HIT_VAL > 0)
-    print("D6")
+    D5 = D4 %>% mutate(HIT_BINARY = HIT_VAL > 0)
+    print("D5")
     
     ###########
     
-    result = D6
+    result = D5
     write_csv(result, filename)
 }
 
@@ -133,8 +120,6 @@ E = read_csv(filename)
     # nchar(s) == 14+9
     # # Check EVENT_PITCH_COUNT
     # View(D3 %>% select(PITCH_SEQ_TX, EVENT_PITCH_COUNT))
-    # # Check PITCH_COUNT_CUMU, PITCH_COUNT_FINAL
-    # View(D4 %>% select(GAME_ID, BAT_HOME_IND, INNING, PITCH_SEQ_TX, EVENT_PITCH_COUNT, PITCH_COUNT_CUMU, PITCH_COUNT_FINAL))
     # # Check ORDER_CT
     # View(D4 %>% select(GAME_ID, BAT_HOME_IND, INNING, BATTER_SEQ_NUM, ORDER_CT))
     # # Check HIT_BINARY

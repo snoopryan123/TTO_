@@ -11,7 +11,6 @@ library(stringr)
 # create new columns !
 #######################################################
 # YEAR
-# BATTER_SEQ_NUM 
 # BAT_HAND === L or R 
 #######################################################
 
@@ -54,10 +53,7 @@ get_rosters <- function(year) {
 create.dataset.2B <- function(D, filename) {
   # YEAR
   D1 = D %>% mutate(YEAR = substr(DATE,start=1,stop=4))
-  # BATTER_SEQ_NUM 
-  D2 = D1 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
-    mutate(BATTER_SEQ_NUM = row_number()) %>%
-    ungroup()
+  D2 = D1
   # View(D2 %>% filter(is.na(YEAR))) ---> error in "SEA200709261"
   D2 = D2 %>% mutate(YEAR = ifelse(GAME_ID == "SEA200709261",2007, YEAR))
   

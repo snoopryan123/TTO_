@@ -21,9 +21,8 @@ library(stringr)
 # PIT_HAND === L or R [pit.hand]
 # COUNT === pitch count [count]
 # EVENT_TX === play event text [play]
-# PA_IND === 1 if it is an at-bat-event, i.e. a plate appearance (so, not a substitution or stolen base) [*****]
+#******************************************************
 # HIT_VAL === hit or not, and type of hit, c(0,1,2,3,4) [*****]
-# AB_IND === TRUE if it is an at-bat else FALSE [*****]
 # EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR) [*****]
 # EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR) [*****]
 # EVENT_RUNS === number of runs recorded during this event [*****]
@@ -59,52 +58,20 @@ create.dataset.2A <- function(D,filename) {
     
     #######################################################
     
-    # https://www.retrosheet.org/eventfile.htm
-    #https://www.retrosheet.org/datause.txt
-    # PA_IND === 1 if it is an at-bat-event, i.e. a plate appearance (so, not a substitution or stolen base) 
-    is_pa_helper <- function(event_tx) {
-      !startsWith(event_tx, "BK") & !startsWith(event_tx, "CS") & !startsWith(event_tx, "DI") &
-      !startsWith(event_tx, "OA") & !startsWith(event_tx, "PB") & !startsWith(event_tx, "WP") &
-      !startsWith(event_tx, "PO") & !startsWith(event_tx, "POCS") &
-      !startsWith(event_tx, "SB") & !startsWith(event_tx, "NP")
-    }
-    D2 = D1 %>% mutate(PA_IND = sapply(EVENT_TX, is_pa_helper))
-    print("D2")
     # HIT_VAL === hit or not, and type of hit, c(0,1,2,3,4)
-    compute_hit_val <- function(event_tx) {
-      if (startsWith(event_tx, "S") & !startsWith(event_tx, "SB") & !startsWith(event_tx, "SF")) {
-        1
-      } else if (startsWith(event_tx, "D") & !startsWith(event_tx, "DI")) {
-        2
-      } else if (startsWith(event_tx, "T")) {
-        3
-      } else if (startsWith(event_tx, "HR") | (startsWith(event_tx, "H") & !startsWith(event_tx, "HP")) ) {
-        4
-      } else {
-        0
-      }
-    }
-    D3 = D2 %>% mutate(HIT_VAL = sapply(EVENT_TX, compute_hit_val))
-    print("D3")
+    D5 = D1 %>% mutate(HIT_VAL =  ifelse(str_detect(EVENT_TX, "^S") & !str_detect(EVENT_TX, "^SB") & 
+                                        !str_detect(EVENT_TX, "^SF") & !str_detect(EVENT_TX, "^SH"), 1,
+                                  ifelse(str_detect(EVENT_TX, "^D") & !str_detect(EVENT_TX, "^DI"), 2,
+                                  ifelse(str_detect(EVENT_TX, "^T"), 3,
+                                  ifelse(str_detect(EVENT_TX, "^H") & !str_detect(EVENT_TX, "^HP"), 4, 0)))))
+    print("D5")
     # PH_IND === 1 if pinch hitter else 0
     #D4 = D3 %>% mutate(PH_IND = (BAT_FLD_CD == 11))
-    D4 = D3
-    print("D4")
-    # AB_IND === TRUE if it is an at-bat else FALSE
-    is_at_bat_helper <- function(event_tx) {
-      if (startsWith(event_tx, "W") | startsWith(event_tx, "I") | startsWith(event_tx, "C") |
-          grepl("SF", event_tx, fixed=TRUE) | grepl("SH", event_tx, fixed=TRUE) |
-         !is_pa_helper(event_tx) ) {
-        0
-      } else {
-        1
-      } 
-    }
-    D5 = D4 %>% mutate(AB_IND = (PA_IND & sapply(EVENT_TX, is_at_bat_helper)))
-    print("D5")
+    
     # EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR)
     # EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR)
     # EVENT_RUNS === number of runs recorded during this event
+    #FIXME --> do it better with str_detect ????
     compute_rbi <- function(event_tx) {
         hit_val = compute_hit_val(event_tx)
         run_tx = str_extract(event_tx, "([^.]+$)")

@@ -184,13 +184,11 @@ pbpText_to_pbpTbl <- function(E,rosters) {
                                         (ST %>% filter(pit.team == 0))$pit.retroID),
                    pit.name = ifelse(team == 0, 
                                        (ST %>% filter(pit.team == 1))$pit.name, 
-                                       (ST %>% filter(pit.team == 0))$pit.name),
-                   sp.ind = 1)
+                                       (ST %>% filter(pit.team == 0))$pit.name))
   
   ### Add relieving pitchers to P
   if (!is.na(subs.p[1])) {
       s = which(P$sub.here)
-      P[first(s):nrow(P), ]$sp.ind = 0
       for (i in 1:nrow(SU)) {
         subbb = SU[i,]
         P = P %>% mutate(pit.retroID = ifelse(team != subbb$pit.team & row_number() >= s[i], subbb$pit.retroID, pit.retroID),
