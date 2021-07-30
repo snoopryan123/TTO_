@@ -21,6 +21,7 @@ D <- read_csv("retro3_PA_1990-2020.csv")
 #D <- Dog %>% filter(YEAR == 2010) ###FIXME
 
 ################################
+########### FIXES... ###########
 ################################
 # FIX ERROR from data_wrangling_2A:  DI is DEFENSIVE INDIFFERENCE not DOUBLE, so should have HIT_VAL = 0, EVENT_WOBA = 0
 D <- D %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
@@ -29,6 +30,9 @@ D <- D %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
 
 # problem with DUPLICATE ROWS...
 D <- D %>% distinct(across(c(INNING,BAT_HOME_IND,BAT_ID,COUNT,PITCH_SEQ_TX,EVENT_TX,GAME_ID,PIT_ID)), .keep_all = TRUE)
+
+# fix AB_IND and PA_IND !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 ################################
 ################################
 
@@ -81,7 +85,7 @@ write_csv(result, filename)
     
     # check individual player data 
     # https://www.fangraphs.com/players/robinson-cano/3269/stats?position=2B
-    N = "Shin-Soo Choo" #"Robinson Cano" #"Albert Pujols"
+    N = "David Ortiz" #"Shin-Soo Choo" #"Robinson Cano" #"Albert Pujols"
     R2 = R %>% filter(YEAR== y, BAT_NAME== N) %>% 
       summarise(G=length(unique(GAME_ID)), AB=sum(AB_IND), PA = last(cumu.pa.minus.iw.sum.b), H=sum(HIT_BINARY),
                 S=sum(HIT_VAL==1), D=sum(HIT_VAL==2), T= sum(HIT_VAL==3), HR= sum(HIT_VAL==4),
@@ -100,9 +104,6 @@ write_csv(result, filename)
       filter( str_detect(EVENT_TX, "HR") ) #%>%
       #select(INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,PIT_NAME)
     View(R4)
-    
-    # need to fix AB and PA !!!!!
-    
     
 }
 
