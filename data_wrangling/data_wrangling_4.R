@@ -20,10 +20,17 @@ library(tidyverse)
 D <- read_csv("retro3_PA_1990-2020.csv")
 #D <- Dog %>% filter(YEAR == 2010) ###FIXME
 
+################################
+################################
 # FIX ERROR from data_wrangling_2A:  DI is DEFENSIVE INDIFFERENCE not DOUBLE, so should have HIT_VAL = 0, EVENT_WOBA = 0
 D <- D %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
                   HIT_BINARY = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_BINARY),
                   EVENT_WOBA = ifelse(str_detect(EVENT_TX, "^DI"), 0, EVENT_WOBA))
+
+# problem with DUPLICATE ROWS...
+D <- D %>% distinct(across(c(INNING,BAT_HOME_IND,BAT_ID,COUNT,PITCH_SEQ_TX,EVENT_TX,GAME_ID,PIT_ID)), .keep_all = TRUE)
+################################
+################################
 
 # WOBA_CUMU_BAT (INDIVIDUAL BATTER'S QUALITY)
 D1 <- D %>% group_by(YEAR, BAT_ID) %>%
@@ -73,9 +80,8 @@ write_csv(result, filename)
     View(R1)
     
     # check individual player data 
-    # "Albert Pujols" "Jose Bautista" "Miguel Cabrera" "Erick Aybar" "Robinson Cano"
     # https://www.fangraphs.com/players/robinson-cano/3269/stats?position=2B
-    N = "Robinson Cano" #"Albert Pujols"
+    N = "Shin-Soo Choo" #"Robinson Cano" #"Albert Pujols"
     R2 = R %>% filter(YEAR== y, BAT_NAME== N) %>% 
       summarise(G=length(unique(GAME_ID)), AB=sum(AB_IND), PA = last(cumu.pa.minus.iw.sum.b), H=sum(HIT_BINARY),
                 S=sum(HIT_VAL==1), D=sum(HIT_VAL==2), T= sum(HIT_VAL==3), HR= sum(HIT_VAL==4),
@@ -91,11 +97,11 @@ write_csv(result, filename)
     
     # some plate appearances
     R4 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
-      filter(str_detect(EVENT_TX, "^DI")) %>%
-      select(INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,AB_IND,PA_IND,PIT_NAME)
+      filter( str_detect(EVENT_TX, "HR") ) #%>%
+      #select(INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,PIT_NAME)
     View(R4)
     
-    # need to fix AB and PA !!!
+    # need to fix AB and PA !!!!!
     
     
 }
