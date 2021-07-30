@@ -20,6 +20,11 @@ library(tidyverse)
 D <- read_csv("retro3_PA_1990-2020.csv")
 #D <- Dog %>% filter(YEAR == 2010) ###FIXME
 
+# FIX ERROR from data_wrangling_2A:  DI is DEFENSIVE INDIFFERENCE not DOUBLE, so should have HIT_VAL = 0, EVENT_WOBA = 0
+D <- D %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
+                  HIT_BINARY = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_BINARY),
+                  EVENT_WOBA = ifelse(str_detect(EVENT_TX, "^DI"), 0, EVENT_WOBA))
+
 # WOBA_CUMU_BAT (INDIVIDUAL BATTER'S QUALITY)
 D1 <- D %>% group_by(YEAR, BAT_ID) %>%
       mutate(cumu.woba.sum.b = cumsum(replace_na(EVENT_WOBA, 0)),
@@ -72,12 +77,26 @@ write_csv(result, filename)
     # https://www.fangraphs.com/players/robinson-cano/3269/stats?position=2B
     N = "Robinson Cano" #"Albert Pujols"
     R2 = R %>% filter(YEAR== y, BAT_NAME== N) %>% 
-      summarise(G=length(unique(GAME_ID)), AB=sum(AB_IND), PA = last(cumu.pa.minus.iw.sum.b),H=sum(HIT_BINARY),
+      summarise(G=length(unique(GAME_ID)), AB=sum(AB_IND), PA = last(cumu.pa.minus.iw.sum.b), H=sum(HIT_BINARY),
                 S=sum(HIT_VAL==1), D=sum(HIT_VAL==2), T= sum(HIT_VAL==3), HR= sum(HIT_VAL==4),
-                W= sum(EVENT_CODE=="W"), IW=sum(EVENT_CODE=="IW"), HP= sum(EVENT_CODE=="HP"), 
+                W= sum(EVENT_CODE=="W"), IW=sum(EVENT_CODE=="IW"), BB=W+IW, HP= sum(EVENT_CODE=="HP"), 
                 AVG = H/AB, wOBA = (S*w$w1B + D*w$w2B + T*w$w3B + HR*w$wHR + W*w$wBB + HP*w$wHBP)/(PA)
                 )
     R2
+    
+    # all plate appearances
+    R3 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
+               select(INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,PA_IND,PIT_NAME)
+    View(R3)
+    
+    # some plate appearances
+    R4 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
+      filter(str_detect(EVENT_TX, "^DI")) %>%
+      select(INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,AB_IND,PA_IND,PIT_NAME)
+    View(R4)
+    
+    # need to fix AB and PA !!!
+    
     
 }
 
