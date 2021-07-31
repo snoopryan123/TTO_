@@ -1,72 +1,28 @@
 library(tidyverse)
 library(stringr)
-
-#########################################
-######## MANDATORY INSTRUCTIONS #########
-#########################################
-
-# 1. go to https://www.retrosheet.org/game.htm
-# 2. manually download the event file folders for the desired years (SAY, 1993-2020), 
-#    and put them in the working directory !!!
-# ex. put `2000eve` in your working directory
+source("data_wrangling_00.R")
 
 #########################################
 ################ THE CODE ###############
 #########################################
 
-get_team_names <- function(year) {
-  filename = str_glue("{year}eve/TEAM{year}")
-  A <- read_csv(filename, col_names=FALSE)
-  team_names <- A[,1][[1]]
-  return(team_names)
-}
-
-get_roster <- function(team, year) {
-  print(c(team,year))
-  filename = str_glue("{year}eve/{team}{year}.ROS")
-  suppressWarnings(
-    A <- read_csv(filename, col_names = FALSE)
-  )
-  colnames(A) <- c("retroID", "Last", "First", "Bat", "Throw", "Team", "Pos")
-  return(A)
-}
-
-get_rosters <- function(year, team_names) {
-  L = list()
-  for (t in team_names) {
-    L[[t]] <- get_roster(t, year)
-  }
-  return(L)
-}
-
-##############
-
 write_pbp_year <- function(year) {
-  team_names <- get_team_names(year)
-  rosters <- get_rosters(year, team_names)
+  print(year)
+  team_names <- getTeamIDs(year)
+  rosters <- getRetrosheet("roster", year)
   P = tibble()
   for (team in team_names) {
-    print(c("*",team))
     pbp_team_year <- get_play_by_play(year, team, rosters)
     P <- bind_rows(P, pbp_team_year)
   }
-  write_csv(P, str_glue("retro1_PA_{year}.csv"))
+  write_csv(P, str_glue("retro01_PA_{year}.csv"))
 }
 
 get_play_by_play <- function(year, team, rosters) {
-  filenameA <- str_glue("{year}eve/{year}{team}.EVA") 
-  filenameN <- str_glue("{year}eve/{year}{team}.EVN")
-  D <- if (file.exists(filenameA)) readLines(filenameA) else readLines(filenameN)
-  
-  ids <- which(startsWith(D,"id"))
-  i0 <- ids # indices in D which begin a game
-  i1 <- c( (ids-1)[2:length(ids)], length(D) ) # indices in D which end a game
-  
+  D <- getRetrosheet("play", year, team)
   result <- tibble()
-  for (a in 1:length(i0)) {
-    start_ind = i0[a]
-    end_ind = i1[a]
-    E <- D[start_ind:end_ind]
+  for (i in 1:length(D)) {
+    E <- D[[i]]
     P <- pbpText_to_pbpTbl(E,rosters)
     result <- bind_rows(result, P)
   }
@@ -81,7 +37,11 @@ pbpText_to_pbpTbl <- function(E,rosters) {
   E <- c(E[1:7], E[20], E[26:length(E)])
   starters <- E[startsWith(E,"start")]
   st_pitchers <- starters[endsWith(starters,",1")]
+  subbers <- E[startsWith(E,"sub")]
+  for(i in 1:length(starters)) { starters[i] = substr(starters[i], 7,1000) }
   for(i in 1:length(st_pitchers)) { st_pitchers[i] = substr(st_pitchers[i], 7,1000) }
+  for(i in 1:length(subbers)) { subbers[i] = substr(subbers[i], 5,1000) }
+  players <- c(starters, subbers)
   E <- E[!startsWith(E,"start")]
   # get id
   id <- strsplit(E[startsWith(E,"id")], ",")[[1]][2]
@@ -116,7 +76,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
   for(i in 1:length(subs.p)) { subs.p[i] = str_remove_all(subs.p[i], "\"") }
   for(i in 1:length(play)) { play[i] = substr(play[i], 6,1000) }
   ###############################
-  
+
   ### create P tibble
   P = strsplit(play[1], ",")[[1]]
   for (i in 2:length(play)) {
@@ -137,9 +97,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
                      hometeam = info.values[2],
                      site = info.values[3],
                      date = info.values[4],
-                     number = info.values[5],
-                     starttime = info.values[6],
-                     sky = info.values[7])
+                     number = info.values[5])#, starttime = info.values[6], sky = info.values[7])
   
   ### create ST tibble (starting pitchers)
   ST = strsplit(st_pitchers[1], ",")[[1]]
@@ -156,7 +114,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
   ST$V4 = NA #as.numeric(ST$V4)
   ST$V5 = NA #as.numeric(ST$V5)
   ST = tibble(ST) %>% select(!c(V4,V5))
-  for(i in 1:nrow(ST)) { ST$pit.name[i] = str_sub(ST$pit.name[i], 2, -2) }
+  #for(i in 1:nrow(ST)) { ST$pit.name[i] = str_sub(ST$pit.name[i], 2, -2) }
   
   ### create SU tibble (subbed pitchers)
   if (!is.na(subs.p[1])) {
@@ -210,41 +168,54 @@ pbpText_to_pbpTbl <- function(E,rosters) {
   HV = bind_rows(H,V)
   P <- left_join(P,HV,by="pit.retroID")
   
-  # add name, Pos column
-  H =  tibble(rosters[[h]]) %>% filter(Pos != "P")
-  V =  tibble(rosters[[v]]) %>% filter(Pos != "P")
-  HV = bind_rows(H,V)
-  HV = HV %>% mutate(name = paste(First,Last)) %>% select(!c(First,Last,Bat,Throw,Team))
+  
+  ### add fieldPos, name columns
+  PL = strsplit(players[1], ",")[[1]]
+  if (length(players) >= 2) {
+    for (i in 2:length(players)) {
+      PL = rbind(PL, strsplit(players[i], ",")[[1]])
+    }
+  }
+  PL = as.data.frame(PL, row.names = FALSE)
+  colnames(PL) = c("retroID", "name", "team", "batPos", "fieldPos") 
+  PL$retroID = as.character(PL$retroID)
+  PL$name = as.character(PL$name)
+  PL$team = as.numeric(PL$team)
+  PL$batPos = as.numeric(PL$batPos)
+  PL$fieldPos = as.numeric(PL$fieldPos)
+  PL = tibble(PL) %>% select(!c(batPos,team))
+  P <- left_join(P,PL,by="retroID")
+  
+  # add BAT.HAND column
+  H =  tibble(rosters[[h]]) %>% select(retroID, Bat)
+  V =  tibble(rosters[[v]])  %>% select(retroID, Bat)
+  HV = bind_rows(H,V) %>% rename(bat.hand = Bat)
   P <- left_join(P,HV,by="retroID")
   
-  # batPos, fieldPos
-  # P = P %>% mutate(batPos = NA, fieldPos = NA)
+  # YEAR
+  P = P %>% mutate(year = substr(date,start=1,stop=4))
   
   # re-order the columns!
-  P = P %>% relocate(name, .after = sky) %>% 
-            relocate(Pos, .after = name) %>% 
-            #relocate(batPos, .after = name) %>% 
-            #relocate(  fieldPos, .after = batPos) %>%
-            relocate( pit.hand, .after = pit.name)
+  P = P %>% relocate(name, .after = retroID) %>% 
+            relocate(bat.hand, .after = name) %>%
+            relocate(fieldPos, .after = bat.hand) %>%
+            relocate(pit.retroID, .after = fieldPos) %>%
+            relocate(pit.name, .after = pit.retroID) %>%
+            relocate(pit.hand, .after = pit.name) %>%
+            relocate(year, .after = date) %>%
   
   return(P)
 }
 
-############################################################
-################ RUN THIS, REPLACE THE YEARS ###############
-############################################################
+#######################################
+################ RUNNIT ###############
+#######################################
 
-get_pbp_all <- function() {
-  for (year in 1993:2020) {
-    write_pbp_year(year)
-  }
-}
+for (year in 1990:2020) { write_pbp_year(year) }
 
-get_pbp_all() 
+################################################
 
-##############
-
-#write_pbp_year(1993)
+write_pbp_year(2020)
 
 
 
