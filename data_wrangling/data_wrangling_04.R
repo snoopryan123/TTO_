@@ -13,6 +13,9 @@ library(rvest)
 # EVENT_RUNS === number of runs recorded during this event
 # EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR)
 # EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR)
+# EVENT_PITCH_COUNT== pitch count per event
+# PITCH_COUNT_CUMU === pitch count up to this point in the game
+# PITCH_COUNT_FINAL === final pitch count of the game for each starter
 ########################################################################
 
 ################################
@@ -23,6 +26,8 @@ input_filename = "retro03_PA_2020.csv"
 output_filename = "retro04_PA_2020.csv"
 D <- read_csv(input_filename)
 E <- D 
+
+################################
 
 ### scrape WOBA WEIGHTS
 content <- read_html("https://www.fangraphs.com/guts.aspx?type=cn")
@@ -51,6 +56,8 @@ print("E1")
 # PA_IND (plate appearance) (so, not a substitution or stolen base) 
 # definition:   https://en.wikipedia.org/wiki/Plate_appearance
 
+#FIXME
+#FIXME
 #FIXME
 # A batter is not credited with a plate appearance if, while batting, a preceding runner is put out on the basepaths for the third out in a way other than 
 #by the batter putting the ball into play (i.e., picked off, caught stealing). In this case, the same batter continues his turn batting in the next inning with 
@@ -122,25 +129,42 @@ print("E7")
 # EVENT_RUNS === number of runs recorded during this event
 # EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR)
 # EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR)
-E8 = E7 %>% mutate(run_tx = str_extract(event_tx, "([^.]+$)"),
+E8 = E7 %>% mutate(run_tx = str_extract(EVENT_TX, "([^.]+$)"),
                    num.home = str_count(run_tx, "-H"),
                    no.rbi = str_count(run_tx, "NR"),
                    unearned.runs = str_count(run_tx, "UR"), 
                    hr.ind = ifelse(HIT_VAL == 4, 1, 0),
                    EVENT_RUNS = num.home + hr.ind,
                    EVENT_ER_CT = EVENT_RUNS - unearned.runs,
-                   EVENT_RBI_CT = EVENT_RUNS - no.rbi)
+                   EVENT_RBI_CT = EVENT_RUNS - no.rbi) %>%
+            select(!c(run_tx, num.home, no.rbi, unearned.runs, hr.ind))
 print("E8")
+#View(E8 %>% select(EVENT_TX, HIT_VAL, EVENT_RUNS, EVENT_ER_CT, EVENT_RBI_CT))
 
 
+# EVENT_PITCH_COUNT== pitch count per event
+# https://www.retrosheet.org/datause.txt    --> field 5
+# pitches: C,S,B,F,X,T,H,L,M,P,K,U,Q,R   --> 14
+# not a pitch: N,V,1,2,3,+,>,*,.,        --> 9
+E9 = E8 %>% mutate(p = str_remove_all(PITCH_SEQ_TX, "[NV123\\+\\>\\*\\.]"),
+                   EVENT_PITCH_COUNT = str_length(p)) %>%
+            select(!c(p))
+print("E9")
 
+# PITCH_COUNT_CUMU, PITCH_COUNT_FINAL
+E10 <- E9 %>% group_by(GAME_ID, PIT_ID) %>%
+             mutate(PITCH_COUNT_CUMU = cumsum(replace_na(EVENT_PITCH_COUNT, 0)),
+                    PITCH_COUNT_FINAL = sum(EVENT_PITCH_COUNT, na.rm=TRUE)) %>%
+             ungroup()
+print("E10")
+#View(E10 %>% select(INNING,BAT_HOME_IND,GAME_ID,BAT_NAME,HOME_TEAM_ID,AWAY_TEAM_ID,PIT_NAME,SP_IND,PITCH_SEQ_TX, EVENT_PITCH_COUNT, PITCH_COUNT_CUMU, PITCH_COUNT_FINAL))
 
 
 ##############################
 
-R = E8
+R = E10
 R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.woba.denom.p))
-#write_csv(R_, output_filename)
+write_csv(R_, output_filename)
 
 ##############################
 ########### CHECKS ###########
@@ -176,6 +200,10 @@ R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.w
       filter( HIT_VAL==4) %>%
       select(GAME_ID,INNING,BAT_HOME_IND,INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,PIT_NAME)
     View(R3)
+    
+    # CHECK pitcher ERA
+    # https://www.fangraphs.com/leaders.aspx?pos=all&stats=pit&lg=all&qual=y&type=8&season=2020&month=0&season1=2020&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=2020-01-01&enddate=2020-12-31&sort=17,a
+    
 }   
 
 
