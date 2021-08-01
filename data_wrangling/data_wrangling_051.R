@@ -14,6 +14,13 @@ library(stringr)
 ########### THE CODE ###########
 ################################
 
+
+input_filename = "retro04_PA_2020.csv"
+output_filename = "retro05_PA_2020.csv"
+D <- read_csv(input_filename)
+
+
+
 create.dataset.2A <- function(D,filename) {
     ########################################################
     # EVENT_OUTS_CT
