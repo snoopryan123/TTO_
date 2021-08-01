@@ -1,22 +1,11 @@
 library(tidyverse)
 
-# -> add additional FEATURES to Dataset_3 to create Dataset_4
 ########################################################################
-# SP_IND === True if is a starting pitcher in this game
-# PITCH_COUNT_CUMU === pitch count up to this point in the game
-# PITCH_COUNT_FINAL === final pitch count of the game for each starter
-# consecutive.bat.row
-# BATTER_SEQ_NUM
-# ORDER_CT === time thru the order number {1,2,3,..}
-# HAND_MATCH === 1 if pitcher and batter handedness match, else 0
 # PA_IND === TRUE iff it is a plate appearance
 # AB_IND === TRUE iff it is an at-bat
 # WOBA_APP === TRUE iff it is a wOBA-appearance, i.e. in {AB,W,SF,SH,HP}\{IW}
-
-# INDIVIDUAL BATTER'S QUALITY
-  # WOBA_CUMU_BAT === cumulative woba prior to this plate appearance for a given batter during a given season
-# INDIVIDUAL PITCHER'S QUALITY
-  # WOBA_CUMU_PIT === cumulative woba prior to this plate appearance for a given pitcher during a given season
+# WOBA_CUMU_BAT === cumulative woba prior to this plate appearance for a given batter during a given season (INDIVIDUAL BATTER'S QUALITY)
+# WOBA_CUMU_PIT === cumulative woba prior to this plate appearance for a given pitcher during a given season (INDIVIDUAL PITCHER'S QUALITY)
 ########################################################################
 
 ################################
@@ -39,41 +28,6 @@ E1 <- E %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
                   HIT_BINARY = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_BINARY),
                   EVENT_WOBA = ifelse(str_detect(EVENT_TX, "^DI"), 0, EVENT_WOBA))
 print("E1")
-
-# RUNS and RBIs      EVENT_ER_CT, EVENT_RBI_CT, EVENT_RUNS
-#FIXME --> do it better with str_detect ????
-
-# SP_IND, PITCH_COUNT_CUMU, PITCH_COUNT_FINAL
-E3 <- E2 %>% group_by(GAME_ID, BAT_HOME_IND) %>% mutate(first.p = first(PIT_ID)) %>% ungroup() %>%
-             group_by(GAME_ID, PIT_ID) %>%
-             mutate(SP_IND = (PIT_ID == first.p),
-                    PITCH_COUNT_CUMU = cumsum(replace_na(EVENT_PITCH_COUNT, 0)),
-                    PITCH_COUNT_FINAL = sum(EVENT_PITCH_COUNT, na.rm=TRUE)) %>%
-             ungroup() %>% select(!c(first.p))
-print("E3")
-# Check
-#View(E3 %>% select(INNING,BAT_HOME_IND,GAME_ID,BAT_NAME,HOME_TEAM_ID,AWAY_TEAM_ID,PIT_NAME,SP_IND,PITCH_SEQ_TX, EVENT_PITCH_COUNT, PITCH_COUNT_CUMU, PITCH_COUNT_FINAL))
-
-# BATTER_SEQ_NUM, ORDER_CT
-# For BATTER_SEQ_NUM, do not count the same player twice in a row
-E4 <- E3 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
-             mutate(consecutive.bat.row = lag(BAT_ID)==BAT_ID,
-                    consecutive.bat.row = ifelse(is.na(consecutive.bat.row), FALSE, consecutive.bat.row),
-                    BATTER_SEQ_NUM = cumsum(!consecutive.bat.row), #row_number(),
-                    ORDER_CT = 1 + (BATTER_SEQ_NUM-1) %/% 9) %>%
-             ungroup() 
-print("E4")
-# Check
-#View(E4 %>% select(INNING,BAT_HOME_IND,GAME_ID,HOME_TEAM_ID,AWAY_TEAM_ID,EVENT_TX, BAT_NAME,consecutive.bat.row,BATTER_SEQ_NUM, ORDER_CT))
-
-# HAND_MATCH 
-# check unique(D$BAT_HAND) and unique(D$PIT_HAND)
-E5 <- E4 %>% mutate(HAND_MATCH = ifelse(is.na(BAT_HAND) | is.na(PIT_HAND), NA,
-                                        ifelse(BAT_HAND == "B" | PIT_HAND == "B", TRUE,
-                                               BAT_HAND == PIT_HAND)))
-print("E5")
-# Check
-#View(E5 %>% select(INNING,BAT_HOME_IND,GAME_ID,HOME_TEAM_ID,AWAY_TEAM_ID,BAT_NAME,BAT_HAND,PIT_NAME,PIT_HAND,HAND_MATCH))
 
 # fix AB_IND and PA_IND !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

@@ -12,7 +12,8 @@ library(stringr)
 # TEAM_MATCH {IN_DIV, IN_LEAG}
 # EVENT_WOBA === wOBA of this event
 # EVENT_PITCH_COUNT== pitch count per event
-# HIT_BINARY === 1 if hit else 0
+# PITCH_COUNT_CUMU === pitch count up to this point in the game
+# PITCH_COUNT_FINAL === final pitch count of the game for each starter
 ########################################################################
 
 ################################
@@ -83,10 +84,23 @@ create.dataset.3 <- function(D, filename) {
     }
     D4 = D3 %>% mutate(EVENT_PITCH_COUNT = sapply(PITCH_SEQ_TX, compute_event_pitch_count))
     print("D4")
-
-    # HIT_BINARY === 1 if hit else 0
-    D5 = D4 %>% mutate(HIT_BINARY = HIT_VAL > 0)
+    
+    
+    # PITCH_COUNT_CUMU, PITCH_COUNT_FINAL
+    D5 <- D4 %>% group_by(GAME_ID, PIT_ID) %>%
+      mutate(PITCH_COUNT_CUMU = cumsum(replace_na(EVENT_PITCH_COUNT, 0)),
+             PITCH_COUNT_FINAL = sum(EVENT_PITCH_COUNT, na.rm=TRUE)) %>%
+      ungroup() %>% select(!c(first.p))
     print("D5")
+    # Check
+    #View(D5 %>% select(INNING,BAT_HOME_IND,GAME_ID,BAT_NAME,HOME_TEAM_ID,AWAY_TEAM_ID,PIT_NAME,SP_IND,PITCH_SEQ_TX, EVENT_PITCH_COUNT, PITCH_COUNT_CUMU, PITCH_COUNT_FINAL))
+    
+    
+    
+    # RUNS and RBIs      EVENT_ER_CT, EVENT_RBI_CT, EVENT_RUNS
+    #FIXME --> do it better with str_detect ????
+    
+    
     
     ###########
     
@@ -122,8 +136,6 @@ E = read_csv(filename)
     # View(D3 %>% select(PITCH_SEQ_TX, EVENT_PITCH_COUNT))
     # # Check ORDER_CT
     # View(D4 %>% select(GAME_ID, BAT_HOME_IND, INNING, BATTER_SEQ_NUM, ORDER_CT))
-    # # Check HIT_BINARY
-    # View(D5 %>% select(HIT_VAL, HIT_BINARY))
     # # Check EVENT_CODE
     # View(D6 %>% select(EVENT_TX, EVENT_CODE))  
     # # Check EVENT_WOBA
