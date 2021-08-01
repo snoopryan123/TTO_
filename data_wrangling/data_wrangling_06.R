@@ -6,9 +6,6 @@ library(stringr)
 
 # create new columns
 #######################################################
-# EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR) [*****]
-# EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR) [*****]
-# EVENT_RUNS === number of runs recorded during this event [*****]
 # EVENT_OUTS_CT === number of outs recorded at that event [*****]
 # OUTS_CT === number of outs at that time [*****]
 #######################################################
@@ -18,37 +15,6 @@ library(stringr)
 ################################
 
 create.dataset.2A <- function(D,filename) {
-    # EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR)
-    # EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR)
-    # EVENT_RUNS === number of runs recorded during this event
-    #FIXME --> do it better with str_detect ????
-    compute_rbi <- function(event_tx) {
-        hit_val = compute_hit_val(event_tx)
-        run_tx = str_extract(event_tx, "([^.]+$)")
-        n = length(str_extract_all(run_tx, "-H")[[1]])
-        norbi = length(str_extract_all(run_tx, "NR")[[1]])
-        hr = if (hit_val == 4) 1 else 0
-        n + hr - norbi
-    }
-    compute_er <- function(event_tx) {
-      hit_val = compute_hit_val(event_tx)
-      run_tx = str_extract(event_tx, "([^.]+$)")
-      n = length(str_extract_all(run_tx, "-H")[[1]])
-      unearned_run = length(str_extract_all(run_tx, "UR")[[1]])
-      hr = if (hit_val == 4) 1 else 0
-      n + hr - unearned_run
-    }
-    compute_event_runs <- function(event_tx) {
-      hit_val = compute_hit_val(event_tx)
-      run_tx = str_extract(event_tx, "([^.]+$)")
-      n = length(str_extract_all(run_tx, "-H")[[1]])
-      hr = if (hit_val == 4) 1 else 0
-      n + hr
-    }
-    D6 = D %>% mutate(EVENT_ER_CT = sapply(EVENT_TX, compute_er),
-                       EVENT_RBI_CT = sapply(EVENT_TX, compute_rbi),
-                       EVENT_RUNS = sapply(EVENT_TX, compute_event_runs))
-    print("D6")
     ########################################################
     # EVENT_OUTS_CT
     ########################################################

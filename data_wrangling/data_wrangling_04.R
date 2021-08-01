@@ -4,12 +4,15 @@ library(rvest)
 
 ########################################################################
 # EVENT_CODE === {IW, W, HP, NA}  --> [need for wOBA calculation]
-# EVENT_WOBA === wOBA of this event
 # PA_IND === TRUE iff it is a plate appearance
 # AB_IND === TRUE iff it is an at-bat
 # WOBA_APP === TRUE iff it is a wOBA-appearance, i.e. in {AB,W,SF,SH,HP}\{IW}
+# EVENT_WOBA === wOBA of this event
 # WOBA_CUMU_BAT === cumulative woba prior to this plate appearance for a given batter during a given season (INDIVIDUAL BATTER'S QUALITY)
 # WOBA_CUMU_PIT === cumulative woba prior to this plate appearance for a given pitcher during a given season (INDIVIDUAL PITCHER'S QUALITY)
+# EVENT_RUNS === number of runs recorded during this event
+# EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR)
+# EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR)
 ########################################################################
 
 ################################
@@ -81,14 +84,6 @@ E4 <- E3 %>% mutate(WOBA_APP = (AB_IND | (str_detect(EVENT_TX, "^W") & !str_dete
 # E4 <- E3 %>% mutate(WOBA_APP = PA_IND & !str_detect(EVENT_TX, "^IW") & !str_detect(EVENT_TX, "^C") &  !str_detect(EVENT_TX, "^INT") )  
 print("E4")
 
-
-
-
-# RUNS and RBIs      EVENT_ER_CT, EVENT_RBI_CT, EVENT_RUNS
-#FIXME --> do it better with str_detect ????
-
-
-
 # EVENT_WOBA === wOBA of this event
 # https://www.fangraphs.com/guts.aspx?type=cn
 # HP, is an AB and PA.
@@ -108,33 +103,42 @@ E5 = E4 %>% group_by(YEAR) %>% mutate(EVENT_WOBA =
 print("E5")
 #View(E5 %>% filter(GAME_ID == "BOS202008180"))
 
-
-
-D0 <- E5
-################################
-################################
-
 # WOBA_CUMU_BAT (INDIVIDUAL BATTER'S QUALITY)
-D1 <- D0 %>% group_by(YEAR, BAT_ID) %>%
-      mutate(cumu.woba.sum.b = cumsum(replace_na(EVENT_WOBA, 0)),
-             cumu.woba.denom.b = cumsum(replace_na(WOBA_APP, 0)),
-             #cumu.pa.sum.b = cumsum(replace_na(PA_IND, 0)),
-             WOBA_CUMU_BAT = cumu.woba.sum.b/cumu.woba.denom.b) %>% # is it plate appearance, or something else?
-      #select(!c(cumu.woba.sum, cumu.pa.sum)) %>%
-      ungroup()
+E6 <- E5 %>% group_by(YEAR, BAT_ID) %>%
+  mutate(cumu.woba.sum.b = cumsum(replace_na(EVENT_WOBA, 0)),
+         cumu.woba.denom.b = cumsum(replace_na(WOBA_APP, 0)),
+         WOBA_CUMU_BAT = cumu.woba.sum.b/cumu.woba.denom.b) %>% 
+  ungroup()
+print("E6")
 
 # WOBA_CUMU_PIT (INDIVIDUAL PITCHER'S QUALITY)
-D2 <- D1 %>% group_by(YEAR, PIT_ID) %>%
+E7 <- E6 %>% group_by(YEAR, PIT_ID) %>%
   mutate(cumu.woba.sum.p = cumsum(replace_na(EVENT_WOBA, 0)),
          cumu.woba.denom.p = cumsum(replace_na(WOBA_APP, 0)),
-         #cumu.pa.sum.p = cumsum(replace_na(PA_IND, 0)),
-         WOBA_CUMU_PIT = cumu.woba.sum.p/cumu.woba.denom.p) %>% # is it plate appearance, or something else?
-  #select(!c(cumu.woba.sum, cumu.pa.sum)) %>%
+         WOBA_CUMU_PIT = cumu.woba.sum.p/cumu.woba.denom.p) %>% 
   ungroup()
+print("E7")
+
+# EVENT_RUNS === number of runs recorded during this event
+# EVENT_ER_CT === number of earned runs recorded during this event (take into accoount UR)
+# EVENT_RBI_CT === number of RBIs recorded during this event (take into accoount NR)
+E8 = E7 %>% mutate(run_tx = str_extract(event_tx, "([^.]+$)"),
+                   num.home = str_count(run_tx, "-H"),
+                   no.rbi = str_count(run_tx, "NR"),
+                   unearned.runs = str_count(run_tx, "UR"), 
+                   hr.ind = ifelse(HIT_VAL == 4, 1, 0),
+                   EVENT_RUNS = num.home + hr.ind,
+                   EVENT_ER_CT = EVENT_RUNS - unearned.runs,
+                   EVENT_RBI_CT = EVENT_RUNS - no.rbi)
+print("E8")
+
+
+
+
 
 ##############################
 
-R = D2
+R = E8
 R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.woba.denom.p))
 #write_csv(R_, output_filename)
 
