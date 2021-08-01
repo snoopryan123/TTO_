@@ -37,6 +37,9 @@ library(tidyverse)
 ################################
 
 D = read_csv("retro01_PA_2020.csv") #FIXME
+output_filename = "retro03_PA_2020.csv" #FIXME
+
+################################
 
 ### initial columns: name changes
 D1 = D %>% rename(GAME_ID = game_id,
@@ -107,12 +110,11 @@ print("D7")
 # Check
 View(D7 %>% select(INNING,BAT_HOME_IND,GAME_ID,BAT_NAME,HOME_TEAM_ID,AWAY_TEAM_ID,PIT_NAME,SP_IND))
 
-
-
+################################
+################################
 
 result = D7
-filename = "retro03_PA_2020.csv" #FIXME
-write_csv(result, filename)
+write_csv(result, output_filename)
 
 
 
