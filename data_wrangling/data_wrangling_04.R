@@ -1,6 +1,8 @@
 library(tidyverse)
 
 ########################################################################
+# EVENT_CODE === {IW, W, HP, NA}  --> [need for wOBA calculation]
+# EVENT_WOBA === wOBA of this event
 # PA_IND === TRUE iff it is a plate appearance
 # AB_IND === TRUE iff it is an at-bat
 # WOBA_APP === TRUE iff it is a wOBA-appearance, i.e. in {AB,W,SF,SH,HP}\{IW}
@@ -12,9 +14,10 @@ library(tidyverse)
 ########### THE CODE ###########
 ################################
 
-D <- read_csv("retro3_PA_1990-2020.csv")
-E <- D %>% select(!c(sp.ind))
-#D <- Dog %>% filter(YEAR == 2010) ###FIXME
+input_filename = "retro03_PA_2020.csv"
+output_filename = "retro04_PA_2020.csv"
+D <- read_csv(input_filename)
+E <- D 
 
 #########################################################################
 ########### FIX ERRORS IN THE DATASET!!! and ADD SOME COLUMNS ###########
@@ -23,11 +26,38 @@ E <- D %>% select(!c(sp.ind))
 
 #########################################################################
 
-# FIX !!! ERROR from data_wrangling_2A:  DI is DEFENSIVE INDIFFERENCE not DOUBLE, so should have HIT_VAL = 0, EVENT_WOBA = 0
+# FIXME !!! ERROR from data_wrangling_2A:  DI is DEFENSIVE INDIFFERENCE not DOUBLE, so should have HIT_VAL = 0, EVENT_WOBA = 0
 E1 <- E %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
                   HIT_BINARY = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_BINARY),
                   EVENT_WOBA = ifelse(str_detect(EVENT_TX, "^DI"), 0, EVENT_WOBA))
 print("E1")
+
+
+# EVENT_CODE === {IW, W, HP, NA}    --> [need for wOBA calculation]
+E1 = E1 %>% mutate(EVENT_CODE = ifelse(grepl("IW", EVENT_TX, fixed=TRUE), "IW",
+                                      ifelse(startsWith(EVENT_TX, "W") & !startsWith(EVENT_TX, "WP"), "W",
+                                             ifelse(grepl("HP", EVENT_TX, fixed=TRUE), "HP",
+                                                    "other" ))))
+print("E1A")
+
+# EVENT_WOBA === wOBA of this event
+# https://www.fangraphs.com/guts.aspx?type=cn
+# HP, is an AB and PA.
+# SH, SF, IW, W are PA but not AB
+# an event is a WOBA_EVENT iff it is an {AB, W, SH, SF, HP} but not {IW}. Equivalently, {PA}\{IW}
+# ---> include all plate appearances as wOBA except intentional walks !!!
+E2 = E1 %>% group_by(YEAR) %>%
+            mutate(EVENT_WOBA = ifelse(HIT_VAL == 1, W[W$Season == unique(YEAR),]$w1B, # single
+                  ifelse(HIT_VAL == 2, W[W$Season == unique(YEAR),]$w2B, # double
+                  ifelse(HIT_VAL == 3, W[W$Season == unique(YEAR),]$w3B, # triple
+                  ifelse(HIT_VAL == 4, W[W$Season == unique(YEAR),]$wHR, # HR
+                  ifelse(EVENT_CODE == "W", W[W$Season == unique(YEAR),]$wBB, # uBB / NIBB
+                  ifelse(EVENT_CODE == "HP", W[W$Season == unique(YEAR),]$wHBP, # HBP / HP
+                  #ifelse(EVENT_CD==18, 0.92, # RBOE (reached base on error) --> no longer in the woba formula
+                  ifelse(PA_IND &  (EVENT_CODE != "IW"), 0, NA )))))))) %>% ungroup()
+print("E2")
+
+
 
 # fix AB_IND and PA_IND !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -43,7 +73,7 @@ print("E1")
 #already started his turn at bat. Under Rule 9.15(b), the pinch hitter would receive the plate appearance (and potential of an at-bat) unless the original batter 
 #is replaced when having 2 strikes against him and the pinch hitter subsequently completes the strikeout, in which case the plate appearance and at-bat are charged
 # to the first batter.
-E6 <- E5 %>%  group_by(GAME_ID, BAT_HOME_IND) %>%
+E6 <- E2 %>%  group_by(GAME_ID, BAT_HOME_IND) %>%
               mutate(x = lead(BAT_ID) != BAT_ID,
                      x = replace_na(x, TRUE),
                      PA_IND = x) %>% select(!c(x)) %>%
@@ -104,20 +134,11 @@ D2 <- D1 %>% group_by(YEAR, PIT_ID) %>%
   #select(!c(cumu.woba.sum, cumu.pa.sum)) %>%
   ungroup()
 
+##############################
 
 R = D2
 R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.woba.denom.p))
-filename = "retro4_PA_1990-2020.csv"
-#write_csv(R_, filename)
-
-########################################################################
-
-##############################
-########### RUNNIT ###########
-##############################
-
-
-
+#write_csv(R_, output_filename)
 
 ##############################
 ########### CHECKS ###########
@@ -171,5 +192,3 @@ filename = "retro4_PA_1990-2020.csv"
 # HOME_FIELD_EFFECT ???
 # HOW FAR INTO THE SEASON WE ARE EFFECT ???
 # NUM_DAYS_REST === number of days of rest the starting pitcher has prior to this game -> data????
-
-
