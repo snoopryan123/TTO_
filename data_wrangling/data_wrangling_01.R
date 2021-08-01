@@ -96,8 +96,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
                      visteam = info.values[1],
                      hometeam = info.values[2],
                      site = info.values[3],
-                     date = info.values[4],
-                     number = info.values[5])#, starttime = info.values[6], sky = info.values[7])
+                     date = info.values[4]) #number = info.values[5], starttime = info.values[6], sky = info.values[7])
   
   ### create ST tibble (starting pitchers)
   ST = strsplit(st_pitchers[1], ",")[[1]]
@@ -184,6 +183,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
   PL$batPos = as.numeric(PL$batPos)
   PL$fieldPos = as.numeric(PL$fieldPos)
   PL = tibble(PL) %>% select(!c(batPos,team))
+  PL = PL %>% distinct(retroID, .keep_all = TRUE)
   P <- left_join(P,PL,by="retroID")
   
   # add BAT.HAND column

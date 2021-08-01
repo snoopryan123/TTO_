@@ -34,23 +34,14 @@ E <- D %>% select(!c(sp.ind))
 
 #########################################################################
 
-
-# remove NP rows !!!
-E0 <- E %>% filter(EVENT_TX != "NP")
-print("E0")
-
 # FIX !!! ERROR from data_wrangling_2A:  DI is DEFENSIVE INDIFFERENCE not DOUBLE, so should have HIT_VAL = 0, EVENT_WOBA = 0
-E1 <- E0 %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
+E1 <- E %>% mutate(HIT_VAL = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_VAL),
                   HIT_BINARY = ifelse(str_detect(EVENT_TX, "^DI"), 0, HIT_BINARY),
                   EVENT_WOBA = ifelse(str_detect(EVENT_TX, "^DI"), 0, EVENT_WOBA))
 print("E1")
 
 # RUNS and RBIs      EVENT_ER_CT, EVENT_RBI_CT, EVENT_RUNS
 #FIXME --> do it better with str_detect ????
-
-# problem with DUPLICATE ROWS...
-E2 <- E1 %>% distinct(across(c(INNING,BAT_HOME_IND,BAT_ID,COUNT,PITCH_SEQ_TX,EVENT_TX,GAME_ID,PIT_ID)), .keep_all = TRUE)
-print("E2")
 
 # SP_IND, PITCH_COUNT_CUMU, PITCH_COUNT_FINAL
 E3 <- E2 %>% group_by(GAME_ID, BAT_HOME_IND) %>% mutate(first.p = first(PIT_ID)) %>% ungroup() %>%
@@ -163,7 +154,7 @@ D2 <- D1 %>% group_by(YEAR, PIT_ID) %>%
 R = D2
 R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.woba.denom.p))
 filename = "retro4_PA_1990-2020.csv"
-write_csv(R_, filename)
+#write_csv(R_, filename)
 
 ########################################################################
 
@@ -181,7 +172,7 @@ write_csv(R_, filename)
 {
     # 
     WW = read_csv("woba_weights_Fangraphs.csv")
-    y = 2010
+    y = 1993
     w = WW[WW$Season == y,]
     
     # CHECK WOBA_CUMU_BAT
