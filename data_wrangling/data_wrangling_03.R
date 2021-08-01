@@ -1,4 +1,3 @@
-#library(stringr)
 library(tidyverse)
 
 # create new columns
@@ -29,7 +28,6 @@ library(tidyverse)
 # ORDER_CT === time thru the order number {1,2,3,..}
 # HAND_MATCH === 1 if pitcher and batter handedness match, else 0
 # SP_IND === True if is a starting pitcher in this game
-
 #######################################################
 
 ################################
