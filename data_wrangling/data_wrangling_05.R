@@ -1,7 +1,4 @@
-#install.packages("retrosheet")
-library(retrosheet)
 library(tidyverse)
-library(pkgcond)
 library(stringr)
 
 # create new columns
@@ -21,66 +18,37 @@ D <- read_csv(input_filename)
 
 
 
-create.dataset.2A <- function(D,filename) {
-    ########################################################
-    # EVENT_OUTS_CT
-    ########################################################
+
     
-    num.outs.cs <- function(a) {
-      # CS2(E1/TH).3-H(NR);1-3 --> 0 outs
-      A = length(str_extract_all(a, "CS[23H]")[[1]]) -
-          length(str_extract_all(a, "CS[23H]\\([0-9]*E")[[1]])
-      return(A)
-    }
+# EVENT_OUTS_CT === number of outs recorded at that event
+D1 = D %>% mutate(
+  num.outs.cs = str_count(EVENT_TX, "CS[23H]") - str_count(EVENT_TX, "CS[23H]\\([0-9]*E"), # CS2(E1/TH).3-H(NR);1-3 --> 0 outs
+  num.outs.po = ifelse(str_detect(EVENT_TX, "^POCS"), 
+                       str_count(EVENT_TX, "POCS[H123]") - str_count(EVENT_TX, "POCS[H123]\\([0-9]*E"),
+                       str_count(EVENT_TX, "PO[H123]") - str_count(EVENT_TX, "PO[H123]\\([0-9]*E")),
+  num.outs.startsWithNum = str_count(EVENT_TX, "^[0-9]*") - str_count(EVENT_TX, "^[0-9]*E"), # 63/G --> 1 out, 6E3/G --> 0 outs
+  
+  # S9/L.2-3;1X3(936) --> 1 baserunner out
+  # FC4.1X2(4E6);B-1 --> 0 baserunner outs
+  # FC6/G.2XH(NR)(6E5)(UR);B-2\n --> 0 outs (remove the (NR), (UR))
+  starts.with.num = str_count(s.urnr, "^[0-9]"),
+  s = str_split_fixed(EVENT_TX, "\\.", 2),
+  a = s[1], # string, description of the basic play
+  
+  
+  b = s[2], # string, the advancement of any runners
+  b.nr = str_remove_all(b, "\\(NR\\)"),
+  b.urnr = str_remove_all(b, "\\(UR\\)"),
+  num.baserunner.outs = str_count(b.urnr, "[123BH]X[123BH]") - str_count(b.urnr, "[123BH]X[123BH]\\([0-9]*E"),
+  B = num.baserunner.outs,
+  dp = str_detect(EVENT_TX, "DP"),
+  tp = str_detect(EVENT_TX, "TP"),
+  EVENT_OUTS_CT = ifelse(dp, 2, ifelse(tp, 3, A+B))
+)
     
-    num.outs.po <- function(a) {
-      A.po = length(str_extract_all(a, "PO[H123]")[[1]]) -
-             length(str_extract_all(a, "PO[H123]\\([0-9]*E")[[1]])
-      A.pocs = length(str_extract_all(a, "POCS[H123]")[[1]]) -
-               length(str_extract_all(a, "POCS[H123]\\([0-9]*E")[[1]])
-      A = if (startsWith(a, "POCS")) A.pocs else A.po
-      return(A)
-    }
     
-    num.outs.startsWithNum <- function(a) {
-      # 63/G --> 1 out
-      # 6E3/G --> 0 outs
-      A = length(str_extract_all(a, "^[0-9]*")[[1]]) -
-          length(str_extract_all(a, "^[0-9]*E")[[1]])
-      return(A)
-    }
-    
-    num.baserunner.outs <- function(b) {
-      # S9/L.2-3;1X3(936) --> 1 baserunner out
-      # FC4.1X2(4E6);B-1 --> 0 baserunner outs
-      # FC6/G.2XH(NR)(6E5)(UR);B-2\n --> 0 outs (remove the (NR), (UR))
-      b = if (str_detect(b, "\\(NR\\)")) str_remove(b,"\\(NR\\)") else b
-      b = if (str_detect(b, "\\(UR\\)")) str_remove(b,"\\(NR\\)") else b
-      
-      B = length(str_extract_all(b, "[123BH]X[123BH]")[[1]]) -
-          length(str_extract_all(b, "[123BH]X[123BH]\\([0-9]*E")[[1]])
-      return(B)
-    }
-    
-    starts.with.num <- function(a) {
-      A = length(str_extract_all(a, "^[0-9]")[[1]])
-      return(A)
-    }
-    
-    # EVENT_OUTS_CT === number of outs recorded at that event
     compute_event_outs_ct <- function(event_tx) {
-      s = strsplit(event_tx, ".", fixed=TRUE)[[1]]
-      a = s[1] # description of the basic play
-      b = if (length(s) > 1) s[2] else NA # the advancement of any runners
       A = 0
-      B = 0
-      
-      if (grepl("DP", event_tx, fixed=TRUE)) {
-        return(2)
-      } else if (grepl("TP", event_tx, fixed=TRUE)) {
-        return(3)
-      }
-      
       # set the value of A
       {
         if (starts.with.num(a)) {
@@ -169,7 +137,7 @@ create.dataset.2A <- function(D,filename) {
         } else if (startsWith(a, "WP")) {
           A = 0
         } else if (startsWith(a, "PO")) {
-          # inclueds "POCS"
+          # includes "POCS"
           A = num.outs.po(a)
         } else if (startsWith(a, "SB")) {
           A = 0
@@ -180,16 +148,21 @@ create.dataset.2A <- function(D,filename) {
         }
       }
       
-      # set the value of B
-      B = if (!is.na(b)) num.baserunner.outs(b) else 0
       
-      return(A+B)
     }
+    
+    
       
     D7 = D6 %>% mutate(EVENT_OUTS_CT = sapply(EVENT_TX, compute_event_outs_ct))
     
     print("D7")
+    ########################################################
     
+   
+  
+   
+     
+   
     ########################################################
     
     # OUTS_CT === number of outs PRIOR TO the play
@@ -201,18 +174,9 @@ create.dataset.2A <- function(D,filename) {
     print("D8")
     
     result = D8
-    write_csv(result, filename)
-}
+    #write_csv(result, output_filename)
 
 
-##############################
-########### RUNNIT ###########
-##############################
-D = read_csv("retro1_PA_1990-2020.csv")
-# D = Dog %>% filter(startsWith(as.character(date), "2012"))
-# takes about ~45 mins to run on 30 years worth of data
-create.dataset.2A(D,"retro2A_PA_1990-2020.csv")
-E = read_csv("retro2A_PA_1990-2020.csv")
 
 
 ########################################################################
