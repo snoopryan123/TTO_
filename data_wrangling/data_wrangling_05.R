@@ -27,27 +27,27 @@ D1 = D %>% mutate(
                        str_count(EVENT_TX, "POCS[H123]") - str_count(EVENT_TX, "POCS[H123]\\([0-9]*E"),
                        str_count(EVENT_TX, "PO[H123]") - str_count(EVENT_TX, "PO[H123]\\([0-9]*E")),
   num.outs.startsWithNum = str_count(EVENT_TX, "^[0-9]*") - str_count(EVENT_TX, "^[0-9]*E"), # 63/G --> 1 out, 6E3/G --> 0 outs
-  
+  starts.with.num = str_count(EVENT_TX, "^[0-9]"),
+  ################################
+  a = str_split_fixed(EVENT_TX, "\\.", 2)[,1], # string, description of the basic play
+  A = compute_A(a),
+  ################################
+  b = str_split_fixed(EVENT_TX, "\\.", 2)[,2], # string, the advancement of any runners
   # S9/L.2-3;1X3(936) --> 1 baserunner out
   # FC4.1X2(4E6);B-1 --> 0 baserunner outs
   # FC6/G.2XH(NR)(6E5)(UR);B-2\n --> 0 outs (remove the (NR), (UR))
-  starts.with.num = str_count(s.urnr, "^[0-9]"),
-  s = str_split_fixed(EVENT_TX, "\\.", 2),
-  a = s[1], # string, description of the basic play
-  
-  
-  b = s[2], # string, the advancement of any runners
   b.nr = str_remove_all(b, "\\(NR\\)"),
-  b.urnr = str_remove_all(b, "\\(UR\\)"),
+  b.urnr = str_remove_all(b.nr, "\\(UR\\)"),
   num.baserunner.outs = str_count(b.urnr, "[123BH]X[123BH]") - str_count(b.urnr, "[123BH]X[123BH]\\([0-9]*E"),
   B = num.baserunner.outs,
+  ################################
   dp = str_detect(EVENT_TX, "DP"),
   tp = str_detect(EVENT_TX, "TP"),
   EVENT_OUTS_CT = ifelse(dp, 2, ifelse(tp, 3, A+B))
 )
     
     
-    compute_event_outs_ct <- function(event_tx) {
+    compute_event_outs_ct <- function(EVENT_TX_0) {
       A = 0
       # set the value of A
       {
@@ -55,91 +55,91 @@ D1 = D %>% mutate(
           # 63/G --> 1 out
           # 6E3/G --> 0 outs
           A = num.outs.startsWithNum(a) 
-        } else if (startsWith(a, "C/E")) {
+        } else if (str_detect(a, "^C/E")) {
           A = 0
-        } else if (startsWith(a, "S")) {
+        } else if (str_detect(a, "^S")) {
           A = 0
-        } else if (startsWith(a, "D")) {
+        } else if (str_detect(a, "^D")) {
           A = 0
-        } else if (startsWith(a, "T")) {
+        } else if (str_detect(a, "^T")) {
           A = 0
-        } else if (startsWith(a, "E")) {
+        } else if (str_detect(a, "^E")) {
           A = 0
-        } else if (startsWith(a, "FC")) {
+        } else if (str_detect(a, "^FC")) {
           # ignore fielder's choice. looks at the baserunner activity
           A = 0
-        } else if (startsWith(a, "FLE")) {
+        } else if (str_detect(a, "^FLE")) {
           A = 0
-        } else if (startsWith(a, "HP") | startsWith(a, "HR") | startsWith(a, "H")) {
+        } else if (str_detect(a, "^HP") | str_detect(a, "^HR") | str_detect(a, "^H")) {
           A = 0
-        } else if (startsWith(a, "K") & !startsWith(a, "K+")) {
+        } else if (str_detect(a, "^K") & !str_detect(a, "^K+")) {
           # sometimes 0, sometimes 1 --> look at baserunner advances
           # K.BX1(2E3) --> 0 outs
           # K.BX1 --> 1 outs
           # K --> 1 out
-          A = if (grepl("B", b, fixed=TRUE)) 0 else 1
-        } else if (startsWith(a, "K+SB")) {
+          A = if (str_detect(b, "B")) 0 else 1
+        } else if (str_detect(a, "^K+SB")) {
           A = 1
           return(1)
-        } else if (startsWith(a, "K+CS")) {
+        } else if (str_detect(a, "^K+CS")) {
           # guaranteed double play
           A = 2 
           return(2)
-        }  else if (startsWith(a, "K+PO")) {
+        }  else if (str_detect(a, "^K+PO")) {
           # guaranteed double play
           A = 2
           return(2)
-        } else if (startsWith(a, "K+E")) {
+        } else if (str_detect(a, "^K+E")) {
           A = 0
-        } else if (startsWith(a, "K+PB")) {
+        } else if (str_detect(a, "^K+PB")) {
           # sometimes 0, sometimes 1 --> look at baserunner advances
           #K+PB.B-1 --> 0 outs
           #K+PB.2-3;1-2 --> 1 out
-          A = if (grepl("B-", b, fixed=TRUE)) 0 else 1
-        } else if (startsWith(a, "K+WP")) {
+          A = if (str_detect(b, "B-")) 0 else 1
+        } else if (str_detect(a, "^K+WP")) {
           #K+WP.1-2 --> 1 out
           #K+WP.B-1 --> 0 outs
-          A = if (grepl("B-", b, fixed=TRUE)) 0 else 1
-        } else if (startsWith(a, "K+OA")) {
+          A = if (str_detect(b, "B-", b)) 0 else 1
+        } else if (str_detect(a, "^K+OA")) {
           # sometimes 0, sometimes 1 --> look at baserunner advances
           A = 0
-        } else if (startsWith(a, "NP")) {
+        } else if (str_detect(a, "^NP")) {
           A = 0
-        } else if ( (startsWith(a, "W") & !startsWith(a, "W+")) |
-                    (startsWith(a, "IW") & !startsWith(a, "IW+")) | 
-                    (startsWith(a, "I") & !startsWith(a, "I+")) )  {
+        } else if ( (str_detect(a, "^W") & !str_detect(a, "^W+")) |
+                    (str_detect(a, "^IW") & !str_detect(a, "^IW+")) | 
+                    (str_detect(a, "^I") & !str_detect(a, "^I+")) )  {
           A = 0
-        } else if (startsWith(a, "W+SB") | startsWith(a, "IW+SB") | startsWith(a, "I+SB")) {
+        } else if (str_detect(a, "^W+SB") | str_detect(a, "^IW+SB") | str_detect(a, "^I+SB")) {
           A = 0
-        } else if (startsWith(a, "W+CS") | startsWith(a, "IW+CS") | startsWith(a, "I+CS")) {
+        } else if (str_detect(a, "^W+CS") | str_detect(a, "^IW+CS") | str_detect(a, "^I+CS")) {
           A = 1
-        } else if (startsWith(a, "W+PO") | startsWith(a, "IW+PO") | startsWith(a, "I+PO")) {
+        } else if (str_detect(a, "^W+PO") | str_detect(a, "^IW+PO") | str_detect(a, "^I+PO")) {
           A = 1
-        } else if (startsWith(a, "W+PB") | startsWith(a, "IW+PB") | startsWith(a, "I+PB")) {
+        } else if (str_detect(a, "^W+PB") | str_detect(a, "^IW+PB") | str_detect(a, "^I+PB")) {
           A = 0
-        } else if (startsWith(a, "W+WP") | startsWith(a, "IW+WP") | startsWith(a, "I+WP")) {
+        } else if (str_detect(a, "^W+WP") | str_detect(a, "^IW+WP") | str_detect(a, "^I+WP")) {
           A = 0
-        } else if (startsWith(a, "W+E") | startsWith(a, "IW+E") | startsWith(a, "I+E")) {
+        } else if (str_detect(a, "^W+E") | str_detect(a, "^IW+E") | str_detect(a, "^I+E")) {
           A = 0
-        } else if (startsWith(a, "W+OA")) {
+        } else if (str_detect(a, "^W+OA")) {
           A = 0
-        } else if (startsWith(a, "BK")) {
+        } else if (str_detect(a, "^BK")) {
           A = 0
-        } else if (startsWith(a, "CS")) {
+        } else if (str_detect(a, "^CS")) {
           A = num.outs.cs(a)
-        } else if (grepl("DI", a, fixed=TRUE)) {
+        } else if (str_detect(a, "DI")) {
           A = 0
-        } else if (startsWith(a, "OA")) {
+        } else if (str_detect(a, "^OA")) {
           A = 0
           # need to look at b
-        } else if (startsWith(a, "PB")) {
+        } else if (str_detect(a, "^PB")) {
           A = 0
-        } else if (startsWith(a, "WP")) {
+        } else if (str_detect(a, "^WP")) {
           A = 0
-        } else if (startsWith(a, "PO")) {
+        } else if (str_detect(a, "^PO")) {
           # includes "POCS"
           A = num.outs.po(a)
-        } else if (startsWith(a, "SB")) {
+        } else if (str_detect(a, "^SB")) {
           A = 0
           return(0)
         } else {
@@ -148,19 +148,8 @@ D1 = D %>% mutate(
         }
       }
       
-      
     }
-    
-    
-      
-    D7 = D6 %>% mutate(EVENT_OUTS_CT = sapply(EVENT_TX, compute_event_outs_ct))
-    
-    print("D7")
-    ########################################################
-    
-   
   
-   
      
    
     ########################################################
