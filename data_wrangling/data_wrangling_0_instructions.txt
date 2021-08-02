@@ -1,1 +1,2 @@
 Run dw_01, dw_02, ..., dw_06 in order. Do not run dw_00 (it is used in _01 automatically).
+In most/all of these files you will have to manually change the strings `input_filename` and `output_filename`.
