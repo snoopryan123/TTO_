@@ -36,15 +36,6 @@ W <- tables[[9]]
 
 ################################
 
-# STILL a problem with DUPLICATE ROWS somehow...
-# ex. see inning 6 Bryce Harper HR (shows up twice) in
-#View(E %>% filter(GAME_ID == "BOS202008180") %>% select(GAME_ID, INNING, BAT_HOME_IND, BAT_ID, PIT_ID, PITCH_SEQ_TX, EVENT_TX, BATTER_SEQ_NUM))
-#View(E %>% filter(GAME_ID == "BOS202008180"))
-E0 = E %>% distinct(across(c(GAME_ID, INNING, BAT_HOME_IND, BAT_ID, PIT_ID, PITCH_SEQ_TX, EVENT_TX, BATTER_SEQ_NUM)), .keep_all = TRUE)
-#View(E0 %>% filter(GAME_ID == "BOS202008180") %>% select(GAME_ID, INNING, BAT_HOME_IND, BAT_ID, PIT_ID, PITCH_SEQ_TX, EVENT_TX, BATTER_SEQ_NUM))
-
-################################
-
 # EVENT_CODE === {IW, W, HP, NA}  --> [need for wOBA calculation]
 E1 = E0 %>% mutate(EVENT_CODE =  ifelse(str_detect(EVENT_TX, "IW"), "IW",
                                 ifelse(str_detect(EVENT_TX, "^W") & !str_detect(EVENT_TX, "^WP"), "W",

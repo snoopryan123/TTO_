@@ -69,8 +69,18 @@ compute_A <- function(a,b) {
   
 ################################
 
+################################
+
+# STILL a problem with DUPLICATE ROWS somehow...
+# ex. see inning 6 Bryce Harper HR (shows up twice) in
+#View(E %>% filter(GAME_ID == "BOS202008180") %>% select(GAME_ID, INNING, BAT_HOME_IND, BAT_ID, PIT_ID, PITCH_SEQ_TX, EVENT_TX, BATTER_SEQ_NUM))
+#View(E %>% filter(GAME_ID == "BOS202008180"))
+D0 = D %>% distinct(across(c(GAME_ID, INNING, BAT_HOME_IND, BAT_ID, PIT_ID, PITCH_SEQ_TX, EVENT_TX, BATTER_SEQ_NUM)), .keep_all = TRUE)
+#View(E0 %>% filter(GAME_ID == "BOS202008180") %>% select(GAME_ID, INNING, BAT_HOME_IND, BAT_ID, PIT_ID, PITCH_SEQ_TX, EVENT_TX, BATTER_SEQ_NUM))
+
+
 # EVENT_OUTS_CT === number of outs recorded at that event
-D1 = D %>% mutate(
+D1 = D0 %>% mutate(
   ################################
   a = str_split_fixed(EVENT_TX, "\\.", 2)[,1], # string, description of the basic play
   b = str_split_fixed(EVENT_TX, "\\.", 2)[,2], # string, the advancement of any runners
@@ -98,7 +108,7 @@ D1 = D %>% mutate(
   dp = str_detect(EVENT_TX, "DP"),
   tp = str_detect(EVENT_TX, "TP"),
   EVENT_OUTS_CT = ifelse(dp, 2, ifelse(tp, 3, A+B))
-)
+) # %>% select(GAME_ID, EVENT_OUTS_CT) # need to JOIN !!!! 
 print("D1")  
 
 
@@ -109,10 +119,12 @@ D2 = D1 %>% group_by(GAME_ID, BAT_HOME_IND, INNING) %>%
             mutate(OUTS_CT_after = cumsum(EVENT_OUTS_CT)) %>%
             ungroup() %>%
             mutate(OUTS_CT = OUTS_CT_after - EVENT_OUTS_CT) %>%
-            select(!c(OUTS_CT_after))
+            select(!c(OUTS_CT_after)) # %>% select(GAME_ID, OUTS_CT) # need to JOIN !!!! 
 print("D2")
 
 ################################
+
+
 
 result = D2
 #write_csv(result, output_filename)
@@ -134,14 +146,14 @@ E = result
         select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
   # outs check: make sure the inning ends with 3 outs (and drop the last inning)
-  # CHECK this tibble is empty
+  # CHECK this tibble is empty (game could end early due to comm...)
   View(E %>% group_by(GAME_ID, BAT_HOME_IND) %>% filter(INNING < max(INNING)) %>% group_by(INNING) %>%
          slice_tail() %>% filter(EVENT_OUTS_CT + OUTS_CT != 3) %>% ungroup() %>% ungroup() %>%
          select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
   # specific game and inning check
-  game = "CHA201208260"
-  inning = 7
+  game = "ANA202008120" #"ANA202008100"
+  inning = 8 #5
   View(E %>% filter(GAME_ID == game, INNING == inning) %>%
          select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
