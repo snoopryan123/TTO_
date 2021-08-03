@@ -54,7 +54,7 @@ Div = read_csv("mlb_divisions_dataset.csv")
     
     result = D1
     #View(result %>% select(HOME_TEAM_ID,AWAY_TEAM_ID,HOME_DIV,AWAY_DIV,HOME_LEAGUE,AWAY_LEAGUE,IN_DIV,IN_LEAGUE))
-    #write_csv(result, output_filename)
+    write_csv(result, output_filename)
 }
 
 

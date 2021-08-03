@@ -22,10 +22,9 @@ library(rvest)
 ########### THE CODE ###########
 ################################
 
-input_filename = "retro04_PA_2020.csv"
+input_filename = "retro05_PA_2020.csv"
 output_filename = "retro06_PA_2020.csv"
-D <- read_csv(input_filename)
-E <- D 
+E <- read_csv(input_filename)
 
 ################################
 
@@ -37,41 +36,55 @@ W <- tables[[9]]
 ################################
 
 # EVENT_CODE === {IW, W, HP, NA}  --> [need for wOBA calculation]
-E1 = E0 %>% mutate(EVENT_CODE =  ifelse(str_detect(EVENT_TX, "IW"), "IW",
+E1 = E %>% mutate(EVENT_CODE =  ifelse(str_detect(EVENT_TX, "IW"), "IW",
                                 ifelse(str_detect(EVENT_TX, "^W") & !str_detect(EVENT_TX, "^WP"), "W",
                                 ifelse(str_detect(EVENT_TX, "HP"), "HP", "other" ))))
 print("E1")
 
-# fix AB_IND and PA_IND !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# PA_IND (plate appearance) (so, not a substitution or stolen base) 
-# definition:   https://en.wikipedia.org/wiki/Plate_appearance
-
-#FIXME
-#FIXME
-#FIXME
-# A batter is not credited with a plate appearance if, while batting, a preceding runner is put out on the basepaths for the third out in a way other than 
-#by the batter putting the ball into play (i.e., picked off, caught stealing). In this case, the same batter continues his turn batting in the next inning with 
-#no balls or strikes against him.
-# A batter is not credited with a plate appearance if, while batting, the game ends as the winning run scores from third base on a balk, stolen base, wild pitch or passed ball.
-# A batter may or may not be credited with a plate appearance (and possibly at bat) in the rare instance when he is replaced by a pinch hitter after having 
-#already started his turn at bat. Under Rule 9.15(b), the pinch hitter would receive the plate appearance (and potential of an at-bat) unless the original batter 
-#is replaced when having 2 strikes against him and the pinch hitter subsequently completes the strikeout, in which case the plate appearance and at-bat are charged
-# to the first batter.
-#FIXME
-#FIXME
-#FIXME - need the fine-tuning of whats not a PA. We're very close tho!
+# PA_IND (plate appearance) (so, not a substitution or stolen base). 
+# Definition:   https://en.wikipedia.org/wiki/Plate_appearance
 E2 <- E1 %>%  group_by(GAME_ID, BAT_HOME_IND) %>%
               mutate(x = lead(BAT_ID) != BAT_ID,
                      x = replace_na(x, TRUE),
-                     PA_IND = x) %>% select(!c(x)) %>%
+                     PA_IND_0 = x) %>% select(!c(x)) %>%
               ungroup() 
+# 1. A batter is not credited with a plate appearance if, while batting, a preceding runner is put out on the basepaths for the 
+#    third out in a way other than by the batter putting the ball into play (i.e., picked off, caught stealing).
+E2a <- E2 %>% group_by(GAME_ID, BAT_HOME_IND) %>% slice_tail() %>%
+              mutate(x = as.logical(str_count(EVENT_TX, "CS[23H]") - str_count(EVENT_TX, "CS[23H]\\([0-9]*E"))) %>% ungroup()
+E2b <- left_join(E2, E2a) %>% mutate(x = replace_na(x, FALSE)) %>% mutate(PA_IND_1 = PA_IND_0 & !x) %>% select(!c(x))
+# 2. A batter is not credited with a plate appearance if, while batting, the game ends as the winning run scores from third base on a 
+#    balk, stolen base, wild pitch, or passed ball.
+E2c <- E2b %>% group_by(GAME_ID) %>% slice_tail() %>%
+               mutate(x = as.logical(str_detect(EVENT_TX, "^BK") | str_detect(EVENT_TX, "^SB") | 
+                                     str_detect(EVENT_TX, "^WP") | str_detect(EVENT_TX, "^PB"))) %>%
+               ungroup()
+E2d <- left_join(E2b, E2c) %>% mutate(x = replace_na(x, FALSE)) %>% mutate(PA_IND_2 = PA_IND_1 & !x) %>% select(!c(x))          
+#FIXME
+#FIXME      
+# 3. A batter may or may not be credited with a plate appearance (and possibly at bat) in the rare instance when he is replaced by a 
+#    pinch hitter after having already started his turn at bat. Under Rule 9.15(b), the pinch hitter would receive the 
+#    plate appearance (and potential of an at-bat) unless the original batter  is replaced when having 2 strikes against him 
+#    and the pinch hitter subsequently completes the strikeout, in which case the plate appearance and at-bat are charged 
+#    to the first batter.   
+# Checks:
+# View(E2d %>% filter(EVENT_TX == "NP"))
+# View(E2d %>% filter(EVENT_TX == "NP") %>% select(EVENT_TX, PITCH_SEQ_TX, PA_IND_2))
+# View(E2d %>% filter(EVENT_TX == "NP", PA_IND_2) %>%
+#      select(GAME_ID, INNING, BAT_HOME_IND, BAT_NAME, PIT_NAME, PITCH_SEQ_TX, EVENT_TX, PA_IND_2))
+# View(E2d %>% filter(GAME_ID == "TEX202009090", INNING==4) %>% 
+#        select(GAME_ID, INNING, BAT_HOME_IND, BAT_NAME, PIT_NAME, PITCH_SEQ_TX, EVENT_TX, PA_IND_2))
+E2e <- E2d %>% mutate(PA_IND_3 = ifelse(EVENT_TX == "NP", FALSE, PA_IND_2))
+
+
+E2_final <- E2e %>% mutate(PA_IND = PA_IND_3) %>% select(names(E1), PA_IND)
+rm(E2); rm(E2a); rm(E2b); rm(E2c); rm(E2d); rm(E2e);
 print("E2")
 
 # AB_IND (at bat)
 # AT-BAT is a PLATE-APPEARANCE without {SF,SH(sacBunt),W,IW,HP,C(catcher interference)}
 # https://www.retrosheet.org/eventfile.htm
-E3 <- E2 %>% mutate(AB_IND = PA_IND & !str_detect(EVENT_TX, "SF") & !str_detect(EVENT_TX, "SH") & !str_detect(EVENT_TX, "^W") & 
+E3 <- E2_final %>% mutate(AB_IND = PA_IND & !str_detect(EVENT_TX, "SF") & !str_detect(EVENT_TX, "SH") & !str_detect(EVENT_TX, "^W") & 
                         !str_detect(EVENT_TX, "^IW") & !str_detect(EVENT_TX, "^HP") & !str_detect(EVENT_TX, "^C"))
 print("E3")
 

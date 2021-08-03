@@ -63,7 +63,7 @@ D1 = D %>% rename(GAME_ID = game_id,
 print("D1")
 
 ### remove "NP" (no-play) rows
-D2 <- D1 %>% filter(EVENT_TX != "NP")
+D2 <- D1 %>% filter(EVENT_TX != "NP" | (!is.na(PITCH_SEQ_TX) & str_detect(PITCH_SEQ_TX, "[^\\.]")) )
 print("D2")
 
 # HIT_VAL === hit or not, and type of hit, c(0,1,2,3,4)
@@ -97,7 +97,7 @@ D6 <- D5 %>% mutate(HAND_MATCH = ifelse(is.na(BAT_HAND) | is.na(PIT_HAND), NA,
                                                BAT_HAND == PIT_HAND)))
 print("D6")
 # Check
-View(D6 %>% select(INNING,BAT_HOME_IND,GAME_ID,HOME_TEAM_ID,AWAY_TEAM_ID,BAT_NAME,BAT_HAND,PIT_NAME,PIT_HAND,HAND_MATCH))
+#View(D6 %>% select(INNING,BAT_HOME_IND,GAME_ID,HOME_TEAM_ID,AWAY_TEAM_ID,BAT_NAME,BAT_HAND,PIT_NAME,PIT_HAND,HAND_MATCH))
 
 # SP_IND, PITCH_COUNT_CUMU, PITCH_COUNT_FINAL
 D7 <- D6 %>%  group_by(GAME_ID, BAT_HOME_IND) %>% mutate(first.p = first(PIT_ID)) %>% ungroup() %>%
@@ -106,7 +106,7 @@ D7 <- D6 %>%  group_by(GAME_ID, BAT_HOME_IND) %>% mutate(first.p = first(PIT_ID)
               ungroup() %>% select(!c(first.p))
 print("D7")
 # Check
-View(D7 %>% select(INNING,BAT_HOME_IND,GAME_ID,BAT_NAME,HOME_TEAM_ID,AWAY_TEAM_ID,PIT_NAME,SP_IND))
+#View(D7 %>% select(INNING,BAT_HOME_IND,GAME_ID,BAT_NAME,HOME_TEAM_ID,AWAY_TEAM_ID,PIT_NAME,SP_IND))
 
 ################################
 ################################
