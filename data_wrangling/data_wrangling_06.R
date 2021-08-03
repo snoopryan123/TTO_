@@ -85,14 +85,20 @@ W <- tables[[9]]
     # AB_IND (at bat)
     # AT-BAT is a PLATE-APPEARANCE without {SF,SH(sacBunt),W,IW,HP,C(catcher interference)}
     # https://www.retrosheet.org/eventfile.htm
-    E3 <- E2_final %>% mutate(AB_IND = PA_IND & !str_detect(EVENT_TX, "SF") & !str_detect(EVENT_TX, "SH") & !str_detect(EVENT_TX, "^W") & 
-                            !str_detect(EVENT_TX, "^IW") & !str_detect(EVENT_TX, "^HP") & !str_detect(EVENT_TX, "^C"))
+    E3 <- E2_final %>% mutate(AB_IND = PA_IND & !(str_detect(EVENT_TX, "SF") & !str_detect(EVENT_TX, "\\/FL")) &
+                                                !(str_detect(EVENT_TX, "SH") & !str_detect(EVENT_TX, "\\/FL")) &
+                                                #!(str_detect(EVENT_TX, "^W") & !str_detect(EVENT_TX, "^WP")) & 
+                                                !str_detect(EVENT_TX, "^W") &
+                                                !str_detect(EVENT_TX, "^IW") & 
+                                                !str_detect(EVENT_TX, "^HP") & !str_detect(EVENT_TX, "^C"))
     print("E3")
     
-    # WOBA_APP === TRUE iff it is a wOBA-appearance, i.e. in {AB,W,SF,SH,HP}\{IW}
+    # WOBA_APP === TRUE iff it is a wOBA-appearance, i.e. in {AB,W,SF,HP}\{IW}
+    # SH (sacrifice hit/bunt) is not part of wOBA!
     E4 <- E3 %>% mutate(WOBA_APP = (AB_IND | (str_detect(EVENT_TX, "^W") & !str_detect(EVENT_TX, "^WP")) | 
-                                              str_detect(EVENT_TX, "SF") | str_detect(EVENT_TX, "SH") |
-                                              str_detect(EVENT_TX, "^HP")) & !str_detect(EVENT_TX, "^IW"))
+                                             (str_detect(EVENT_TX, "SF") & !str_detect(EVENT_TX, "\\/FL")) | #str_detect(EVENT_TX, "SF") |
+                                              str_detect(EVENT_TX, "^HP")) & 
+                                    !str_detect(EVENT_TX, "^IW"))
     # E4 <- E3 %>% mutate(WOBA_APP = PA_IND & !str_detect(EVENT_TX, "^IW") & !str_detect(EVENT_TX, "^C") &  !str_detect(EVENT_TX, "^INT") )  
     print("E4")
     
@@ -189,7 +195,7 @@ R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.w
     
     # check individual player data 
     # https://www.fangraphs.com/players/robinson-cano/3269/stats?position=2B
-    N = "Bryce Harper"
+    N = "Alex Dickerson" #"Nelson Cruz"
     R2 = R %>% filter(YEAR== y, BAT_NAME== N) %>% 
       summarise(G=length(unique(GAME_ID)), AB=sum(AB_IND), PA = sum(PA_IND), 
                 H=sum(HIT_BINARY), S=sum(HIT_VAL==1), D=sum(HIT_VAL==2), T= sum(HIT_VAL==3), HR= sum(HIT_VAL==4),
@@ -203,7 +209,18 @@ R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.w
     R3 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
       filter(PA_IND) %>%
       select(GAME_ID,INNING,BAT_HOME_IND,INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,PIT_NAME)
-    View(R3)
+    #View(R3)
+    
+    #
+    R4 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
+      #filter(PA_IND & str_detect(EVENT_TX, "SF") & str_detect(EVENT_TX, "\\/FL")) %>%
+      filter(!PA_IND) %>%
+      select(GAME_ID,INNING,BAT_HOME_IND,INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,WOBA_APP,PIT_NAME)
+    View(R4)
+  
+    #
+    R5 = R %>% filter(GAME_ID == "SDN202009131", INNING == 4)
+    View(R5)
     
     # CHECK pitcher ERA
     # https://www.fangraphs.com/leaders.aspx?pos=all&stats=pit&lg=all&qual=y&type=8&season=2020&month=0&season1=2020&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=2020-01-01&enddate=2020-12-31&sort=17,a
