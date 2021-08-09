@@ -9,9 +9,11 @@ source("data_wrangling_00.R")
 write_pbp_year <- function(year) {
   print(year)
   team_names <- getTeamIDs(year)
+  print(team_names)
   rosters <- getRetrosheet("roster", year)
   P = tibble()
   for (team in team_names) {
+    print(c(team,year))
     pbp_team_year <- get_play_by_play(year, team, rosters)
     P <- bind_rows(P, pbp_team_year)
   }
@@ -23,8 +25,11 @@ get_play_by_play <- function(year, team, rosters) {
   result <- tibble()
   for (i in 1:length(D)) {
     E <- D[[i]]
-    P <- pbpText_to_pbpTbl(E,rosters)
-    result <- bind_rows(result, P)
+    if (!all(str_detect(E, "^com"))) {
+      # error in 1991, 92, 99 - D[[1]] is only `com`
+      P <- pbpText_to_pbpTbl(E,rosters)
+      result <- bind_rows(result, P)
+    }
   }
   return(result)
 }
@@ -82,12 +87,12 @@ pbpText_to_pbpTbl <- function(E,rosters) {
   for (i in 2:length(play)) {
     P = rbind(P, strsplit(play[i], ",")[[1]])
   }
-  P = as.data.frame(P, row.names = FALSE)
+  P = as.data.frame(P, row.names = FALSE, stringsAsFactors=FALSE)
   colnames(P) = c("inning","team","retroID","count","pitches","play","sub.here")
   P$inning = as.numeric(P$inning)
-  P$team = as.numeric(P$team) - 1
+  P$team = as.numeric(P$team)
   P$retroID = as.character(P$retroID)
-  P$count = as.numeric(P$count)
+  P$count = as.character(P$count)
   P$pitches = as.character(P$pitches)
   P$play = as.character(P$play)
   P$sub.here = as.logical(P$sub.here)
@@ -105,11 +110,11 @@ pbpText_to_pbpTbl <- function(E,rosters) {
       ST = rbind(ST, strsplit(st_pitchers[i], ",")[[1]])
     }
   }
-  ST = as.data.frame(ST, row.names = FALSE)
+  ST = as.data.frame(ST, row.names = FALSE, stringsAsFactors=FALSE)
   colnames(ST) = c("pit.retroID", "pit.name", "pit.team", "V4", "V5")
   ST$pit.retroID = as.character(ST$pit.retroID)
   ST$pit.name = as.character(ST$pit.name)
-  ST$pit.team = as.numeric(ST$pit.team) - 1
+  ST$pit.team = as.numeric(ST$pit.team) #- 1
   ST$V4 = NA #as.numeric(ST$V4)
   ST$V5 = NA #as.numeric(ST$V5)
   ST = tibble(ST) %>% select(!c(V4,V5))
@@ -122,14 +127,14 @@ pbpText_to_pbpTbl <- function(E,rosters) {
         for (i in 2:length(subs.p)) {
           SU = rbind(SU, strsplit(subs.p[i], ",")[[1]])
         }
-        SU = as.data.frame(SU, row.names = FALSE)
+        SU = as.data.frame(SU, row.names = FALSE, stringsAsFactors=FALSE)
       } else {
-        SU = as.data.frame(t(SU))
+        SU = as.data.frame(t(SU), stringsAsFactors=FALSE)
       }
       colnames(SU) = c("pit.retroID", "pit.name", "pit.team", "V4", "V5")
       SU$pit.retroID = as.character(SU$pit.retroID)
       SU$pit.name = as.character(SU$pit.name)
-      SU$pit.team = as.numeric(SU$pit.team) - 1
+      SU$pit.team = as.numeric(SU$pit.team) #- 1
       SU$V4 = NA #as.numeric(SU$V4)
       SU$V5 = NA #as.numeric(SU$V5)
       SU = tibble(SU) %>% select(!c(V4,V5))
@@ -175,7 +180,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
       PL = rbind(PL, strsplit(players[i], ",")[[1]])
     }
   }
-  PL = as.data.frame(PL, row.names = FALSE)
+  PL = as.data.frame(PL, row.names = FALSE, stringsAsFactors=FALSE)
   colnames(PL) = c("retroID", "name", "team", "batPos", "fieldPos") 
   PL$retroID = as.character(PL$retroID)
   PL$name = as.character(PL$name)
@@ -202,7 +207,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
             relocate(pit.retroID, .after = fieldPos) %>%
             relocate(pit.name, .after = pit.retroID) %>%
             relocate(pit.hand, .after = pit.name) %>%
-            relocate(year, .after = date) %>%
+            relocate(year, .after = date) 
   
   return(P)
 }
@@ -211,7 +216,9 @@ pbpText_to_pbpTbl <- function(E,rosters) {
 ################ RUNNIT ###############
 #######################################
 
-for (year in 1990:2020) { write_pbp_year(year) }
+#1990-2020
+# 95 & 98 have the same problem too...
+for (year in 1992:1992) { write_pbp_year(year) }
 
 ################################################
 
