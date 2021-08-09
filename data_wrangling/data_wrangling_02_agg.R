@@ -21,15 +21,15 @@ D <- tibble()
 # the warnings from 1990 - 2020 are fine...
 for (year in 1990:2020) {
   print(year)
-  curr <- read_csv(str_glue("retro1_PA_{year}.csv")) 
-  curr <- curr %>% select(!c(starttime, sky))
+  curr <- read_csv(str_glue("retro01_PA_{year}.csv")) 
   if (year %in% c(1992)) {
     # Error: Can't combine `..1$date` <date> and `..2$date` <character>.
     # For SOME rows, site and date are switched !!
     curr <- curr %>% mutate(temp = ifelse(IsDate(date), date, site), # will become the date column
                             site = ifelse(IsDate(date), site, date),
                             date = as.Date(temp),
-                            site = as.character(site)) %>%
+                            site = as.character(site),
+                            year = as.numeric(str_sub(as.character(date),1,4))) %>%
                      select(!c(temp))
   }
   if (year %in% c(1999)) {
@@ -37,14 +37,15 @@ for (year in 1990:2020) {
     # For ALL rows, site and date are switched !!
     curr <- curr %>% mutate(temp = date, # will become the site column
                             date = site,
-                            site = temp) %>%
+                            site = temp,
+                            year = as.numeric(str_sub(as.character(date),1,4))) %>%
                      select(!c(temp))
   }
   D <- bind_rows(D, curr)
 }
 
 
-write_csv(D, "retro1_PA_1990-2020.csv")
+write_csv(D, "retro02_PA_1990-2020.csv")
 
 
 # curr0 <- read_csv(str_glue("retro1_PA_1999.csv")) 
