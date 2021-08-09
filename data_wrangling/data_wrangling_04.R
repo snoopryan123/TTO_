@@ -16,8 +16,8 @@ library(stringr)
 
 ## WARNING: this code is not vectorized, and may take some time to run.
 
-input_filename = "retro03_PA_2020.csv"
-output_filename = "retro04_PA_2020.csv"
+input_filename = "retro03_PA_1990-2020.csv"
+output_filename = "retro04_PA_1990-2020.csv"
 D <- read_csv(input_filename)
 
 Div = read_csv("mlb_divisions_dataset.csv")
@@ -26,6 +26,12 @@ Div = read_csv("mlb_divisions_dataset.csv")
 ################################
 
 {
+    ### make sure no NA years
+    #View(D %>% filter(is.na(YEAR)) )
+    D <- D %>% mutate(YEAR = ifelse(GAME_ID == "SEA200709261", 2007, YEAR),
+                      DATE = ifelse(GAME_ID == "SEA200709261", as.Date("2007-09-26"), DATE))
+    print(c("if this is 0 then we good:", nrow(D %>% filter(is.na(YEAR)))))
+  
     # HOME_DIV {NL_E, NL_C, NL_W, AL_E, AL_C, AL_W}
     # AWAY_DIV {NL_E, NL_C, NL_W, AL_E, AL_C, AL_W}
     # HOME_LEAGUE {AL, NL}

@@ -34,8 +34,8 @@ library(tidyverse)
 ########### THE CODE ###########
 ################################
 
-D = read_csv("retro01_PA_2020.csv") #FIXME
-output_filename = "retro03_PA_2020.csv" #FIXME
+D = read_csv("retro02_PA_1990-2020.csv") #FIXME
+output_filename = "retro03_PA_1990-2020.csv" #FIXME
 
 ################################
 
@@ -62,7 +62,7 @@ D1 = D %>% rename(GAME_ID = game_id,
                  BAT_NAME, BAT_HAND, FIELD_POS, PIT_ID, PIT_NAME, PIT_HAND, COUNT, PITCH_SEQ_TX, EVENT_TX)
 print("D1")
 
-### remove "NP" (no-play) rows
+### remove some "NP" (no-play) rows
 D2 <- D1 %>% filter(EVENT_TX != "NP" | (!is.na(PITCH_SEQ_TX) & str_detect(PITCH_SEQ_TX, "[^\\.]")) )
 print("D2")
 
