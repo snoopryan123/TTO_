@@ -217,12 +217,11 @@ pbpText_to_pbpTbl <- function(E,rosters) {
 #######################################
 
 #1990-2020
-# 95 & 98 have the same problem too...
-for (year in 1992:1992) { write_pbp_year(year) }
+for (year in 1993:1995) { write_pbp_year(year) }
 
 ################################################
 
-write_pbp_year(2020)
+#write_pbp_year(2020)
 
 
 
