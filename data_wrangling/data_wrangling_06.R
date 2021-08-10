@@ -25,7 +25,7 @@ library(rvest)
 input_filename = "retro05_PA_1990-2020.csv"
 output_filename = "retro06_PA_1990-2020.csv"
 E <- read_csv(input_filename)
-E0 <- E %>% filter(YEAR %in% 2020:2020)
+E0 <- E %>% filter(YEAR %in% c(2015,2020))
 
 ################################
 
@@ -182,26 +182,47 @@ R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.w
 ########### CHECKS ###########
 ##############################
 
+y = 2015 #2020
+w = W[W$Season == y,]
+### read TRUE WOBAS
+TW0 = read_csv(str_glue("true_woba_{y}.csv"))
+TW = TW0 %>% mutate(BAT_NAME = paste(first_name, last_name),wOBA_true=woba) %>% select(BAT_NAME, wOBA_true) %>% 
+             arrange(-wOBA_true) %>% 
+             mutate(BAT_NAME = str_replace_all(BAT_NAME, "á", "a"),
+                    BAT_NAME = str_replace_all(BAT_NAME, "é", "e"),
+                    BAT_NAME = str_replace_all(BAT_NAME, "í", "i"),
+                    BAT_NAME = str_replace_all(BAT_NAME, "ó", "o"),
+                    BAT_NAME = str_replace_all(BAT_NAME, "ñ", "n"))
+
 {
     # 
-    y = 2020
-    w = W[W$Season == y,]
     
     # CHECK WOBA_CUMU_BAT
     # https://baseballsavant.mlb.com/leaderboard/expected_statistics?type=batter&year=2020&position=&team=&min=100&sort=11&sortDir=desc
+    # https://baseballsavant.mlb.com/leaderboard/expected_statistics?type=batter&year=2015&position=&team=&min=100&sort=11&sortDir=desc
     R1 = R %>% filter(YEAR == y) %>% group_by(BAT_ID) %>% filter(row_number() == n()) %>% filter(cumu.woba.denom.b >= 150) %>% 
                ungroup() %>% mutate(wOBA=round(WOBA_CUMU_BAT,3)) %>% 
-               arrange(-WOBA_CUMU_BAT) %>% select(BAT_ID, BAT_NAME, YEAR, wOBA, cumu.woba.denom.b, WOBA_CUMU_BAT) 
+               arrange(-WOBA_CUMU_BAT) %>% select(BAT_ID, BAT_NAME, YEAR, wOBA, cumu.woba.denom.b, WOBA_CUMU_BAT) %>%
+               left_join(TW) %>% relocate(wOBA_true, .after = wOBA) %>% mutate(wOBA_diff = wOBA_true - wOBA) %>% relocate(wOBA_diff, .after = wOBA_true)
     View(R1)
+    
+    R1a = R1 %>% filter(wOBA_diff != 0)
+    View(R1a)
     
     # check individual player data 
     # https://www.fangraphs.com/players/robinson-cano/3269/stats?position=2B
-    N = "Alex Dickerson" #"Nelson Cruz"
+    
+    # "George Springer" agrees with my calculation, see
+    # https://www.fangraphs.com/players/george-springer/12856/stats?position=OF
+    N =  "Joey Votto" #"Alex Dickerson"
     R2 = R %>% filter(YEAR== y, BAT_NAME== N) %>% 
       summarise(G=length(unique(GAME_ID)), AB=sum(AB_IND), PA = sum(PA_IND), 
                 H=sum(HIT_BINARY), S=sum(HIT_VAL==1), D=sum(HIT_VAL==2), T= sum(HIT_VAL==3), HR= sum(HIT_VAL==4),
                 W= sum(EVENT_CODE=="W"), IW=sum(EVENT_CODE=="IW"), BB=W+IW, HP= sum(EVENT_CODE=="HP"), 
-                AVG = H/AB, wOBA_num = (S*w$w1B + D*w$w2B + T*w$w3B + HR*w$wHR + W*w$wBB + HP*w$wHBP), wOBA_APP = last(cumu.woba.denom.b), 
+                AVG = H/AB, 
+                wOBA_num = (S*w$w1B + D*w$w2B + T*w$w3B + HR*w$wHR + W*w$wBB + HP*w$wHBP), 
+                #wOBA_num = sum(EVENT_WOBA, na.rm = TRUE),
+                wOBA_APP = last(cumu.woba.denom.b), 
                 wOBA = wOBA_num/(wOBA_APP)) %>%
       select(!c(W)) %>% relocate(BB, .before=IW)
     R2
@@ -220,8 +241,8 @@ R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.w
     View(R4)
   
     #
-    R5 = R %>% filter(GAME_ID == "SDN202009131", INNING == 4)
-    View(R5)
+    #R5 = R %>% filter(GAME_ID == "SDN202009131", INNING == 4)
+    #View(R5)
     
     # CHECK pitcher ERA
     # https://www.fangraphs.com/leaders.aspx?pos=all&stats=pit&lg=all&qual=y&type=8&season=2020&month=0&season1=2020&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=2020-01-01&enddate=2020-12-31&sort=17,a
