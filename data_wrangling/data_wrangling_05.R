@@ -11,11 +11,10 @@ library(stringr)
 ########### THE CODE ###########
 ################################
 
-
 input_filename = "retro04_PA_1990-2020.csv"
 output_filename = "retro05_PA_1990-2020.csv"
 D <- read_csv(input_filename)
-D00 <- D %>% filter(YEAR %in% 2000:2000)
+D00 <- D %>% filter(YEAR %in% 1996:1996)
   
 ################################
 
@@ -113,10 +112,19 @@ compute_K <- function(a,b) {
       # S9/L.2-3;1X3(936) --> 1 baserunner out
       # FC4.1X2(4E6);B-1 --> 0 baserunner outs
       # FC6/G.2XH(NR)(6E5)(UR);B-2\n --> 0 outs (remove the (NR), (UR))   to get FC6/G.2XH(6E5);B-2
-      # D9/G+.1-H;BX3(E9)(95/TH) --> 1 out   WRONG...
+      # D9/G+.1-H;BX3(E9)(95/TH) --> 1 out   WRONG???
+      # S8/G6M.1XH(E8)(862) --> 1 out
+      # S6/L6D.2-H;BXH(TH)(E2/TH)(8E2)(NR)(UR) --> 0 outs
+      # S9/F9S.2-H;BX3(E9/THH)(13) --> 1 out
       b = str_remove_all(b, "\\(NR\\)"),
       b = str_remove_all(b, "\\(UR\\)"),
-      num.baserunner.outs = str_count(b, "[123BH]X[123BH]") - str_count(b, "[123BH]X[123BH]\\([0-9]*E"),
+      b = str_remove_all(b, "THH"),
+      b = str_remove_all(b, "TH"),
+      b = str_remove_all(b, "\\/"),
+      b = str_remove_all(b, "\\(\\)"),
+      num.baserunner.outs = str_count(b, "[123BH]X[123BH]") - 
+                            str_count(b, "[123BH]X[123BH]\\([0-9]*E") +
+                            str_count(b, "[123BH]X[123BH]\\([0-9]*E[0-9]*\\)\\([0-9]*\\)"),
       B = num.baserunner.outs,
       ################################
       dp = str_detect(EVENT_TX, "DP"),
@@ -165,8 +173,8 @@ compute_K <- function(a,b) {
 }
 
 # specific game and inning check
-game = "CIN200007230" 
-inning = 5
+game = "LAN199608200" 
+inning = 3
 View(result %>% filter(GAME_ID == game, INNING == inning) %>%
        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
