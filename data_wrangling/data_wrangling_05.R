@@ -62,7 +62,6 @@ compute_A <- function(a,b) {
     
     # K+PO2(E2).2-3 ---> 1 out
     # K+PO ---> 2 outs
-    str_detect(a, "^K[0-9]*\\+PO")
     x7po = str_detect(a, "^K[0-9]*\\+PO") & str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(1)
     x8po = str_detect(a, "^K[0-9]*\\+PO") & !str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(2)
     
@@ -105,8 +104,8 @@ compute_A <- function(a,b) {
                            str_count(a, "POCS[H123]") - str_count(a, "POCS[H123]\\([0-9]*E"),
                            str_count(a, "PO[H123]") - str_count(a, "PO[H123]\\([0-9]*E")),
       A = ifelse(starts.with.num, num.outs.startsWithNum,
-          ifelse(str_detect(a, "CS"), num.outs.cs, # str_detect(a, "^CS")
-          ifelse(str_detect(a, "PO"), num.outs.po, # includes "POCS" # str_detect(a, "^PO")
+          ifelse(str_detect(a, "CS") & !str_detect(a, "^K+CS"), num.outs.cs, # str_detect(a, "^CS")
+          ifelse(str_detect(a, "PO") & !str_detect(a, "^K+PO"), num.outs.po, # includes "POCS" # str_detect(a, "^PO")
                  compute_A(a,b)  
       ))),
       ################################
