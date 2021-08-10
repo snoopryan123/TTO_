@@ -15,7 +15,7 @@ library(stringr)
 input_filename = "retro04_PA_1990-2020.csv"
 output_filename = "retro05_PA_1990-2020.csv"
 D <- read_csv(input_filename)
-D00 <- D %>% filter(YEAR %in% c(2019,2020))
+D00 <- D %>% filter(YEAR %in% c(2017,2018))
   
 ################################
 
@@ -39,8 +39,6 @@ compute_A <- function(a,b) {
          str_detect(a, "^W+PO") | str_detect(a, "^IW+PO") | str_detect(a, "^I+PO") |
          str_detect(a, "^K[0-9]*\\+SB") # return(1)
     
-    x4 = str_detect(a, "^K[0-9]*\\+CS") | str_detect(a, "^K[0-9]*\\+PO") # return(2) # guaranteed double play
-  
     # sometimes 0, sometimes 1 --> look at baserunner advances
     #K+PB.B-1 --> 0 outs
     #K+PB.2-3;1-2 --> 1 out
@@ -54,8 +52,19 @@ compute_A <- function(a,b) {
     
     #K+SB.1-2 --> 1 out
     #K+SB2.B-1(WP) --> 0 outs
-    x7sb = str_detect(a, "^K[0-9]*\\+SB") & (str_detect(b, "B-[123H]\\(WP\\)") | str_detect(b, "BX[123H]\\(WP\\)")) # return(0)
-    x8sb = str_detect(a, "^K[0-9]*\\+SB") & (!str_detect(b, "B-[123H]\\(WP\\)") & !str_detect(b, "BX[123H]\\(WP\\)")) # return(1)
+    x7sb = str_detect(a, "^K[0-9]*\\+SB") & (str_detect(b, "B-[123H]\\(WP\\)")) # return(0)
+    x8sb = str_detect(a, "^K[0-9]*\\+SB") & (!str_detect(b, "B-[123H]\\(WP\\)")) # return(1)
+    
+    # K+CS3(24E5).2-3 ---> 1 out
+    # K+CS3 ---> 2 outs
+    x7cs = str_detect(a, "^K[0-9]*\\+CS") & str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(1)
+    x8cs = str_detect(a, "^K[0-9]*\\+CS") & !str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(2)
+    
+    # K+PO2(E2).2-3 ---> 1 out
+    # K+PO ---> 2 outs
+    str_detect(a, "^K[0-9]*\\+PO")
+    x7po = str_detect(a, "^K[0-9]*\\+PO") & str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(1)
+    x8po = str_detect(a, "^K[0-9]*\\+PO") & !str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(2)
     
     # sometimes 0, sometimes 1 --> look at baserunner advances
     # K.BX1(2E3) --> 0 outs
@@ -64,9 +73,9 @@ compute_A <- function(a,b) {
     x9 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & str_detect(b, "B") # return(0)
     x10 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(b, "B") # return(1)
     
-    R = ifelse(x1 | x2 | x5 | x7 | x7sb | x9, 0,
-        ifelse(x3 | x6 | x8 | x8sb| x10, 1,
-        ifelse(x4, 2, 
+    R = ifelse(x1 | x2 | x5 | x7 | x7sb |  x9, 0,
+        ifelse(x3 | x6 | x7cs | x7po | x8 | x8sb| x10, 1,
+        ifelse(x8cs | x8po, 2, 
           0 # forgot a case?
         )))
   
@@ -103,7 +112,8 @@ compute_A <- function(a,b) {
       ################################
       # S9/L.2-3;1X3(936) --> 1 baserunner out
       # FC4.1X2(4E6);B-1 --> 0 baserunner outs
-      # FC6/G.2XH(NR)(6E5)(UR);B-2\n --> 0 outs (remove the (NR), (UR))
+      # FC6/G.2XH(NR)(6E5)(UR);B-2\n --> 0 outs (remove the (NR), (UR))   to get FC6/G.2XH(6E5);B-2
+      # D9/G+.1-H;BX3(E9)(95/TH) --> 1 out   WRONG...
       b.nr = str_remove_all(b, "\\(NR\\)"),
       b.urnr = str_remove_all(b.nr, "\\(UR\\)"),
       num.baserunner.outs = str_count(b.urnr, "[123BH]X[123BH]") - str_count(b.urnr, "[123BH]X[123BH]\\([0-9]*E"),
@@ -154,8 +164,8 @@ compute_A <- function(a,b) {
 }
 
 # specific game and inning check
-game = "BAL201906250" 
-inning = 3
+game = "BOS201708190" 
+inning = 5
 View(result %>% filter(GAME_ID == game, INNING == inning) %>%
        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
