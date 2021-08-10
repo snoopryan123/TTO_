@@ -66,13 +66,13 @@ compute_AB <- function(a,b) {
   
   # K+CS3(24E5).2-3 ---> 1 out
   # K+CS3 ---> 2 outs
-  x7cs = str_detect(a, "^K[0-9]*\\+CS") & str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(1)
-  x8cs = str_detect(a, "^K[0-9]*\\+CS") & !str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(2)
+  x7cs = str_detect(a, "^K[0-9]*\\+CS") & str_detect(a, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(1)
+  x8cs = str_detect(a, "^K[0-9]*\\+CS") & !str_detect(a, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(2)
   
   # K+PO2(E2).2-3 ---> 1 out
   # K+PO ---> 2 outs
-  x7po = str_detect(a, "^K[0-9]*\\+PO") & str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(1)
-  x8po = str_detect(a, "^K[0-9]*\\+PO") & !str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(2)
+  x7po = str_detect(a, "^K[0-9]*\\+PO") & str_detect(a, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(1)
+  x8po = str_detect(a, "^K[0-9]*\\+PO") & !str_detect(a, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(2)
   
   # K/FO.3XH(2);2-3;1-2;B-1 --> 1 out
   x7fo = str_detect(a, "^K\\/FO") # return(1)
