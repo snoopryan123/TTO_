@@ -23,20 +23,20 @@ compute_A <- function(a) {
     x1 = str_detect(a, "^C/E") | str_detect(a, "^S") | str_detect(a, "^D") | str_detect(a, "^T") | str_detect(a, "^E") | 
          str_detect(a, "^FC") | # ignore fielder's choice. looks at the baserunner activity
          str_detect(a, "^FLE") | str_detect(a, "^HP") | str_detect(a, "^HR") | str_detect(a, "^H") |
-         str_detect(a, "^K+E") | str_detect(a, "^K[0-9]*\\+OA") | # sometimes 0, sometimes 1 --> look at baserunner advances
-         str_detect(a, "^NP") | str_detect(a, "^W+SB") | str_detect(a, "^IW+SB") | str_detect(a, "^I+SB") |
-         str_detect(a, "^W+PB") | str_detect(a, "^IW+PB") | str_detect(a, "^I+PB") | 
-         str_detect(a, "^W+WP") | str_detect(a, "^IW+WP") | str_detect(a, "^I+WP") | 
-         str_detect(a, "^W+E") | str_detect(a, "^IW+E") | str_detect(a, "^I+E") | 
-         str_detect(a, "^W+OA") | str_detect(a, "^BK") | str_detect(a, "DI") | str_detect(a, "^OA") |
+         str_detect(a, "^K\\+E") | str_detect(a, "^K[0-9]*\\+OA") | # sometimes 0, sometimes 1 --> look at baserunner advances
+         str_detect(a, "^NP") | str_detect(a, "^W\\\\+SB") | str_detect(a, "^IW\\\\+SB") | str_detect(a, "^I\\+SB") |
+         str_detect(a, "^W\\+PB") | str_detect(a, "^IW\\+PB") | str_detect(a, "^I\\+PB") | 
+         str_detect(a, "^W\\+WP") | str_detect(a, "^IW\\+WP") | str_detect(a, "^I\\+WP") | 
+         str_detect(a, "^W\\+E") | str_detect(a, "^IW\\+E") | str_detect(a, "^I\\+E") | 
+         str_detect(a, "^W\\+OA") | str_detect(a, "^BK") | str_detect(a, "DI") | str_detect(a, "^OA") |
          str_detect(a, "^PB") | str_detect(a, "^WP") | str_detect(a, "^SB") # return(0)
     
-    x2 = (str_detect(a, "^W") & !str_detect(a, "^W+")) |
-         (str_detect(a, "^IW") & !str_detect(a, "^IW+")) | 
-         (str_detect(a, "^I") & !str_detect(a, "^I+")) # return(0)
+    x2 = (str_detect(a, "^W") & !str_detect(a, "^W\\+")) |
+         (str_detect(a, "^IW") & !str_detect(a, "^IW\\+")) | 
+         (str_detect(a, "^I") & !str_detect(a, "^I\\+")) # return(0)
     
-    x3 = str_detect(a, "^W+CS") | str_detect(a, "^IW+CS") | str_detect(a, "^I+CS") | 
-         str_detect(a, "^W+PO") | str_detect(a, "^IW+PO") | str_detect(a, "^I+PO") |
+    x3 = str_detect(a, "^W\\+CS") | str_detect(a, "^IW\\+CS") | str_detect(a, "^I\\+CS") | 
+         str_detect(a, "^W\\+PO") | str_detect(a, "^IW\\+PO") | str_detect(a, "^I\\+PO") |
          str_detect(a, "^K[0-9]*\\+SB") # return(1)
     
     R = ifelse(x1 | x2, 0,
