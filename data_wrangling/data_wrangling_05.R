@@ -15,7 +15,7 @@ library(stringr)
 input_filename = "retro04_PA_1990-2020.csv"
 output_filename = "retro05_PA_1990-2020.csv"
 D <- read_csv(input_filename)
-D00 <- D %>% filter(YEAR %in% 2010:2010)
+D00 <- D %>% filter(YEAR %in% 2000:2000)
   
 ################################
 
@@ -165,8 +165,8 @@ compute_K <- function(a,b) {
 }
 
 # specific game and inning check
-game = "LAN201005050" 
-inning = 1
+game = "CIN200007230" 
+inning = 5
 View(result %>% filter(GAME_ID == game, INNING == inning) %>%
        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
