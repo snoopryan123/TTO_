@@ -15,7 +15,7 @@ library(stringr)
 input_filename = "retro04_PA_1990-2020.csv"
 output_filename = "retro05_PA_1990-2020.csv"
 D <- read_csv(input_filename)
-D00 <- D %>% filter(YEAR %in% 2019:2019)
+D00 <- D %>% filter(YEAR %in% 2010:2015)
   
 ################################
 
@@ -61,11 +61,14 @@ compute_K <- function(a,b) {
   x5 = str_detect(a, "^K[0-9]*\\+CS") | str_detect(a, "^K[0-9]*\\+PO")
   x6 = str_detect(a, "^K") & !x4 & !x5
   x4 = x4 | x6
+  
+  AAA = str_detect(a, "\\([0-9]*E")
 
   R = ifelse(x4 & BBB, 0 + xxx.b + xxx.nob,
       ifelse(x4 & !BBB, 1 + xxx.nob, 
-      
-             NA))
+      ifelse(x5 & AAA, 1 + xxx.nob,
+      ifelse(x5 & !AAA, 2, 
+             NA))))
   
   return(R)
  
@@ -163,8 +166,8 @@ compute_K <- function(a,b) {
 }
 
 # specific game and inning check
-game = "MIN201904300" 
-inning = 8
+game = "CHN201604280" 
+inning = 6
 View(result %>% filter(GAME_ID == game, INNING == inning) %>%
        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
