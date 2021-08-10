@@ -22,9 +22,10 @@ library(rvest)
 ########### THE CODE ###########
 ################################
 
-input_filename = "retro05_PA_2020.csv"
-output_filename = "retro06_PA_2020.csv"
+input_filename = "retro05_PA_1990-2020.csv"
+output_filename = "retro06_PA_1990-2020.csv"
 E <- read_csv(input_filename)
+E0 <- E %>% filter(YEAR %in% 2020:2020)
 
 ################################
 
@@ -37,7 +38,7 @@ W <- tables[[9]]
 
 {
     # EVENT_CODE === {IW, W, HP, NA}  --> [need for wOBA calculation]
-    E1 = E %>% mutate(EVENT_CODE =  ifelse(str_detect(EVENT_TX, "IW"), "IW",
+    E1 = E0 %>% mutate(EVENT_CODE =  ifelse(str_detect(EVENT_TX, "IW"), "IW",
                                     ifelse(str_detect(EVENT_TX, "^W") & !str_detect(EVENT_TX, "^WP"), "W",
                                     ifelse(str_detect(EVENT_TX, "HP"), "HP", "other" ))))
     print("E1")
