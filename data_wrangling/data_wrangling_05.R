@@ -14,7 +14,7 @@ library(stringr)
 input_filename = "retro04_PA_1990-2020.csv"
 output_filename = "retro05_PA_1990-2020.csv"
 D <- read_csv(input_filename)
-D00 <- D %>% filter(YEAR %in% 2010:2020)
+D00 <- D #%>% filter(YEAR %in% 1990:2020)
   
 ################################
 
