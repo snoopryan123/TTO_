@@ -62,7 +62,7 @@ compute_K <- function(a,b) {
   x6 = str_detect(a, "^K") & !x4 & !x5
   x4 = x4 | x6
 
-  R = ifelse(x4 & BBB, 0 + xxx.b,
+  R = ifelse(x4 & BBB, 0 + xxx.b + xxx.nob,
       ifelse(x4 & !BBB, 1 + xxx.nob, 
       
              NA))
@@ -163,8 +163,8 @@ compute_K <- function(a,b) {
 }
 
 # specific game and inning check
-game = "PIT201908030" 
-inning = 7
+game = "MIN201904300" 
+inning = 8
 View(result %>% filter(GAME_ID == game, INNING == inning) %>%
        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
