@@ -25,7 +25,7 @@ library(rvest)
 input_filename = "retro05_PA_1990-2020.csv"
 output_filename = "retro06_PA_1990-2020.csv"
 E <- read_csv(input_filename)
-E0 <- E %>% filter(YEAR %in% c(2015,2020))
+E0 <- E #%>% filter(YEAR %in% c(2015,2020))
 
 ################################
 
@@ -176,28 +176,25 @@ W <- tables[[9]]
 
 R = E10
 R_ = R %>% select(!c(cumu.woba.sum.b, cumu.woba.denom.b, cumu.woba.sum.p, cumu.woba.denom.p))
-#write_csv(R_, output_filename)
+write_csv(R_, output_filename)
 
 ##############################
 ########### CHECKS ###########
 ##############################
 
-y = 2015 #2020
+y = 2020 #2020
 w = W[W$Season == y,]
-### read TRUE WOBAS
-TW0 = read_csv(str_glue("true_woba_{y}.csv"))
-TW = TW0 %>% mutate(BAT_NAME = paste(first_name, last_name),wOBA_true=woba) %>% select(BAT_NAME, wOBA_true) %>% 
-             arrange(-wOBA_true) %>% 
-             mutate(BAT_NAME = str_replace_all(BAT_NAME, "á", "a"),
-                    BAT_NAME = str_replace_all(BAT_NAME, "é", "e"),
-                    BAT_NAME = str_replace_all(BAT_NAME, "í", "i"),
-                    BAT_NAME = str_replace_all(BAT_NAME, "ó", "o"),
-                    BAT_NAME = str_replace_all(BAT_NAME, "ñ", "n"))
-
+# CHECK WOBA_CUMU_BAT
 {
-    # 
-    
-    # CHECK WOBA_CUMU_BAT
+    ### read TRUE WOBAS
+    TW0 = read_csv(str_glue("true_woba_{y}.csv"))
+    TW = TW0 %>% mutate(BAT_NAME = paste(first_name, last_name),wOBA_true=woba) %>% select(BAT_NAME, wOBA_true) %>% 
+    arrange(-wOBA_true) %>% 
+    mutate(BAT_NAME = str_replace_all(BAT_NAME, "á", "a"),
+           BAT_NAME = str_replace_all(BAT_NAME, "é", "e"),
+           BAT_NAME = str_replace_all(BAT_NAME, "í", "i"),
+           BAT_NAME = str_replace_all(BAT_NAME, "ó", "o"),
+           BAT_NAME = str_replace_all(BAT_NAME, "ñ", "n"))
     # https://baseballsavant.mlb.com/leaderboard/expected_statistics?type=batter&year=2020&position=&team=&min=100&sort=11&sortDir=desc
     # https://baseballsavant.mlb.com/leaderboard/expected_statistics?type=batter&year=2015&position=&team=&min=100&sort=11&sortDir=desc
     R1 = R %>% filter(YEAR == y) %>% group_by(BAT_ID) %>% filter(row_number() == n()) %>% filter(cumu.woba.denom.b >= 150) %>% 
@@ -212,9 +209,12 @@ TW = TW0 %>% mutate(BAT_NAME = paste(first_name, last_name),wOBA_true=woba) %>% 
     # check individual player data 
     # https://www.fangraphs.com/players/robinson-cano/3269/stats?position=2B
     
-    # "George Springer" agrees with my calculation, see
+    # "George Springer" in 2020 agrees with my calculation, see
     # https://www.fangraphs.com/players/george-springer/12856/stats?position=OF
-    N =  "Joey Votto" #"Alex Dickerson"
+    # "Josh Reddick" in 2015 agrees with my calculation, see
+    # https://www.fangraphs.com/players/josh-reddick/3892/stats?position=OF
+    # seems to be slight rounding errors... no biggie !!
+    N =  "Josh Reddick" #"Alex Dickerson"
     R2 = R %>% filter(YEAR== y, BAT_NAME== N) %>% 
       summarise(G=length(unique(GAME_ID)), AB=sum(AB_IND), PA = sum(PA_IND), 
                 H=sum(HIT_BINARY), S=sum(HIT_VAL==1), D=sum(HIT_VAL==2), T= sum(HIT_VAL==3), HR= sum(HIT_VAL==4),
@@ -227,36 +227,34 @@ TW = TW0 %>% mutate(BAT_NAME = paste(first_name, last_name),wOBA_true=woba) %>% 
       select(!c(W)) %>% relocate(BB, .before=IW)
     R2
     
-    # some plate appearances
-    R3 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
-      filter(PA_IND) %>%
-      select(GAME_ID,INNING,BAT_HOME_IND,INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,PIT_NAME)
-    #View(R3)
-    
-    #
-    R4 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
-      #filter(PA_IND & str_detect(EVENT_TX, "SF") & str_detect(EVENT_TX, "\\/FL")) %>%
-      filter(!PA_IND) %>%
-      select(GAME_ID,INNING,BAT_HOME_IND,INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,WOBA_APP,PIT_NAME)
-    View(R4)
+    # # some plate appearances
+    # R3 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
+    #   filter(PA_IND) %>%
+    #   select(GAME_ID,INNING,BAT_HOME_IND,INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,PIT_NAME)
+    # #View(R3)
+    # 
+    # #
+    # R4 = R %>% filter(YEAR== y, BAT_NAME== N) %>% arrange(GAME_ID,INNING,BATTER_SEQ_NUM) %>%
+    #   #filter(PA_IND & str_detect(EVENT_TX, "SF") & str_detect(EVENT_TX, "\\/FL")) %>%
+    #   filter(!PA_IND) %>%
+    #   select(GAME_ID,INNING,BAT_HOME_IND,INNING,BATTER_SEQ_NUM,HOME_TEAM_ID,AWAY_TEAM_ID,GAME_ID,EVENT_TX,EVENT_WOBA,HIT_VAL,AB_IND,PA_IND,WOBA_APP,PIT_NAME)
+    # View(R4)
+}
   
-    #
-    #R5 = R %>% filter(GAME_ID == "SDN202009131", INNING == 4)
-    #View(R5)
+#
+#R5 = R %>% filter(GAME_ID == "SDN202009131", INNING == 4)
+#View(R5)
+
+# CHECK pitcher ERA
+# https://www.fangraphs.com/leaders.aspx?pos=all&stats=pit&lg=all&qual=y&type=8&season=2020&month=0&season1=2020&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=2020-01-01&enddate=2020-12-31&sort=17,a
     
-    # CHECK pitcher ERA
-    # https://www.fangraphs.com/leaders.aspx?pos=all&stats=pit&lg=all&qual=y&type=8&season=2020&month=0&season1=2020&ind=0&team=0&rost=0&age=0&filter=&players=0&startdate=2020-01-01&enddate=2020-12-31&sort=17,a
-    
-}   
 
+# CHECK ERA, PITCH COUNT from
+# "EVENT_RUNS"          "EVENT_ER_CT"        "EVENT_RBI_CT"        "EVENT_PITCH_COUNT"   "PITCH_COUNT_CUMU"    "PITCH_COUNT_FINAL"  
+{
+  # https://www.mlb.com/stats/pitching/earned-runs/2020?playerPool=QUALIFIED&sortState=asc
+  S1 = R %>% filter(YEAR == y) %>% group_by(PIT_ID) %>% mutate(num_ER = sum(EVENT_ER_CT), num_P = sum(EVENT_PITCH_COUNT)) %>% 
+             filter(row_number() == n(), num_P >= 1050) %>% ungroup() %>% select(PIT_NAME, num_ER, num_P) %>% arrange(num_ER)
+  View(S1)
+}
 
-
-
-
-
-
-# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# PARK_EFFECT ???
-# HOME_FIELD_EFFECT ???
-# HOW FAR INTO THE SEASON WE ARE EFFECT ???
-# NUM_DAYS_REST === number of days of rest the starting pitcher has prior to this game -> data????
