@@ -14,7 +14,7 @@ library(stringr)
 input_filename = "retro04_PA_1990-2020.csv"
 output_filename = "retro05_PA_1990-2020.csv"
 D <- read_csv(input_filename)
-D00 <- D %>% filter(YEAR %in% 1996:1996)
+D00 <- D %>% filter(YEAR %in% 2010:2020)
   
 ################################
 
@@ -97,6 +97,7 @@ compute_K <- function(a,b) {
       ################################
       a = str_split_fixed(EVENT_TX, "\\.", 2)[,1], # string, description of the basic play
       b = str_split_fixed(EVENT_TX, "\\.", 2)[,2], # string, the advancement of any runners
+      a = str_remove_all(a, "\\!"),
       starts.with.num = str_count(a, "^[0-9]"),
       num.outs.startsWithNum = str_count(a, "^[0-9]*") - str_count(a, "^[0-9]*E"), # 63/G --> 1 out, 6E3/G --> 0 outs
       num.outs.cs = str_count(a, "CS[23H]") - str_count(a, "CS[23H]\\([0-9]*E"), # CS2(E1/TH).3-H(NR);1-3 --> 0 outs
@@ -173,8 +174,8 @@ compute_K <- function(a,b) {
 }
 
 # specific game and inning check
-game = "LAN199608200" 
-inning = 3
+game = "NYN200905060" 
+inning = 6
 View(result %>% filter(GAME_ID == game, INNING == inning) %>%
        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
