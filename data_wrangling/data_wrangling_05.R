@@ -19,7 +19,7 @@ D00 <- D %>% filter(YEAR %in% c(2017,2018))
   
 ################################
 
-compute_A <- function(a,b) {
+compute_A <- function(a) {
     x1 = str_detect(a, "^C/E") | str_detect(a, "^S") | str_detect(a, "^D") | str_detect(a, "^T") | str_detect(a, "^E") | 
          str_detect(a, "^FC") | # ignore fielder's choice. looks at the baserunner activity
          str_detect(a, "^FLE") | str_detect(a, "^HP") | str_detect(a, "^HR") | str_detect(a, "^H") |
@@ -39,46 +39,58 @@ compute_A <- function(a,b) {
          str_detect(a, "^W+PO") | str_detect(a, "^IW+PO") | str_detect(a, "^I+PO") |
          str_detect(a, "^K[0-9]*\\+SB") # return(1)
     
-    # sometimes 0, sometimes 1 --> look at baserunner advances
-    #K+PB.B-1 --> 0 outs
-    #K+PB.2-3;1-2 --> 1 out
-    x5 = str_detect(a, "^K[0-9]*\\+PB") & (str_detect(b, "B-") | str_detect(b, "BX")) # return(0)
-    x6 = str_detect(a, "^K[0-9]*\\+PB") & (!str_detect(b, "B-") & !str_detect(b, "BX"))# return(1)
-  
-    #K+WP.1-2 --> 1 out
-    #K+WP.B-1 --> 0 outs
-    x7 = str_detect(a, "^K[0-9]*\\+WP") & (str_detect(b, "B-") | str_detect(b, "BX")) # return(0)
-    x8 = str_detect(a, "^K[0-9]*\\+WP") & (!str_detect(b, "B-") & !str_detect(b, "BX")) # return(1)
-    
-    #K+SB.1-2 --> 1 out
-    #K+SB2.B-1(WP) --> 0 outs
-    x7sb = str_detect(a, "^K[0-9]*\\+SB") & (str_detect(b, "B-[123H]\\(WP\\)")) # return(0)
-    x8sb = str_detect(a, "^K[0-9]*\\+SB") & (!str_detect(b, "B-[123H]\\(WP\\)")) # return(1)
-    
-    # K+CS3(24E5).2-3 ---> 1 out
-    # K+CS3 ---> 2 outs
-    x7cs = str_detect(a, "^K[0-9]*\\+CS") & str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(1)
-    x8cs = str_detect(a, "^K[0-9]*\\+CS") & !str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(2)
-    
-    # K+PO2(E2).2-3 ---> 1 out
-    # K+PO ---> 2 outs
-    x7po = str_detect(a, "^K[0-9]*\\+PO") & str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(1)
-    x8po = str_detect(a, "^K[0-9]*\\+PO") & !str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(2)
-    
-    # sometimes 0, sometimes 1 --> look at baserunner advances
-    # K.BX1(2E3) --> 0 outs
-    # K.BX1 --> 1 outs
-    # K --> 1 out
-    x9 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & str_detect(b, "B") # return(0)
-    x10 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(b, "B") # return(1)
-    
-    R = ifelse(x1 | x2 | x5 | x7 | x7sb |  x9, 0,
-        ifelse(x3 | x6 | x7cs | x7po | x8 | x8sb| x10, 1,
-        ifelse(x8cs | x8po, 2, 
-          0 # forgot a case?
-        )))
+    R = ifelse(x1 | x2, 0,
+        ifelse(x3, 1, 
+               NA # forgot a case?
+        ))
   
     return(R)
+}
+
+compute_AB <- function(a,b) {
+  # sometimes 0, sometimes 1 --> look at baserunner advances
+  #K+PB.B-1 --> 0 outs
+  #K+PB.2-3;1-2 --> 1 out
+  x5 = str_detect(a, "^K[0-9]*\\+PB") & (str_detect(b, "B-") | str_detect(b, "BX")) # return(0)
+  x6 = str_detect(a, "^K[0-9]*\\+PB") & (!str_detect(b, "B-") & !str_detect(b, "BX"))# return(1)
+  
+  #K+WP.1-2 --> 1 out
+  #K+WP.B-1 --> 0 outs
+  x7 = str_detect(a, "^K[0-9]*\\+WP") & (str_detect(b, "B-") | str_detect(b, "BX")) # return(0)
+  x8 = str_detect(a, "^K[0-9]*\\+WP") & (!str_detect(b, "B-") & !str_detect(b, "BX")) # return(1)
+  
+  #K+SB.1-2 --> 1 out
+  #K+SB2.B-1(WP) --> 0 outs
+  x7sb = str_detect(a, "^K[0-9]*\\+SB") & (str_detect(b, "B-[123H]\\(WP\\)")) # return(0)
+  x8sb = str_detect(a, "^K[0-9]*\\+SB") & (!str_detect(b, "B-[123H]\\(WP\\)")) # return(1)
+  
+  # K+CS3(24E5).2-3 ---> 1 out
+  # K+CS3 ---> 2 outs
+  x7cs = str_detect(a, "^K[0-9]*\\+CS") & str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(1)
+  x8cs = str_detect(a, "^K[0-9]*\\+CS") & !str_detect(b, "^K[0-9]*\\+CS[0-9]*\\([0-9]*E") # return(2)
+  
+  # K+PO2(E2).2-3 ---> 1 out
+  # K+PO ---> 2 outs
+  x7po = str_detect(a, "^K[0-9]*\\+PO") & str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(1)
+  x8po = str_detect(a, "^K[0-9]*\\+PO") & !str_detect(b, "^K[0-9]*\\+PO[0-9]*\\([0-9]*E") # return(2)
+  
+  # K/FO.3XH(2);2-3;1-2;B-1 --> 1 out
+  x7fo = str_detect(a, "^K\\/FO") # return(1)
+  
+  # sometimes 0, sometimes 1 --> look at baserunner advances
+  # K.BX1(2E3) --> 0 outs
+  # K.BX1 --> 1 outs
+  # K --> 1 out
+  x9 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(a, "^K\\/FO") & str_detect(b, "B") # return(0)
+  x10 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(a, "^K\\/FO") & !str_detect(b, "B") # return(1)
+  
+  R = ifelse(x5 | x7 | x7sb |  x9, 0,
+      ifelse(x6 | x7cs | x7po | x7fo | x8 | x8sb| x10, 1,
+      ifelse(x8cs | x8po, 2, 
+             NA # forgot a case?
+      )))
+  
+  return(R)
 }
 
 ################################
@@ -106,7 +118,7 @@ compute_A <- function(a,b) {
       A = ifelse(starts.with.num, num.outs.startsWithNum,
           ifelse(str_detect(a, "CS") & !str_detect(a, "^K+CS"), num.outs.cs, # str_detect(a, "^CS")
           ifelse(str_detect(a, "PO") & !str_detect(a, "^K+PO"), num.outs.po, # includes "POCS" # str_detect(a, "^PO")
-                 compute_A(a,b)  
+                 compute_A(a)  
       ))),
       ################################
       # S9/L.2-3;1X3(936) --> 1 baserunner out
@@ -120,7 +132,8 @@ compute_A <- function(a,b) {
       ################################
       dp = str_detect(EVENT_TX, "DP"),
       tp = str_detect(EVENT_TX, "TP"),
-      EVENT_OUTS_CT = ifelse(dp, 2, ifelse(tp, 3, A+B))
+      ABAB = compute_AB(a,b),
+      EVENT_OUTS_CT = ifelse(dp, 2, ifelse(tp, 3, ifelse(is.na(ABAB), A+B, ABAB)))
     ) %>% select( c(names(D0),EVENT_OUTS_CT) )
     D1 = left_join(D0, A0)
     print("D1")  
