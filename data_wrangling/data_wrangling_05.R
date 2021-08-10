@@ -15,7 +15,7 @@ library(stringr)
 input_filename = "retro04_PA_1990-2020.csv"
 output_filename = "retro05_PA_1990-2020.csv"
 D <- read_csv(input_filename)
-D00 <- D %>% filter(YEAR %in% c(2017,2018))
+D00 <- D %>% filter(YEAR %in% 2019:2020)
   
 ################################
 
@@ -81,11 +81,14 @@ compute_AB <- function(a,b) {
   # K.BX1(2E3) --> 0 outs
   # K.BX1 --> 1 outs
   # K --> 1 out
-  x9 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(a, "^K\\/FO") & str_detect(b, "B") # return(0)
-  x10 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(a, "^K\\/FO") & !str_detect(b, "B") # return(1)
+  x9 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(a, "^K\\/FO") & str_detect(b, "B-") & !str_detect(b, "B-[123H]\\([0-9]*E")# return(0)
+  x10 = str_detect(a, "^K") & !str_detect(a, "^K\\+") & !str_detect(a, "^K\\/FO") & str_detect(b, "BX") & !str_detect(b, "BX[123H]\\([0-9]*E") # return(1)
+  
+  # K+DI.1-2 --> 1
+  x11 = str_detect(a, "^K\\+DI") # return(1)
   
   R = ifelse(x5 | x7 | x7sb |  x9, 0,
-      ifelse(x6 | x7cs | x7po | x7fo | x8 | x8sb| x10, 1,
+      ifelse(x6 | x7cs | x7po | x7fo | x8 | x8sb| x10 | x11, 1,
       ifelse(x8cs | x8po, 2, 
              NA # forgot a case?
       )))
@@ -176,15 +179,15 @@ compute_AB <- function(a,b) {
 }
 
 # specific game and inning check
-game = "BOS201708190" 
-inning = 5
+game = "TEX201706030" 
+inning = 8
 View(result %>% filter(GAME_ID == game, INNING == inning) %>%
        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
-# specific full game check
-game = "WAS202009270"
-View(result %>% filter(GAME_ID == game) %>%
-       select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
+# # specific full game check
+# game = "WAS202009270"
+# View(result %>% filter(GAME_ID == game) %>%
+#        select(GAME_ID, BAT_HOME_IND, INNING, EVENT_TX, EVENT_OUTS_CT, OUTS_CT))
 
 
 
