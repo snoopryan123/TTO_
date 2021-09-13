@@ -12,15 +12,26 @@ theme_set(theme_classic())
 
 #X <- read_csv("design_matrix_0.csv")
 X <- read_csv("design_matrix_0.csv", col_types = "ddddddddddcccc")
-
 names(X)
 
-post1 <- stan_glm(EVENT_WOBA ~ BATTER_IDX + ORDER_CT, 
+prior_i = normal(location = c(.3), scale = c(.03))
+prior1 = normal(location = c(.3), scale = c(.03))
+post1 <- stan_glm(EVENT_WOBA ~ BATTER_IDX + ORDER_CT + WOBA_CUMU_BAT + WOBA_CUMU_PIT + DAYS_SINCE_SZN_START, 
                   data = X,
+                  family = gaussian(link = "identity"),
+                  #prior_intercept = prior_i,
+                  #prior = prior1,
+                  seed = 12345)
+post1
+draws <- as.data.frame(post1)
+post1$coefficients
+
+X1 <- X %>% select(-c(FIELD_POS, OUTS_CT))
+post2 <- stan_glm(EVENT_WOBA ~ ., 
+                  data = X1,
                   family = gaussian(link = "identity"),
                   seed = 12345)
 
-draws <- as.data.frame(post1)
 
 ######################################################################
 
@@ -101,4 +112,37 @@ c39 <- ggplot(data=draws, aes(`(Intercept)` + ORDER_CT3 + BATTER_IDX9)) +
 
 cowplot::plot_grid(c29, c31, c35, c39, labels = "AUTO", ncol=2)
 
+######################################################################
+
+A0 = tibble(draws) %>% mutate(b11 = `(Intercept)`,
+                             b12 = `(Intercept)` + BATTER_IDX2,
+                             b13 = `(Intercept)` + BATTER_IDX3,
+                             b14 = `(Intercept)` + BATTER_IDX4,
+                             b15 = `(Intercept)` + BATTER_IDX5,
+                             b16 = `(Intercept)` + BATTER_IDX6,
+                             b17 = `(Intercept)` + BATTER_IDX7,
+                             b18 = `(Intercept)` + BATTER_IDX8,
+                             b19 = `(Intercept)` + BATTER_IDX9,
+                             b21 = `(Intercept)` + ORDER_CT2,
+                             b22 = `(Intercept)` + BATTER_IDX2 + ORDER_CT2,
+                             b23 = `(Intercept)` + BATTER_IDX3 + ORDER_CT2,
+                             b24 = `(Intercept)` + BATTER_IDX4 + ORDER_CT2,
+                             b25 = `(Intercept)` + BATTER_IDX5 + ORDER_CT2,
+                             b26 = `(Intercept)` + BATTER_IDX6 + ORDER_CT2,
+                             b27 = `(Intercept)` + BATTER_IDX7 + ORDER_CT2,
+                             b28 = `(Intercept)` + BATTER_IDX8 + ORDER_CT2,
+                             b29 = `(Intercept)` + BATTER_IDX9 + ORDER_CT2,
+                             b31 = `(Intercept)` + ORDER_CT3,
+                             b32 = `(Intercept)` + BATTER_IDX2 + ORDER_CT3,
+                             b33 = `(Intercept)` + BATTER_IDX3 + ORDER_CT3,
+                             b34 = `(Intercept)` + BATTER_IDX4 + ORDER_CT3,
+                             b35 = `(Intercept)` + BATTER_IDX5 + ORDER_CT3,
+                             b36 = `(Intercept)` + BATTER_IDX6 + ORDER_CT3,
+                             b37 = `(Intercept)` + BATTER_IDX7 + ORDER_CT3,
+                             b38 = `(Intercept)` + BATTER_IDX8 + ORDER_CT3,
+                             b39 = `(Intercept)` + BATTER_IDX9 + ORDER_CT3) %>%
+      select(b11,b12,b13,b14,b15,b16,b17,b18,b19,b21,b22,b23,b24,b25,b26,b27,b28,b29,b31,b32,b33,b34,b35,b36,b37,b38,b39)
+A1 = reshape2::melt(A0)
+ggplot(A1, aes(x=variable, y=value)) + 
+  geom_boxplot()
 
