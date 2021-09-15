@@ -48,9 +48,9 @@ X = as.matrix(X0)
 # response variable
 y = D$EVENT_WOBA
 
-############################
-########### STAN ###########
-############################
+#############################
+########### RSTAN ###########
+#############################
 
 tto3_dat <- list(n = nrow(X),
                  p = ncol(X),
@@ -60,29 +60,27 @@ tto3_dat <- list(n = nrow(X),
 fit <- stan(file = 'tto3.stan', data = tto3_dat, iter = 1000, chains = 3)
 
 print(fit)
-stan_diag(fit)
-
-pars = c("alpha", 
-         paste(rep("BATTER_IDX_",12), 2:13, sep = ""),
-         paste(rep("ORDER_CT_",3), 2:4, sep = "")) #,"sigma")
-
-k = ncol(X)
 pars <- c("alpha", paste(rep("beta[",k), 1:k, rep("]",k), sep = ""), "sigma")
 stan_hist(fit, pars=pars)
 
-stan_hist(fit, include=TRUE)
 
-plot(fit)
-pairs(fit, pars = c("mu", "tau", "lp__"))
 
-la <- rstan::extract(fit, permuted = TRUE) # return a list of arrays 
-mu <- la$mu 
 
-### return an array of three dimensions: iterations, chains, parameters 
-#a <- rstan::extract(fit, permuted = FALSE) 
+################################
+########### RSTANARM ###########
+################################
 
-### use S3 functions on stanfit objects
-a2 <- as.array(fit)
-m <- as.matrix(fit)
-d <- as.data.frame(fit)
+library(rstanarm)
+
+#prior_i = normal(location = c(.3), scale = c(.03))
+#prior1 = normal(location = c(.3), scale = c(.03))
+post1 <- stan_glm(EVENT_WOBA ~ BATTER_IDX + ORDER_CT  ,# + WOBA_CUMU_BAT + WOBA_CUMU_PIT + DAYS_SINCE_SZN_START, 
+                  data = D,
+                  family = gaussian(link = "identity"),
+                  #prior_intercept = prior_i,
+                  #prior = prior1,
+                  seed = 12345)
+post1
+draws <- as.data.frame(post1)
+post1$coefficients
 

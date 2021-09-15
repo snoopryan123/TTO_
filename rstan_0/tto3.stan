@@ -14,8 +14,8 @@ parameters {
 }
 model {
   // priors
-  alpha ~ normal(.3, .03);
-  to_vector(beta) ~ normal(.3, .03);
+  //alpha ~ normal(.3, .03);
+  //to_vector(beta) ~ normal(.3, .03);
   // likelihood
   //y ~ normal(X * beta + alpha, .03); 
   y ~ normal(X * beta + alpha, sigma);  
