@@ -8,9 +8,13 @@ data {
   vector[n] y;      // outcome vector
 }
 parameters {
-  real alpha;           // intercept
+  //real alpha;           // intercept
   vector[p] beta;       // coefficients for predictors
   real<lower=0> sigma;  // error scale
+}
+transformed parameters {
+  vector[n] linpred;
+  linpred = X * beta;
 }
 model {
   // priors
@@ -18,7 +22,9 @@ model {
   //to_vector(beta) ~ normal(.3, .03);
   // likelihood
   //y ~ normal(X * beta + alpha, .03); 
-  y ~ normal(X * beta + alpha, sigma);  
+  to_vector(beta) ~ normal(.3, .03);
+  y ~ normal(linpred, sigma);  
+  //y ~ normal(X*beta, sigma);  
 }
 
 

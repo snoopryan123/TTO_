@@ -7,12 +7,12 @@ rstan_options(auto_write = TRUE)
 #### COMPILER OPTIMIZATIONS ####
 ################################
 
-# dotR <- file.path(Sys.getenv("HOME"), ".R")
-# if (!file.exists(dotR)) dir.create(dotR)
-# M <- file.path(dotR, "Makevars")
-# if (!file.exists(M)) file.create(M)
-# cat("\nCXX14FLAGS += -O3 -mtune=native -arch x86_64 -ftemplate-depth-256",
-#     file = M, sep = "\n", append = FALSE)
+dotR <- file.path(Sys.getenv("HOME"), ".R")
+if (!file.exists(dotR)) dir.create(dotR)
+M <- file.path(dotR, "Makevars")
+if (!file.exists(M)) file.create(M)
+cat("\nCXX14FLAGS += -O3 -mtune=native -arch x86_64 -ftemplate-depth-256",
+    file = M, sep = "\n", append = FALSE)
 
 
 ################################
@@ -52,18 +52,23 @@ y = D$EVENT_WOBA
 ########### RSTAN ###########
 #############################
 
-tto3_dat <- list(n = nrow(X),
+tto3a_dat <- list(n = nrow(X),
                  p = ncol(X),
                  X = X,
                  y = y) 
 
-fit <- stan(file = 'tto3.stan', data = tto3_dat, iter = 1000, chains = 3)
+file = 'tto3b.stan' # 'tto3a.stan'
+fit <- stan(file = file, data = tto3a_dat, iter = 1000, chains = 1)
+
+fit_summary <- summary(fit)
+fit_summary$summary[1:17,]
 
 print(fit)
-pars <- c("alpha", paste(rep("beta[",k), 1:k, rep("]",k), sep = ""), "sigma")
+k = ncol(X)
+pars <- c(paste(rep("beta[",k), 1:k, rep("]",k), sep = ""), "sigma")
 stan_hist(fit, pars=pars)
 
-
+stan_hist(fit)
 
 
 ################################
