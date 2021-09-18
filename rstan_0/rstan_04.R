@@ -61,8 +61,8 @@ tto3_dat <- list(n = nrow(X),
 file = 'tto3.stan'
 m1 <- stan_model(file = file, model_name = "EVENT_WOBA vs. BATTER_IDX and ORDER_CT")
 # obtain posterior samples of the parameters
-fit <- sampling(m1, data = tto3_dat, pars = c("beta"), 
-                iter = 1000, chains = 1, seed = 12345)
+fit <- sampling(m1, data = tto3_dat, pars = c("beta"), iter = 1000, chains = 1, 
+            seed = 12345)
 #fit_summary <- summary(fit)
 
 fit
