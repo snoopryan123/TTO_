@@ -14,15 +14,16 @@ if (!file.exists(M)) file.create(M)
 cat("\nCXX14FLAGS += -O3 -mtune=native -arch x86_64 -ftemplate-depth-256",
     file = M, sep = "\n", append = FALSE)
 
-
-################################
-########### THE DATA ###########
-################################
+############################
+########### DATA ###########
+############################
 
 # read data
 #D <- read_csv("design_matrix_0.csv")
 D <- read_csv("design_matrix_0.csv", col_types = "ddddddddddcccc")
 names(D)
+
+D <- D %>% drop_na() #FIXME
 
 # create dummy variables for the categorical variables
 BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ BATTER_IDX)
@@ -43,27 +44,39 @@ ORDER_CT_dummies <- D %>% modelr::model_matrix(~ ORDER_CT) %>% select(-`(Interce
 
 # design matrix
 X0 = bind_cols(BATTER_IDX_dummies, ORDER_CT_dummies)
-X = as.matrix(X0)
+X1 = bind_cols(D %>% select(WOBA_CUMU_BAT, WOBA_CUMU_PIT, HAND_MATCH, BAT_HOME_IND, 
+                            PIT_REST, DAYS_SINCE_SZN_START, IN_DIV, IN_LEAGUE, 
+                            PITCH_COUNT_CUMU), X0)
+# FIELD_POS <chr>, OUTS_CT <chr> --> categorical too
 
-# response variable
+# design matrix & response variable
+X = as.matrix(X1)
 y = D$EVENT_WOBA
 
 #############################
 ########### RSTAN ###########
 #############################
 
-tto3_dat <- list(n = nrow(X),
-                 p = ncol(X),
-                 X = X,
-                 y = y) 
+tto_dat <- list(n = nrow(X),
+                p = ncol(X),
+                X = X,
+                y = y) 
 
 # compile .stan file
-file = 'tto3.stan'
-m1 <- stan_model(file = file, model_name = "EVENT_WOBA vs. BATTER_IDX and ORDER_CT")
+file = 'tto4.stan'
+model <- stan_model(file = file, model_name = "linear regression, ind. normal priors")
 # obtain posterior samples of the parameters
-fit <- sampling(m1, data = tto3_dat, pars = c("beta"), iter = 1000, chains = 1, 
-            seed = 12345)
+# 20 minutes to run
+fit <- sampling(model, data = tto_dat, pars = c("beta"), 
+                iter = 1000, chains = 1, seed = 12345)
 #fit_summary <- summary(fit)
 
 fit
-stan_hist(fit, pars=NULL, include=FALSE)
+stan_hist(fit, pars=c("beta"))
+traceplot(fit,pars=c("beta"))
+
+# save the stan object
+saveRDS(fit, file = "fit_04.rds")
+#draws <- as.matrix(fit)
+#rm(fit)
+fit <- readRDS("fit_04.rds")

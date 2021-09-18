@@ -1,6 +1,4 @@
 
-// tto1.stan
-
 data {
   int<lower=0> n;   // number of data items
   int<lower=0> p;   // number of predictors
