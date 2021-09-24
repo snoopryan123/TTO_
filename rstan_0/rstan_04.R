@@ -77,7 +77,8 @@ traceplot(fit,pars=c("beta"))
 # save the stan object
 saveRDS(fit, file = "fit_04_2015-2020_.rds")
 ##########################################
-#fit <- readRDS("fit_04_2015-2020_.rds") # be careful! dont override the code
+#fit <- readRDS("fit_04_2015-2020_.rds") 
+# be careful! dont override the code
 
 
 
@@ -86,7 +87,7 @@ names(draws) <- c(colnames(X), "lp__")
 fit_summary <- summary(fit)
 f <- fit_summary$summary
 rownames(f) <- names(draws)
-f[,c(1,9,10)]
+#f[,c(1,9,10)]
 
 #############################
 ########### PLOTS ###########
@@ -141,6 +142,16 @@ plot1 = A2 %>% ggplot(aes(x=variable, y=value)) +
                labs(y="wOBA", x = "time thru order number + batter index number",
                     title = "Pitchers Exhibit Continuous Fatigue")
 plot1
+
+
+#######3
+
+x = seq(.1,.5,length=100)
+y = dnorm(x, mean=.3, sd=.03)
+plot(x,y)
+
+draws %>% ggplot(aes(x=BATTER_IDX11)) + geom_density() + stat_function(fun=dnorm, args = list(mean=.3, sd=.03), col="red")
+
 
 
 
