@@ -1,6 +1,6 @@
 data_wrangling/intermediate_datasets
 data_wrangling/data3_2010-19_sp.csv
 data_wrangling/.Rhistory
-rstan_0/job_output
+rstan_0/job_output/*.rds
 
 
