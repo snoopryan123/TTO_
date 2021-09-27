@@ -15,17 +15,6 @@ options(mc.cores = strtoi(Sys.getenv('OMP_NUM_THREADS'))) # use this on HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
 
-################################
-#### COMPILER OPTIMIZATIONS ####
-################################
-
-dotR <- file.path(Sys.getenv("HOME"), ".R")
-if (!file.exists(dotR)) dir.create(dotR)
-M <- file.path(dotR, "Makevars")
-if (!file.exists(M)) file.create(M)
-cat("\nCXX14FLAGS += -O3 -mtune=native -arch x86_64 -ftemplate-depth-256",
-    file = M, sep = "\n", append = FALSE)
-
 ############################
 ########### DATA ###########
 ############################
