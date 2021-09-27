@@ -6,8 +6,8 @@
 # - fix num_iters_in_chain
 # - fix output_file
 
-OUTPUT_FILE = "_05_2015-2020_1" 
-NUM_ITERS_IN_CHAIN = 10 #10
+OUTPUT_FILE = "_05_2015-2020_2" 
+NUM_ITERS_IN_CHAIN = 2000 #10
 
 library(tidyverse)
 library(rstan)
