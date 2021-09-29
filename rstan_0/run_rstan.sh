@@ -9,7 +9,9 @@
 ##$ -o job_output/$JOB_NAME-$JOB_ID-$TASK_ID.log
 
 ## this command is to ask for multiple cores for running RStan files:
-#$ -pe openmp 4
+#$ -pe openmp 1
+## comment the above, and uncomment the below, for 4 cores & 4 chains
+##$ -pe openmp 1
 
 Rscript --vanilla rstan_06_arp1_hpcc.R
 ## Rscript --no-save ex.R
