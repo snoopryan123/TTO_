@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N arp1_05_hpcc
+#$ -N rstan_06_arp1_hpcc
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -11,5 +11,5 @@
 ## this command is to ask for multiple cores for running RStan files:
 #$ -pe openmp 4
 
-Rscript --vanilla rstan_05_arp1_hpcc.R
+Rscript --vanilla rstan_06_arp1_hpcc.R
 ## Rscript --no-save ex.R
