@@ -7,7 +7,7 @@
 # - fix output_file
 
 OUTPUT_FILE = "_07_2015-2020a_1" 
-NUM_ITERS_IN_CHAIN = 10 #1000 #10
+NUM_ITERS_IN_CHAIN = 1000 #1000 #10
 
 library(tidyverse)
 library(rstan)
