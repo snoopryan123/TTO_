@@ -4,7 +4,8 @@ library(tidyverse)
 ########### THE CODE ###########
 ################################
 
-input_filename = "retro_final_PA_1990-2020.csv" #"retro_final_PA_2020.csv"
+input_filename = "retro_final_PA_1990-2020a.csv"
+output_filename = "design_matrix_2015-2020a.csv"
 D0 <- read_csv(input_filename)
 D0 <- D0 %>% filter(YEAR >= 2015) #FIXME
 
@@ -43,7 +44,7 @@ D5 <- D4 %>% select(-c(GAME_ID, INNING, BAT_NAME, PIT_NAME))
 
 # design matrix!
 X <- D5
-write_csv(X, "design_matrix_2015-2020.csv")
+write_csv(X, output_filename)
                   
 
 
