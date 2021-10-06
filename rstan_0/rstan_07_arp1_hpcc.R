@@ -88,7 +88,7 @@ fit <- sampling(model,
 
 # save the stan object
 saveRDS(fit, file = paste0(output_folder, "fit", OUTPUT_FILE, ".rds"))
-#fit1 <- readRDS("fit_05_2015-2020_1.rds") 
+#fit <- readRDS("job_output/fit_07_2015-2020a_1.rds") 
 
 #############################
 ########### PLOTS ###########
@@ -154,14 +154,14 @@ A1 = A0 +
     mean(draws$IN_LEAGUE) * 1 +
     mean(draws$PITCH_COUNT_CUMU) * 0
 
-A2 = reshape2::melt(A1) ##FIXME
+A2 = reshape2::melt(A0) ##FIXME
 
 library(ggthemes)
 theme_set(theme_classic())
 plot1 = A2 %>% ggplot(aes(x=variable, y=value)) + 
   geom_boxplot() +
   labs(y="wOBA", x = "time thru order number + batter index number",
-       title = "plot_05_2015-2020_1")
+       title = OUTPUT_FILE)
 
 ggsave(paste0(output_folder, "plot", OUTPUT_FILE, ".png"), plot1)
 

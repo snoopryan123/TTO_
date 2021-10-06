@@ -4,8 +4,8 @@ library(tidyverse)
 ########### THE CODE ###########
 ################################
 
-input_filename = "retro_final_PA_1990-2020a.csv"
-output_filename = "design_matrix_2015-2020a.csv"
+input_filename = "retro_final_PA_1990-2020b.csv" #FIXME
+output_filename = "design_matrix_2015-2020b.csv" #FIXME
 D0 <- read_csv(input_filename)
 D0 <- D0 %>% filter(YEAR >= 2015) #FIXME
 
@@ -14,8 +14,12 @@ D1 <- D0 %>% filter(SP_IND == 1, WOBA_APP == 1)
 
 # select relevant columns, and view this
 D2 <- D1 %>% select(GAME_ID, INNING, BAT_NAME, PIT_NAME,
-                    EVENT_WOBA, WOBA_CUMU_BAT, WOBA_CUMU_PIT, HAND_MATCH,
-                    BAT_HOME_IND, PIT_REST, DAYS_SINCE_SZN_START,
+                    EVENT_WOBA_19, 
+                    WOBA_AVG_BAT_19, WOBA_AVG_PIT_19, 
+                    WOBA_FINAL_BAT_19, WOBA_FINAL_PIT_19,
+                    NUM_WOBA_APP_BAT, NUM_WOBA_APP_PIT,
+                    NUM_WOBA_APP_FINAL_BAT, NUM_WOBA_APP_FINAL_PIT,
+                    HAND_MATCH, BAT_HOME_IND, PIT_REST, DAYS_SINCE_SZN_START,
                     IN_DIV, IN_LEAGUE, PITCH_COUNT_CUMU,
                     FIELD_POS, OUTS_CT,
                     #PARK, BATTER_SEQ_NUM)
