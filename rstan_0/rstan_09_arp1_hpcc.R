@@ -6,8 +6,8 @@
 # - fix num_iters_in_chain
 # - fix output_file
 
-OUTPUT_FILE = "_08_2015-2020b" 
-NUM_ITERS_IN_CHAIN = 1000 #1000 #10
+OUTPUT_FILE = "_09_2015-2020b" 
+NUM_ITERS_IN_CHAIN = 500 #500 #1000 #10
 
 library(tidyverse)
 library(rstan)
@@ -76,8 +76,8 @@ tto_dat <- list(n = length(y),
                 y = y) 
 
 # compile .stan file
-file = 'tto8.stan'
-model <- stan_model(file = file, model_name = "tto8")
+file = 'tto9.stan'
+model <- stan_model(file = file, model_name = "tto9")
 # obtain posterior samples of the parameters
 fit <- sampling(model, 
                 data = tto_dat, 
@@ -90,7 +90,7 @@ fit <- sampling(model,
 
 # save the stan object
 saveRDS(fit, file = paste0(output_folder, "fit", OUTPUT_FILE, ".rds"))
-#fit <- readRDS("job_output/fit_08_2015-2020b.rds") 
+#fit <- readRDS("job_output/fit_07_2015-2020a_1.rds") 
 
 #############################
 ########### PLOTS ###########

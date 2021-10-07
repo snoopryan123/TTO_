@@ -1,0 +1,56 @@
+
+data {
+  int<lower=0> n;   // number of data items
+  int<lower=0> p_b;   // number of predictors in BATTER_IDX matrix
+  int<lower=0> p_o;   // number of predictors in ORDER_CT matrix
+  int<lower=0> p_c;   // number of predictors in other-covariates matrix
+  matrix[n, p_b] X_b;   // BATTER_IDX predictor matrix
+  matrix[n, p_o] X_o;   // ORDER_CT predictor matrix
+  matrix[n, p_c] X_c;   // other-covariates matrix
+  vector[n] y;      // outcome vector
+}
+parameters {
+  // sd of normal likelihood
+  real<lower=0> sigma;      
+  // important: NO INTERCEPT because of the dummy matrices
+  // BATTER_IDX, ORDER_CT prior parameters
+  real beta_b0;             // prior mean for BATTER_IDX1
+  real beta_o0;             // prior mean for ORDER_CT1
+  vector[p_b] beta_b;       // coefficients for BATTER_IDX predictors
+  vector[p_o] beta_o;       // coefficients for ORDER_CT predictors
+  vector[p_c] beta_c;       // coefficients for other-covariates 
+  real<lower=0> tau_b;      // sd of normal prior for BATTER_IDX
+  real<lower=0> tau_o;      // sd of normal prior for ORDER_CT
+}
+transformed parameters {
+  vector[n] linpred_b;
+  vector[n] linpred_o;
+  vector[n] linpred_c;
+  linpred_b = X_b * beta_b;
+  linpred_o = X_o * beta_o;
+  linpred_c = X_c * beta_c;
+}
+model {
+  // DATA BLEED AND AUTO-REGRESSIVE PRIOR
+  
+  // beta_b prior
+  beta_b[1] ~ normal(beta_b0, tau_b);
+  {
+    for (k in 2:p_b)
+    // beta_b[k] ~ normal(beta_b[k-1], tau_b); 
+    beta_b[k] ~ normal(beta_b[k-1], tau_b / k); 
+  }
+  // beta_o prior
+  beta_o[1] ~ normal(beta_o0, tau_o);
+  {
+    for (k in 2:p_o)
+    // beta_o[k] ~ normal(beta_o[k-1], tau_o); 
+    beta_o[k] ~ normal(beta_o[k-1], tau_o / k); 
+  }
+  
+  // likelihood
+  y ~ normal(linpred_b + linpred_o + linpred_c, sigma); 
+}
+
+
+
