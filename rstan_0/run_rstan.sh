@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan_09_arp1_hpcc.R
+#$ -N rstan_10_arp1_hpcc.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -13,5 +13,5 @@
 ## comment the above, and uncomment the below, for 4 cores & 4 chains
 ##$ -pe openmp 4
 
-Rscript --vanilla rstan_09_arp1_hpcc.R
+Rscript --vanilla rstan_10_arp1_hpcc.R
 ## Rscript --no-save ex.R
