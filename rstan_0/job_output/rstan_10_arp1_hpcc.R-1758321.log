@@ -57,3 +57,29 @@ Chain 1: Iteration: 200 / 500 [ 40%]  (Warmup)
 Chain 1: Iteration: 250 / 500 [ 50%]  (Warmup)
 Chain 1: Iteration: 251 / 500 [ 50%]  (Sampling)
 Chain 1: Iteration: 300 / 500 [ 60%]  (Sampling)
+Chain 1: Iteration: 350 / 500 [ 70%]  (Sampling)
+Chain 1: Iteration: 400 / 500 [ 80%]  (Sampling)
+Chain 1: Iteration: 450 / 500 [ 90%]  (Sampling)
+Chain 1: Iteration: 500 / 500 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 16661.3 seconds (Warm-up)
+Chain 1:                28607.5 seconds (Sampling)
+Chain 1:                45268.8 seconds (Total)
+Chain 1: 
+Warning messages:
+1: There were 193 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See
+http://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded 
+2: Examine the pairs() plot to diagnose sampling problems
+ 
+3: The largest R-hat is 1.24, indicating chains have not mixed.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#r-hat 
+4: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#bulk-ess 
+5: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#tail-ess 
+There were 14 warnings (use warnings() to see them)
+No id variables; using all as measure variables
+Saving 7 x 7 in image
