@@ -8,6 +8,7 @@ NUM_ITERS_IN_CHAIN = 1000 #FIXME #500 #1000 #10
 K = 10 #FIXME #K-fold cross validation #2
 
 library(tidyverse)
+library(stringr)
 library(rstan)
 library(loo)
 cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
