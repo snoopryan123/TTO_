@@ -1,0 +1,3 @@
+Error in str_remove(sub(".*/", "", rstudioapi::getSourceEditorContext()$path),  : 
+  could not find function "str_remove"
+Execution halted
