@@ -2,19 +2,18 @@
 #### SETUP ####
 ###############
 
-OUTPUT_FILE = str_remove(sub('.*/', '', rstudioapi::getSourceEditorContext()$path), ".R")
-OUTPUT_FILE
-NUM_ITERS_IN_CHAIN = 1000 #FIXME #500 #1000 #10 
-K = 10 #FIXME #K-fold cross validation #2
-
 library(tidyverse)
-library(stringr)
 library(rstan)
 library(loo)
 cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
+
+OUTPUT_FILE = str_remove(sub('.*/', '', rstudioapi::getSourceEditorContext()$path), ".R")
+OUTPUT_FILE
+NUM_ITERS_IN_CHAIN = 1000 #FIXME #500 #1000 #10 
+K = 10 #FIXME #K-fold cross validation #2
 
 ############################
 ########### DATA ###########
