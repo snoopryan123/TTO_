@@ -86,6 +86,8 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
+#fit <- readRDS("job_output/fit_rstan1_2.R.rds") 
+
 #############################
 ########### PLOTS ###########
 #############################
