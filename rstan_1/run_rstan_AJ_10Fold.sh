@@ -9,6 +9,8 @@
 ## ARRAY JOB
 #$ -t 1-5
 #$ -o job_output/$JOB_NAME-$JOB_ID-$TASK_ID.log
+## MORE RAM
+#$ -l m_mem_free=30G
 
 Rscript --vanilla rstan1_10FoldCVa-$SGE_TASK_ID.R
 
