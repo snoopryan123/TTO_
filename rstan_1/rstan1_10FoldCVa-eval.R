@@ -4,7 +4,6 @@
 library(tidyverse)
 library(rstan)
 library(loo)
-print()
 
 e1 <- readRDS("job_output/rstan1_10FoldCVa-1.R.rds") 
 e2 <- readRDS("job_output/rstan1_10FoldCVa-2.R.rds") 

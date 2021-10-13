@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -N rstan1_10FoldCVa-eval.R
 #$ -j y
-#$ -m e -M ryguy123@sas.upenn.edu 
+##$ -m e -M ryguy123@sas.upenn.edu 
 
 #$ -o job_output/$JOB_NAME-$JOB_ID.log
 ## comment the above, and uncomment the two (2) below for an array job
