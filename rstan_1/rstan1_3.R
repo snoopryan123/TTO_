@@ -2,7 +2,7 @@
 #### SETUP ####
 ###############
 
-OUTPUT_FILE = "rstan1_3.R"
+OUTPUT_FILE = "rstan1_3.R" #FIXME
 #OUTPUT_FILE = str_remove(sub('.*/', '', rstudioapi::getSourceEditorContext()$path), ".R")
 OUTPUT_FILE
 NUM_ITERS_IN_CHAIN = 2000 #FIXME #500 #1000 #10 
@@ -48,7 +48,7 @@ picked = sample(seq_len(nrow(D)), size = sample_size)
 D = D %>% mutate(train = row_number() %in% picked)
 y <- D %>% select(std_EVENT_WOBA_19, train)
 X <- bind_cols(BATTER_IDX_dummies, ORDER_CT_dummies)
-X <- bind_cols(X, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, train))
+X <- bind_cols(X, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19,HAND_MATCH, BAT_HOME_IND, train))
 # HAND_MATCH, IN_DIV, BAT_HOME_IND
 
 #############################

@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan1_10FoldCV.R
+#$ -N rstan1_3.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -11,4 +11,4 @@
 ## this command is to ask for multiple cores for running RStan files: [4]
 #$ -pe openmp 1
 
-Rscript --vanilla rstan1_10FoldCV.R
+Rscript --vanilla rstan1_3.R
