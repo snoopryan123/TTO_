@@ -9,7 +9,8 @@
 ## ARRAY JOB
 #$ -t 1-5
 #$ -o job_output/$JOB_NAME-$JOB_ID-$TASK_ID.log
-##$ -b y 
-#$ 'R --no-save < rstan1_10FoldCVa-$SGE_TASK_ID.R'
 
-## Rscript --vanilla < rstan1_10FoldCVa-$SGE_TASK_ID.R'
+##$ -b y 
+##$ 'R --no-save < rstan1_10FoldCVa-$SGE_TASK_ID.R'
+
+Rscript --vanilla < rstan1_10FoldCVa-$SGE_TASK_ID.R'
