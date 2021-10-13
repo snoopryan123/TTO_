@@ -57,7 +57,7 @@ D %>% group_by(fold) %>% count()
 # compile rstan models
 seed = 12345
 set.seed(seed)
-file = 'tto1_1.stan'
+file = "tto1_1.stan"
 model <- stan_model(file = file, model_name = file)
 
 # 
