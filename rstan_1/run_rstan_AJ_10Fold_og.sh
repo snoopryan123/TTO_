@@ -7,6 +7,6 @@
 #$ -pe openmp 1
 
 ## ARRAY JOB
-#$ -t 1-5
 #$ -o job_output/$JOB_NAME-$JOB_ID-$TASK_ID.log
-#$ -b y 'Rscript --vanilla < rstan1_10FoldCVa-$SGE_TASK_ID.R'
+#$ -t 1-5 
+#$ -b y 'R --no-save < rstan1_10FoldCVa-$SGE_TASK_ID.R'
