@@ -15,4 +15,12 @@ e5 <- readRDS("job_output/rstan1_10FoldCVa-5.R.rds")
 L = loo_compare(e1, e2, e3, e4, e5)
 L
 saveRDS(L, file = paste0("./job_output/", OUTPUT_FILE, ".rds"))
-#e <- readRDS("job_output/rstan_1_loo_compare_a1-5.rds") 
+
+
+
+### Interpret
+# https://avehtari.github.io/modelselection/CV-FAQ.html
+# L <- readRDS("job_output/rstan_1_loo_compare_a1-5.rds") 
+library(tidyverse)
+d = abs(L[,1]/L[,2])
+d
