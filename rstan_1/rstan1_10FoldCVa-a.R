@@ -8,8 +8,8 @@ NUM_ITERS_IN_CHAIN = 1200 #FIXME #500 #1000 #10
 library(tidyverse)
 library(rstan)
 library(loo)
-cores=1#FIXME
-#cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+#cores=1#FIXME
+cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
@@ -61,7 +61,7 @@ file = 'tto1_1.stan'
 model <- stan_model(file = file, model_name = file)
 
 # 
-write_elpd_kfold <- function(X, OUTPUT_FILE) {
+compute_elpd_kfold <- function(X) {
   ees = list()
   
   # Loop over the folds
