@@ -11,4 +11,7 @@
 ## this command is to ask for multiple cores for running RStan files: [4]
 #$ -pe openmp 1
 
+## MORE RAM
+#$ -l m_mem_free=20G
+
 Rscript --vanilla rstan1_4.R
