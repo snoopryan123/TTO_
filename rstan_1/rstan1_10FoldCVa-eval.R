@@ -3,7 +3,7 @@
 
 
 #source("rstan1_10FoldCVa-a.R")
-OUTPUT_FILE = "rstan_1_loo_compare_a1-5"
+OUTPUT_FILE = "rstan_1_loo_compare_a1-4"
 
 library(tidyverse)
 library(rstan)
@@ -27,11 +27,11 @@ saveRDS(L, file = paste0("./job_output/", OUTPUT_FILE, ".rds"))
 # https://avehtari.github.io/modelselection/CV-FAQ.html#15_How_to_interpret_in_Standard_error_(SE)_of_elpd_difference_(elpd_diff)
 
 #### Interpret
-# L <- readRDS("job_output/rstan_1_loo_compare_a1-5.rds") 
-# A <- rbind(unname(L[,1] + 2*L[,2]), unname(L[,1]), unname(L[,1] - 2*L[,2]))
-# colnames(A) <- paste0("model ", 5:1)
-# rownames(A) <- c("elpd_diff + 2*se_diff", "elpd_diff", "elpd_diff - 2*se_diff")
-# A <- round(A,1)
-# A
+L <- readRDS("job_output/rstan_1_loo_compare_a1-4.rds")
+A <- rbind(unname(L[,1] + 2*L[,2]), unname(L[,1]), unname(L[,1] - 2*L[,2]))
+colnames(A) <- paste0("model ", 4:1)
+rownames(A) <- c("elpd_diff + 2*se_diff", "elpd_diff", "elpd_diff - 2*se_diff")
+A <- round(A,1)
+A
 
 

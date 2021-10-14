@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan1_10FoldCVa-4.R
+#$ -N rstan1_10FoldCVa-7.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -11,4 +11,4 @@
 ## MORE RAM
 #$ -l m_mem_free=30G
 
-Rscript --vanilla rstan1_10FoldCVa-4.R
+Rscript --vanilla rstan1_10FoldCVa-7.R

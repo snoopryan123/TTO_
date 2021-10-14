@@ -19,7 +19,7 @@ rstan_options(auto_write = TRUE)
 ############################
 
 # read data
-input_file = "design_matrix1_2.csv" #FIXME
+input_file = "design_matrix1_3.csv" #FIXME
 output_folder = "./job_output/"
 D <- read_csv(input_file) 
 D <- D %>% drop_na()
@@ -45,7 +45,8 @@ X1 <- D %>% select(fold) %>%
 X2 <- bind_cols(X1, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19))
 X3 <- bind_cols(X2, D %>% select(HAND_MATCH))
 X4 <- bind_cols(X3, D %>% select(BAT_HOME_IND))
-### PARK EFFECT...
+### X6 <- significant_parks_only_effect
+X7 <- bind_cols(X4, D %>% select(PARK))
 
 ### old...
 #X4 <- bind_cols(X3, D %>% select(IN_DIV))

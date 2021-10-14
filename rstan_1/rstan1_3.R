@@ -49,7 +49,6 @@ D = D %>% mutate(train = row_number() %in% picked)
 y <- D %>% select(std_EVENT_WOBA_19, train)
 X <- bind_cols(BATTER_IDX_dummies, ORDER_CT_dummies)
 X <- bind_cols(X, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19,HAND_MATCH, BAT_HOME_IND, train))
-# HAND_MATCH, IN_DIV, BAT_HOME_IND
 
 #############################
 ########### RSTAN ###########
