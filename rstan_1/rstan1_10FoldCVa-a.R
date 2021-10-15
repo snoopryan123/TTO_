@@ -38,6 +38,9 @@ names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
 ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 #
+PARK_dummies <- D %>% modelr::model_matrix(~ factor(PARK) + 0) 
+names(PARK_dummies) <- change_factor_names(names(PARK_dummies))
+#
 D$fold = kfold_split_random(K = K, N = nrow(D))
 y <- D %>% select(fold, std_EVENT_WOBA_19)
 X1 <- D %>% select(fold) %>%
@@ -46,7 +49,8 @@ X2 <- bind_cols(X1, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19))
 X3 <- bind_cols(X2, D %>% select(HAND_MATCH))
 X4 <- bind_cols(X3, D %>% select(BAT_HOME_IND))
 ### X6 <- significant_parks_only_effect
-X7 <- bind_cols(X4, D %>% select(PARK))
+X7 <- bind_cols(X4, PARK_dummies)
+#X7 <- bind_cols(X4, D %>% select(PARK))
 
 ### old...
 #X4 <- bind_cols(X3, D %>% select(IN_DIV))
