@@ -2,10 +2,10 @@
 #### SETUP ####
 ###############
 
-OUTPUT_FILE = "rstan1_4.R" #FIXME
+OUTPUT_FILE = "rstan1_4a.R" #FIXME
 #OUTPUT_FILE = str_remove(sub('.*/', '', rstudioapi::getSourceEditorContext()$path), ".R")
 OUTPUT_FILE
-NUM_ITERS_IN_CHAIN = 3000 #FIXME #500 #1000 #10 
+NUM_ITERS_IN_CHAIN = 7000 #FIXME #500 #1000 #10 
 
 library(tidyverse)
 library(rstan)
