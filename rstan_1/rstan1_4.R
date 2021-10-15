@@ -40,6 +40,9 @@ names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
 #
 ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
+#
+PARK_dummies <- D %>% modelr::model_matrix(~ factor(PARK) + 0) 
+names(PARK_dummies) <- change_factor_names(names(PARK_dummies))
 # Split Data into Training and Testing in R 
 sample_size = floor(0.9*nrow(D))
 set.seed(12345)
@@ -52,8 +55,8 @@ X <- bind_cols(X, D %>% select(std_WOBA_FINAL_BAT_19,
                                std_WOBA_FINAL_PIT_19,
                                HAND_MATCH, 
                                BAT_HOME_IND, 
-                               PARK,
                                train))
+X <- bind_cols(X, PARK_dummies)
 
 #############################
 ########### RSTAN ###########
@@ -90,7 +93,7 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
-#fit <- readRDS("job_output/fit_rstan1_2.R.rds") 
+#fit <- readRDS("job_output/fit_rstan1_4.R.rds") 
 
 #############################
 ########### PLOTS ###########
