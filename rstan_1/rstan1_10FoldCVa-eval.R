@@ -3,7 +3,7 @@
 
 
 #source("rstan1_10FoldCVa-a.R")
-OUTPUT_FILE = "rstan_1_loo_compare_a1-4"
+OUTPUT_FILE = "rstan_1_loo_compare_a1-4_7"
 
 library(tidyverse)
 library(rstan)
@@ -13,8 +13,10 @@ e1 <- readRDS("job_output/rstan1_10FoldCVa-1.R.rds")
 e2 <- readRDS("job_output/rstan1_10FoldCVa-2.R.rds") 
 e3 <- readRDS("job_output/rstan1_10FoldCVa-3.R.rds") 
 e4 <- readRDS("job_output/rstan1_10FoldCVa-4.R.rds") 
+e7 <- readRDS("job_output/rstan1_10FoldCVa-7.R.rds") 
 
-L = loo_compare(e1, e2, e3, e4)
+
+L = loo_compare(e1, e2, e3, e4, e7)
 L
 saveRDS(L, file = paste0("./job_output/", OUTPUT_FILE, ".rds"))
 
