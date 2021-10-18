@@ -175,6 +175,15 @@ ggsave(paste0(output_folder, "plot", OUTPUT_FILE, ".png"), plot1)
 
 
 
+####################################
+########### CHECK IT OUT ###########
+####################################
 
+fit <- readRDS("job_output/fit_10_2015-2020b.rds") 
+ss <- read_csv("job_output/fit_ss_10_2015-2020b.csv")
+draws <- as_tibble(as.matrix(fit))
 
+stan_hist(fit, pars="tau_b", include=FALSE)
+stan_trace(fit, pars="tau_b", include=FALSE)
 
+hist(draws$`beta_b[2]`)

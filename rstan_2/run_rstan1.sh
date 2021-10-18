@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan1_10FoldCVa-1.R
+#$ -N rstan2_1a.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -12,6 +12,6 @@
 #$ -pe openmp 1
 
 ## MORE RAM
-#$ -l m_mem_free=30G
+#$ -l m_mem_free=10G
 
-Rscript --vanilla rstan1_10FoldCVa-1.R
+Rscript --vanilla rstan2_1a.R

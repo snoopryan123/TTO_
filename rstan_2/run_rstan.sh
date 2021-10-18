@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan1_2.R
+#$ -N rstan2_1.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -11,4 +11,7 @@
 ## this command is to ask for multiple cores for running RStan files: [4]
 #$ -pe openmp 1
 
-Rscript --vanilla rstan1_2.R
+## MORE RAM
+#$ -l m_mem_free=10G
+
+Rscript --vanilla rstan2_1.R
