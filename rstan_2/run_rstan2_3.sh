@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N run_rstan2_3.sh
+#$ -N rstan2_3.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -14,4 +14,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript --vanilla run_rstan2_3.sh
+Rscript --vanilla rstan2_3.R
