@@ -1,7 +1,4 @@
 data_wrangling/.Rhistory
-data_wrangling/*.csv
-rstan_0/*.csv
-rstan_0/job_output/*.rds
-rstan_1/*.csv
-rstan_1/job_output/*.rds
+*.csv
+*.rds
 
