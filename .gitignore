@@ -1,4 +1,6 @@
 data_wrangling/.Rhistory
 *.csv
 *.rds
+*.RData
+*.Rhistory
 
