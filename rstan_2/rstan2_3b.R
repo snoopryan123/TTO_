@@ -1,10 +1,10 @@
-# CUBIC SPLINE
+# CUBICS WITH DISCONTINUITIES 
 
 ###############
 #### SETUP ####
 ###############
 
-OUTPUT_FILE = "rstan2_3a.R" #FIXME
+OUTPUT_FILE = "rstan2_3.R" #FIXME
 NUM_ITERS_IN_CHAIN = 2000 #FIXME #10 
 
 library(tidyverse)
@@ -29,7 +29,7 @@ D <- D %>% drop_na()
 # data 
 D <- D %>% rename(b = BATTER_SEQ_NUM)
 
-# CUBIC SPLINE
+# CUBICS WITH DISCONTINUITIES 
 # https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html
 
 a = D$b #c(D$b[1:10], 11,12,13,15,14,20,12)
