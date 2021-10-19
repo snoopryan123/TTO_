@@ -63,7 +63,17 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
-#fit <- readRDS("job_output/fit_rstan2_1.R.rds") 
+#fit <- readRDS("job_output/fit_rstan2_2.R.rds") 
+
+# posterior histogram
+# stan_hist(fit)
+# stan_hist(fit, include=FALSE, pars=NA)
+# # convergence plot
+# stan_trace(fit)
+# stan_trace(fit, include=FALSE, pars=NA)
+# # autocorrelation plot
+# stan_ac(fit)
+# stan_ac(fit, include=FALSE, pars=NA)
 
 #############################
 ########### PLOTS ###########
@@ -77,14 +87,16 @@ draws <- as_tibble(as.matrix(fit))
 names(draws) <- NAMES
 # write.csv(data.frame(ss), file = paste0(output_folder, "fit_ss", OUTPUT_FILE, ".csv"), row.names=TRUE)
 
+# due to autocorrelation, keep every other posterior sample
+#draws <- draws[seq(1,nrow(draws),2),]
+
 # RESCALE the coefficients back to un-standardized form
 mu_y = mean(D$EVENT_WOBA_19) #FIXME
 sd_y = sd(D$EVENT_WOBA_19) #FIXME
-# D %>% group_by(YEAR) %>% summarise(mu = mean(EVENT_WOBA_19))
-# D %>% group_by(YEAR) %>% summarise(sd = sd(EVENT_WOBA_19))
 
 transform_back <- function(x) {
   mu_y + 2*sd_y*x
+  #2*sd_y*x
 }
 
 # 

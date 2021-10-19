@@ -92,11 +92,8 @@ names(draws) <- NAMES
 # RESCALE the coefficients back to un-standardized form
 mu_y = mean(D$EVENT_WOBA_19) #FIXME
 sd_y = sd(D$EVENT_WOBA_19) #FIXME
-# D %>% group_by(YEAR) %>% summarise(mu = mean(EVENT_WOBA_19))
-# D %>% group_by(YEAR) %>% summarise(sd = sd(EVENT_WOBA_19))
 
 transform_back <- function(x) {
-  #x
   mu_y + 2*sd_y*x
 }
 
