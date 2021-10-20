@@ -19,7 +19,7 @@ The following object is masked from ‘package:tidyr’:
 
     extract
 
-Rows: 1130067 Columns: 12
+Rows: 105966 Columns: 12
 ── Column specification ────────────────────────────────────────────────────────
 Delimiter: ","
 dbl (12): YEAR, std_EVENT_WOBA_19, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT...
@@ -29,8 +29,8 @@ dbl (12): YEAR, std_EVENT_WOBA_19, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT...
 
 SAMPLING FOR MODEL 'tto2_1.stan' NOW (CHAIN 1).
 Chain 1: 
-Chain 1: Gradient evaluation took 0.19 seconds
-Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 1900 seconds.
+Chain 1: Gradient evaluation took 0.01 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 100 seconds.
 Chain 1: Adjust your expectations accordingly!
 Chain 1: 
 Chain 1: 
@@ -47,20 +47,9 @@ Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 1: 
-Chain 1:  Elapsed Time: 82065.7 seconds (Warm-up)
-Chain 1:                100573 seconds (Sampling)
-Chain 1:                182638 seconds (Total)
+Chain 1:  Elapsed Time: 243.18 seconds (Warm-up)
+Chain 1:                106.57 seconds (Sampling)
+Chain 1:                349.75 seconds (Total)
 Chain 1: 
-Warning messages:
-1: There were 247 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See
-http://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded 
-2: Examine the pairs() plot to diagnose sampling problems
- 
-3: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
-Running the chains for more iterations may help. See
-http://mc-stan.org/misc/warnings.html#bulk-ess 
-4: Tail Effective Samples Size (ESS) is too low, indicating posterior variances and tail quantiles may be unreliable.
-Running the chains for more iterations may help. See
-http://mc-stan.org/misc/warnings.html#tail-ess 
 No id variables; using all as measure variables
 Saving 7 x 7 in image
