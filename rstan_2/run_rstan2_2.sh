@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan2_2.R
+#$ -N rstan2_2_removePit.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -14,4 +14,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript --vanilla rstan2_2.R
+Rscript --vanilla rstan2_2_removePit.R
