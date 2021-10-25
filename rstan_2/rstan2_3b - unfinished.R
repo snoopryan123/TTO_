@@ -4,12 +4,12 @@
 #### SETUP ####
 ###############
 
-OUTPUT_FILE = "rstan2_3.R" #FIXME
+OUTPUT_FILE = "rstan2_3b.R" #FIXME
 NUM_ITERS_IN_CHAIN = 2000 #FIXME #10 
 
 library(tidyverse)
 library(rstan)
-library(splines)
+library(carEx)#library(splines)
 library(ggthemes)
 theme_set(theme_classic())
 cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
@@ -33,7 +33,8 @@ D <- D %>% rename(b = BATTER_SEQ_NUM)
 # https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html
 
 a = D$b #c(D$b[1:10], 11,12,13,15,14,20,12)
-B_ <- bs(a, knots=c(9,18,27,36), degree=3, intercept = TRUE) # creating the B-splines
+B_ <- bs(a, knots=c(9,18,27,36), degree=15, intercept = TRUE) # creating the B-splines
+B_
 colnames(B_) = paste0("B",1:ncol(B_))
 B = as_tibble(B_)
 

@@ -90,7 +90,8 @@ sd_y = sd(D$EVENT_WOBA_19) #FIXME
 # D %>% group_by(YEAR) %>% summarise(sd = sd(EVENT_WOBA_19))
 
 transform_back <- function(x) {
-  mu_y + 2*sd_y*x
+  #mu_y + 2*sd_y*x
+  2*sd_y*x
 }
 
 # 
@@ -129,7 +130,7 @@ A0 = draws %>%
 A1 = reshape2::melt(A0)
 plot1 = A1 %>% ggplot(aes(x=variable, y=value)) +
                geom_boxplot() +
-               labs(y="wOBA", 
+               labs(y="residual wOBA", 
                     x = "time thru order number + batter index number",
                     title = OUTPUT_FILE)
 plot1

@@ -2,7 +2,7 @@
 #### SETUP ####
 ###############
 
-OUTPUT_FILE = "rstan2_2.R" #FIXME
+OUTPUT_FILE = "rstan2_4.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -19,7 +19,7 @@ rstan_options(auto_write = TRUE)
 ############################
 
 # read data
-input_file = "./../data/design_matrix2_1.csv" #FIXME
+input_file = "./../data/design_matrix2_2.csv" #FIXME
 output_folder = "./job_output/"
 D <- read_csv(input_file) 
 D <- D %>% drop_na()
@@ -34,9 +34,15 @@ change_factor_names <- function(s) {
 # categorical dummies for BATTER_SEQ_NUM
 BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0) 
 names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+# categorical dummies for OUTS_CT
+OUTS_CT_dummies <- D %>% modelr::model_matrix(~ factor(OUTS_CT) + 0) 
+names(OUTS_CT_dummies) <- change_factor_names(names(OUTS_CT_dummies))
 # data 
 y <- D %>% select(std_EVENT_WOBA_19)
-X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
+X <- bind_cols(BATTER_SEQ_dummies, 
+               OUTS_CT_dummies,
+               D %>% select(std_WOBA_FINAL_BAT_19,std_WOBA_FINAL_PIT_19, 
+                            HAND_MATCH, BAT_HOME_IND))
 
 #############################
 ########### RSTAN ###########
