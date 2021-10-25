@@ -41,3 +41,23 @@ Chain 1: Iteration: 1200 / 4000 [ 30%]  (Warmup)
 Chain 1: Iteration: 1600 / 4000 [ 40%]  (Warmup)
 Chain 1: Iteration: 2000 / 4000 [ 50%]  (Warmup)
 Chain 1: Iteration: 2001 / 4000 [ 50%]  (Sampling)
+Chain 1: Iteration: 2400 / 4000 [ 60%]  (Sampling)
+Chain 1: Iteration: 2800 / 4000 [ 70%]  (Sampling)
+Chain 1: Iteration: 3200 / 4000 [ 80%]  (Sampling)
+Chain 1: Iteration: 3600 / 4000 [ 90%]  (Sampling)
+Chain 1: Iteration: 4000 / 4000 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 168038 seconds (Warm-up)
+Chain 1:                221775 seconds (Sampling)
+Chain 1:                389813 seconds (Total)
+Chain 1: 
+Warning messages:
+1: There were 495 transitions after warmup that exceeded the maximum treedepth. Increase max_treedepth above 10. See
+http://mc-stan.org/misc/warnings.html#maximum-treedepth-exceeded 
+2: Examine the pairs() plot to diagnose sampling problems
+ 
+3: Bulk Effective Samples Size (ESS) is too low, indicating posterior means and medians may be unreliable.
+Running the chains for more iterations may help. See
+http://mc-stan.org/misc/warnings.html#bulk-ess 
+No id variables; using all as measure variables
+Saving 7 x 7 in image
