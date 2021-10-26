@@ -11,7 +11,7 @@ library(tidyverse)
 library(rstan)
 library(ggthemes)
 library(splines)
-theme_set(theme_classic())
+theme_set(theme_bw())
 cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
@@ -75,7 +75,7 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
-#fit <- readRDS("job_output/fit_rstan2_2.R.rds") 
+#fit <- readRDS("job_output/fit_rstan2_5.R.rds") 
 
 # posterior histogram
 # stan_hist(fit)
@@ -110,69 +110,54 @@ transform_back <- function(x) {
   2*sd_y*x # +mu_y
 }
 
-#######
+# quantiles and mean of posterior samples
+p = 8 #dim(BATTER_SEQ_dummies)[2]
+bsn <- paste0("B", 1:p)
+lower <- numeric(p)
+avg <- numeric(p)
+upper <- numeric(p)
+for (i in 1:length(bsn)) {
+  b = bsn[i]
+  x = transform_back(draws[[bsn[i]]])
+  lower[i] = quantile(x,.025)
+  avg[i] = mean(x)
+  upper[i] = quantile(x,.975)
+}
 
-ff<-extract(fit)
-beta = t(ff$beta)
-rownames(beta) <- names(X)
-beta = beta[1:8,]
-
+# spline basis matrix 
 aa = unique(D$b) #c(D$b[1:10], 11,12,13,15,14,20,12)
 BB_ <- bs(aa, knots=c(9,18,27,36), degree=3, intercept = TRUE) # creating the B-splines
 colnames(BB_) = paste0("B",1:ncol(BB_))
 BB = as_tibble(BB_)
-
-beta_xxx = s[1:ncol(B)+1,1]
 bbb = as.matrix(BB)
-aaa=bbb%*%beta_xxx
-p0 = data.frame(aaa) %>% ggplot(aes(x=1:length(aaa), y=aaa)) + geom_point()
-p0
 
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_postMean_" ,".png"), p0)
+# quantiles of each batter sequence number
+lower_ = bbb %*% lower
+avg_ = bbb %*% avg
+upper_ = bbb %*% upper
 
-#FIXME
-# ADD 95% POSTERIOR INTERVAL ON THE SPLINE
-# 
-# AAA = t(bbb %*% beta)
-# colnames(AAA) = paste0("b",1:nrow(BB))
-# #AAA = as_tibble(AAA)
-# AAA = as_tibble(transform_back(AAA))
-# A1 = reshape2::melt(AAA)
-# #transform_back
-# 
-# ######
-# 
-# p = 27 #dim(BATTER_SEQ_dummies)[2]
-# bsn <- paste0("BATTER_SEQ_NUM", 1:p)
-# lower <- numeric(p)
-# avg <- numeric(p)
-# upper <- numeric(p)
-# for (i in 1:length(bsn)) {
-#   b = bsn[i]
-#   x = draws[[bsn[i]]]#transform_back(draws[[bsn[i]]])
-#   lower[i] = quantile(x,.025)
-#   avg[i] = mean(x)
-#   upper[i] = quantile(x,.975)
-# }
-# 
-# A4 = data.frame(
-#   lower = lower,
-#   avg = avg,
-#   upper= upper,
-#   bn = 1:p
-# )
-# 
-# plot1 = A4 %>% ggplot(aes(x=bn, y=avg)) +
-#                geom_crossbar(aes(ymin = lower, ymax = upper), width = 0.2) +
-#                 labs(y="change in wOBA",
-#                      x = "batter sequence number",
-#                      title = OUTPUT_FILE) +
-#                 theme(legend.position="none") 
-#                 # scale_fill_brewer(palette="Set1")
-# 
-# plot1
-# 
-# #
-# ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
+# plot
+A4 = data.frame(
+  lower = lower_[1:27],
+  avg = avg_[1:27],
+  upper= upper_[1:27],
+  bn = 1:27
+)
+theme_set(theme_bw())
+plot1 = A4 %>% 
+  ggplot(aes(x=bn, y=avg)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+  geom_line(aes(y = avg), color="firebrick", size=1) +
+  labs(title = paste0(OUTPUT_FILE, ": 1 cubic spline")) +
+  theme(legend.position="none") +
+  scale_x_continuous(name="batter sequence number", 
+                   limits = c(0,28),
+                   breaks = c(0,5,10,15,20,25)) +
+  scale_y_continuous(name="posterior change in wOBA", 
+                     limits = c(-.026,.026),
+                     breaks = seq(-.026,.026,.004)) 
+plot1
+
+#ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
 
 

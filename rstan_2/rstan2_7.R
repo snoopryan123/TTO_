@@ -2,9 +2,9 @@
 #### SETUP ####
 ###############
 
-### removed pitchers, batter seq num, 3 cubics (allow for TTO discontinuities)
+### removed pitchers, batter seq num, 1 spline
 
-OUTPUT_FILE = "rstan2_6.R" #FIXME
+OUTPUT_FILE = "rstan2_7.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -34,45 +34,24 @@ change_factor_names <- function(s) {
   s <- str_remove_all(s, "\\)")
   s
 }
+# categorical dummies for BATTER_SEQ_NUM
+# BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0) 
+# names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
 
 # cubic spline over BATTER_SEQ_NUM
 # https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html
-# D <- D %>% rename(b = BATTER_SEQ_NUM)
-# a = D$b #c(D$b[1:10], 11,12,13,15,14,20,12)
-# B_ <- bs(a, knots=c(9,18,27,36), degree=3, intercept = TRUE) # creating the B-splines
-# colnames(B_) = paste0("B",1:ncol(B_))
-# B = as_tibble(B_)
-
-# 1 Cubic for each TTO, allow for discontinuities at TTO
 D <- D %>% rename(b = BATTER_SEQ_NUM)
 a = D$b #c(D$b[1:10], 11,12,13,15,14,20,12)
-
-model.matrix( ~ poly(a, degree=3, raw=TRUE) )
-
-
-cubic.mat <- D %>% select(ORDER_CT, b) %>%
-                    mutate(b10 = ifelse(ORDER_CT == 1,  1,   0),
-                           b11 = ifelse(ORDER_CT == 1,  b,   0),
-                           b12 = ifelse(ORDER_CT == 1,  b^2, 0),
-                           b13 = ifelse(ORDER_CT == 1,  b^3, 0),
-                           b20 = ifelse(ORDER_CT == 2, 1,   0),
-                           b21 = ifelse(ORDER_CT == 2, b,   0),
-                           b22 = ifelse(ORDER_CT == 2, b^2, 0),
-                           b23 = ifelse(ORDER_CT == 2, b^3, 0),
-                           b30 = ifelse(ORDER_CT == 3, 1,   0),
-                           b31 = ifelse(ORDER_CT == 3, b,   0),
-                           b32 = ifelse(ORDER_CT == 3, b^2, 0),
-                           b33 = ifelse(ORDER_CT == 3, b^3, 0),
-                           b40 = ifelse(ORDER_CT >= 4, 1,   0),
-                           b41 = ifelse(ORDER_CT >= 4, b,   0),
-                           b42 = ifelse(ORDER_CT >= 4, b^2, 0),
-                           b43 = ifelse(ORDER_CT >= 4, b^3, 0),
-                    ) %>% select(-c(ORDER_CT,b))
+#knots = c(9,9,9,9,18,18,18,18,27,27,27,27,36,36,36,36)
+knots = c(9,9,9,18,18,18,27,27,27,36,36,36)
+B_ <- bs(a, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
+colnames(B_) = paste0("B",1:ncol(B_))
+B = as_tibble(B_)
 
 # data 
 y <- D %>% select(std_EVENT_WOBA_19)
 #X <- D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND)
-X <- bind_cols(cubic.mat, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, 
+X <- bind_cols(B, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, 
                                HAND_MATCH, BAT_HOME_IND))
 
 #############################
@@ -98,7 +77,7 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
-#fit <- readRDS("job_output/fit_rstan2_6.R.rds") 
+#fit <- readRDS("job_output/fit_rstan2_7.R.rds") 
 
 # posterior histogram
 # stan_hist(fit)
@@ -133,38 +112,59 @@ transform_back <- function(x) {
   2*sd_y*x # +mu_y
 }
 
-cubic <- function(a0,a1,a2,a3,b) {
-  a0 + a1*b + a2*b^2 + a3*b^3
+# compute mean and 2.5%, 97.5% quantiles of posterior samples
+p = dim(B)[2]
+bsn <- paste0("B", 1:p)
+lower <- numeric(p)
+avg <- numeric(p)
+upper <- numeric(p)
+for (i in 1:length(bsn)) {
+  b = bsn[i]
+  x = transform_back(draws[[bsn[i]]])
+  lower[i] = quantile(x,.025)
+  avg[i] = mean(x)
+  upper[i] = quantile(x,.975)
 }
 
-#######
+# spline basis matrix 
+aa = unique(D$b) #c(D$b[1:10], 11,12,13,15,14,20,12)
+BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
+colnames(BB_) = paste0("B",1:ncol(BB_))
+BB = as_tibble(BB_)
+bbb = as.matrix(BB)
 
-ff<-extract(fit)
-beta = t(ff$beta)
-rownames(beta) <- names(X)
-beta = beta[1:16,]
-beta = transform_back(beta)
+# quantiles of each batter sequence number
+lower_ = bbb %*% lower
+avg_ = bbb %*% avg
+upper_ = bbb %*% upper
 
-xx = rowMeans(beta)
+# plot
+A4 = data.frame(
+  lower = lower_[1:27],
+  avg = avg_[1:27],
+  upper= upper_[1:27],
+  bn = 1:27
+)
+theme_set(theme_bw())
+plot0 = A4 %>% 
+  ggplot(aes(x=bn, y=avg)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+  geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+  geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+  geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+  labs(title = paste0(OUTPUT_FILE, ": cubic spline with discontinuities")) +
+  theme(legend.position="none") 
+u = round(max(upper_)+.1, 2)
+l = round(min(lower_)-.1, 2)
+plot1 = plot0 + 
+  scale_x_continuous(name="batter sequence number", 
+                   limits = c(0,28),
+                   breaks = c(0,5,10,15,20,25)) +
+  scale_y_continuous(name="posterior change in wOBA", 
+                     limits = c(l, u),
+                     breaks = seq(l, u, .4)) 
+plot1
 
-c1 = cubic(xx[["b10"]], xx[["b11"]], xx[["b12"]], xx[["b13"]], 1:9)
-c2 = cubic(xx[["b20"]], xx[["b21"]], xx[["b22"]], xx[["b23"]], 10:18)
-c3 = cubic(xx[["b30"]], xx[["b31"]], xx[["b32"]], xx[["b33"]], 19:27)
-yy = c(c1, c2, c3)
-xxx=1:27
-
-p0 = data.frame(yy) %>% ggplot(aes(x=xxx, y=yy)) +
-    geom_point() + 
-    labs(y="change in wOBA",
-         x = "batter sequence number",
-         title = OUTPUT_FILE) 
-p0
-
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), p0)
-
-
-#FIXME
-# ADD 95% POSTERIOR INTERVAL ON THE SPLINE
-
+ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
 
 
