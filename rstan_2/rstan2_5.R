@@ -111,7 +111,7 @@ transform_back <- function(x) {
 }
 
 # quantiles and mean of posterior samples
-p = 8 #dim(BATTER_SEQ_dummies)[2]
+p = dim(B)[2] #8
 bsn <- paste0("B", 1:p)
 lower <- numeric(p)
 avg <- numeric(p)
@@ -158,6 +158,6 @@ plot1 = A4 %>%
                      breaks = seq(-.026,.026,.004)) 
 plot1
 
-#ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
+ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
 
 

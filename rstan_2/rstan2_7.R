@@ -2,7 +2,7 @@
 #### SETUP ####
 ###############
 
-### removed pitchers, batter seq num, 1 spline
+### removed pitchers, batter seq num, 3 cubics
 
 OUTPUT_FILE = "rstan2_7.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
@@ -145,7 +145,6 @@ A4 = data.frame(
   upper= upper_[1:27],
   bn = 1:27
 )
-theme_set(theme_bw())
 plot0 = A4 %>% 
   ggplot(aes(x=bn, y=avg)) +
   geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +

@@ -8,7 +8,7 @@ NUM_ITERS_IN_CHAIN = 1500 #FIXME #10
 library(tidyverse)
 library(rstan)
 library(ggthemes)
-theme_set(theme_classic())
+theme_set(theme_bw())
 cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
@@ -61,7 +61,7 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
-#fit <- readRDS("job_output/fit_rstan2_2.R.rds") 
+#fit <- readRDS("job_output/fit_rstan2_2_removePit.R.rds") 
 
 # posterior histogram
 # stan_hist(fit)
@@ -96,6 +96,7 @@ transform_back <- function(x) {
   2*sd_y*x # +mu_y
 }
 
+# compute mean and 2.5%, 97.5% quantiles of posterior samples
 p = 27 #dim(BATTER_SEQ_dummies)[2]
 bsn <- paste0("BATTER_SEQ_NUM", 1:p)
 lower <- numeric(p)
@@ -103,12 +104,13 @@ avg <- numeric(p)
 upper <- numeric(p)
 for (i in 1:length(bsn)) {
   b = bsn[i]
-  x = draws[[bsn[i]]]#transform_back(draws[[bsn[i]]])
+  x = transform_back(draws[[bsn[i]]])
   lower[i] = quantile(x,.025)
   avg[i] = mean(x)
   upper[i] = quantile(x,.975)
 }
 
+# plot
 A4 = data.frame(
   lower = lower,
   avg = avg,
@@ -116,17 +118,24 @@ A4 = data.frame(
   bn = 1:p
 )
 
-plot1 = A4 %>% ggplot(aes(x=bn, y=avg)) +
-               geom_crossbar(aes(ymin = lower, ymax = upper), width = 0.2) +
-                labs(y="change in wOBA",
-                     x = "batter sequence number",
-                     title = OUTPUT_FILE) +
-                theme(legend.position="none") 
-                # scale_fill_brewer(palette="Set1")
 
+plot1 = A4 %>% 
+  ggplot(aes(x=bn, y=avg)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+  #geom_smooth( color="firebrick", se = FALSE) +
+  #geom_line(aes(y = avg), color="firebrick", size=1) +
+  labs(title = paste0(OUTPUT_FILE, "")) +
+  theme(legend.position="none") +
+  scale_x_continuous(name="batter sequence number", 
+                     limits = c(0,28),
+                     breaks = c(0,5,10,15,20,25)) +
+  scale_y_continuous(name="posterior change in wOBA", 
+                     limits = c(-.03,.03),
+                     breaks = seq(-.03,.03,.005)) 
 plot1
 
-#
+
 ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
 
 
