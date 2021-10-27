@@ -145,23 +145,21 @@ A4 = data.frame(
   upper= upper_[1:27],
   bn = 1:27
 )
-plot0 = A4 %>% 
+plot1 = A4 %>% 
   ggplot(aes(x=bn, y=avg)) +
   geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
-  geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
-  geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
-  geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
-  labs(title = paste0(OUTPUT_FILE, ": cubic spline with discontinuities")) +
-  theme(legend.position="none") 
-u = round(max(upper_)+.1, 2)
-l = round(min(lower_)-.1, 2)
-plot1 = plot0 + 
+  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+  # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+  labs(title = paste0(OUTPUT_FILE, ": cubic spline with discontinuities at TTO ends")) +
+  theme(legend.position="none") +
   scale_x_continuous(name="batter sequence number", 
                    limits = c(0,28),
                    breaks = c(0,5,10,15,20,25)) +
   scale_y_continuous(name="posterior change in wOBA", 
-                     limits = c(l, u),
-                     breaks = seq(l, u, .4)) 
+                     limits = c(-.03, .03),
+                     breaks = seq(-.03, .03, .005)) 
 plot1
 
 ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
