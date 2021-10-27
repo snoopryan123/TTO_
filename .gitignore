@@ -3,4 +3,5 @@ data_wrangling/.Rhistory
 *.rds
 *.RData
 *.Rhistory
+*.log
 
