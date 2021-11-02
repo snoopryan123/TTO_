@@ -67,7 +67,8 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
-#fit <- readRDS("job_output/fit_rstan2_2_removePit.R.rds") 
+#fit <- readRDS("job_output/fit_rstan2_9.R.rds") 
+#fit <- readRDS("job_output/fit_rstan2_1a.R.rds") 
 
 # posterior histogram
 # stan_hist(fit)
@@ -110,13 +111,15 @@ lower <- numeric(p)
 avg <- numeric(p)
 upper <- numeric(p)
 for (i in 1:length(oc)) {
+  o = oc[i]
+  x0 = transform_back(draws[[o]])
   for (j in 1:length(bidx)) {
-    o = oc[i]
     b = bidx[j]
-    x = transform_back(draws[[b]] + draws[[o]])
-    lower[i] = quantile(x,.025)
-    avg[i] = mean(x)
-    upper[i] = quantile(x,.975)
+    xb = transform_back(draws[[b]])
+    x = x0 + xb
+    lower[(i-1)*length(bidx) + j] = quantile(x,.025)
+    avg[(i-1)*length(bidx) + j] = mean(x)
+    upper[(i-1)*length(bidx) + j] = quantile(x,.975)
   }
 }
 
@@ -135,14 +138,15 @@ plot1 = A4 %>%
   geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
   #geom_smooth( color="firebrick", se = FALSE) +
   #geom_line(aes(y = avg), color="firebrick", size=1) +
-  labs(title = paste0(OUTPUT_FILE, "unique batter idx, order ct, remove pitchers as batters")) +
+  labs(title = paste0(OUTPUT_FILE, " unique batter idx, order ct, remove pitchers as batters")) +
   theme(legend.position="none") +
   scale_x_continuous(name="batter sequence number", 
                      limits = c(0,28),
                      breaks = c(0,5,10,15,20,25)) +
   scale_y_continuous(name="posterior change in wOBA", 
                      #limits = c(-.03,.03),
-                     breaks = seq(-.03,.03,.005)) 
+                     #breaks = seq(-.03,.03,.005)
+                     ) 
 plot1
 
 
