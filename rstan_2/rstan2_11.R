@@ -117,13 +117,15 @@ lower <- numeric(p)
 avg <- numeric(p)
 upper <- numeric(p)
 for (i in 1:length(oc)) {
+  o = oc[i]
+  x0 = transform_back(draws[[o]])
   for (j in 1:length(bidx)) {
-    o = oc[i]
     b = bidx[j]
-    x = transform_back(draws[[b]] + draws[[o]])
-    lower[i] = quantile(x,.025)
-    avg[i] = mean(x)
-    upper[i] = quantile(x,.975)
+    xb = transform_back(draws[[b]])
+    x = x0 + xb
+    lower[(i-1)*length(bidx) + j] = quantile(x,.025)
+    avg[(i-1)*length(bidx) + j] = mean(x)
+    upper[(i-1)*length(bidx) + j] = quantile(x,.975)
   }
 }
 
