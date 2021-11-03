@@ -69,7 +69,6 @@ fit <- sampling(model,
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
 #fit <- readRDS("job_output/fit_rstan2_9.R.rds") 
-#fit <- readRDS("job_output/fit_rstan2_1a.R.rds") 
 
 # posterior histogram
 # stan_hist(fit)
@@ -132,7 +131,8 @@ A4 = data.frame(
   bn = 1:p
 )
 
-
+XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
+BREAKS = seq(1,28,by=2)#c(1,6,11,16,21,26)#c(0,5,10,15,20,25)
 plot1 = A4 %>% 
   ggplot(aes(x=bn, y=avg)) +
   geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
@@ -141,16 +141,42 @@ plot1 = A4 %>%
   #geom_line(aes(y = avg), color="firebrick", size=1) +
   labs(title = paste0(OUTPUT_FILE, " unique batter idx, order ct, remove pitchers as batters")) +
   theme(legend.position="none") +
-  scale_x_continuous(name="batter sequence number", 
+  scale_x_continuous(name="(order count, unique batter number)", 
                      limits = c(0,28),
-                     breaks = c(0,5,10,15,20,25)) +
+                     breaks = BREAKS,
+                     labels =  XLABS[BREAKS+1]) +
   scale_y_continuous(name="posterior change in wOBA", 
                      #limits = c(-.03,.03),
                      #breaks = seq(-.03,.03,.005)
                      ) 
 plot1
 
-
 ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
+
+# PRODUCTION PLOT
+theme_update(plot.title = element_text(hjust = 0.5))
+production_plot = A4 %>% 
+  ggplot(aes(x=bn, y=avg)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+  # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+  geom_vline(aes(xintercept = 9.5), size=1.2) +
+  geom_vline(aes(xintercept = 18.5), size=1.2) +
+  labs(title = "Pitcher Effectiveness") +
+  theme(legend.position="none") +
+  scale_x_continuous(name="(order count, unique batter number)", 
+                     limits = c(0,28),
+                     breaks = BREAKS,
+                     labels =  XLABS[BREAKS+1]) +
+  scale_y_continuous(name="Posterior Change in wOBA", 
+                     limits = c(-.015, .03),
+                     breaks = seq(-.03, .03, .005)
+                     ) 
+production_plot
+#ggsave("plot_model_1.png", production_plot)
+
+
 
 

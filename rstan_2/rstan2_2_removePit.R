@@ -139,4 +139,27 @@ plot1
 
 ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
 
+# PRODUCTION PLOT
+theme_update(plot.title = element_text(hjust = 0.5))
+production_plot = A4 %>% 
+  ggplot(aes(x=bn, y=avg)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+  # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+  geom_vline(aes(xintercept = 9.5), size=1.2) +
+  geom_vline(aes(xintercept = 18.5), size=1.2) +
+  labs(title = "Pitcher Effectiveness") +
+  theme(legend.position="none") +
+  scale_x_continuous(name="Batter Sequence Number", 
+                     limits = c(0,28),
+                     breaks = c(0,5,10,15,20,25)) +
+  scale_y_continuous(name="Posterior Change in wOBA", 
+                     limits = c(-.02, .03),
+                     breaks = seq(-.03, .03, .005)
+  ) 
+production_plot
+#ggsave("plot_model_2.png", production_plot)
+
 
