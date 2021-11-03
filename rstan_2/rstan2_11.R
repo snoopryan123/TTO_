@@ -9,6 +9,7 @@ library(tidyverse)
 library(rstan)
 library(ggthemes)
 theme_set(theme_bw())
+if(!interactive()) pdf(NULL)
 cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
@@ -74,7 +75,7 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
-#fit <- readRDS("job_output/fit_rstan2_10.R.rds") 
+#fit <- readRDS("job_output/fit_rstan2_11.R.rds") 
 
 # posterior histogram
 # stan_hist(fit)
@@ -136,7 +137,6 @@ A4 = data.frame(
   upper= upper,
   bn = 1:p
 )
-
 
 plot1 = A4 %>% 
   ggplot(aes(x=bn, y=avg)) +

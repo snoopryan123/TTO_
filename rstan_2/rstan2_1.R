@@ -9,6 +9,7 @@ library(tidyverse)
 library(rstan)
 library(ggthemes)
 theme_set(theme_classic())
+if(!interactive()) pdf(NULL)
 cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
