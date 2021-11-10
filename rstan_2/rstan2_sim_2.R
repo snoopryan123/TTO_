@@ -5,7 +5,7 @@
 # simulation of BATTER_SEQ_NUM model
 
 output_folder = "./job_output/"
-OUTPUT_FILE = "rstan2_sim_1.R" #FIXME
+OUTPUT_FILE = "rstan2_sim_2.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -70,7 +70,7 @@ alpha = do.call(rbind, replicate(G, alpha_mean + rnorm(B, mean=0, sd=tau1), simp
 eta_mean = c(.09, .07, -.02, .01) # s[40:43,1]
 tau2 = 0.001 # sd of noise added to eta_mean # s[40:43,]
 eta = do.call(rbind, replicate(N, eta_mean + rnorm(length(eta_mean), mean=0, sd=tau2), simplify=FALSE))
-sig = 0.005 # sigma(m)
+sig = 0.2 #FIXME - this is what's different in this file # sigma(m) 
 
 # PLOT TRUE DISTRIBUTION OF ALPHA
 plot_alpha <- function(alpha, descriptor) {
@@ -135,8 +135,8 @@ X_x_eta = rowSums(X*eta)
 epsilon = rnorm(N, mean=0, sd=sig)
 y = S_x_alpha + X_x_eta + epsilon 
 ### check
-#f <- function(x) mean(y[seq(x,length(y),by=27)])
-#plot(1:27, sapply(1:27, f))
+f <- function(x) mean(y[seq(x,length(y),by=27)])
+plot(1:27, sapply(1:27, f))
 
 # package the generated data
 # package and save the generated data
