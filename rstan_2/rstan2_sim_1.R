@@ -6,7 +6,7 @@
 
 output_folder = "./job_output/"
 OUTPUT_FILE = "rstan2_sim_1.R" #FIXME
-NUM_ITERS_IN_CHAIN = 1000 #FIXME #10 
+NUM_ITERS_IN_CHAIN = 2000 #FIXME #10 
 
 library(tidyverse)
 library(rstan)
