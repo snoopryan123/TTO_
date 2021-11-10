@@ -5,7 +5,7 @@
 # simulation of BATTER_SEQ_NUM model
 
 output_folder = "./job_output/"
-OUTPUT_FILE = "rstan2_sim_3.R" #FIXME
+OUTPUT_FILE = "rstan2_sim_4.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -26,50 +26,33 @@ rstan_options(auto_write = TRUE)
 
 ##### explore the real data before creating simulated data.
 
-# # read data
-# input_file = "./../data/design_matrix2_3.csv" #FIXME
-# D <- read_csv(input_file)
-# D <- D %>% drop_na()
-# # create dummy variables for the categorical variables
-# # NO INTERCEPT and INCLUDE FIRST COLUMN
-# change_factor_names <- function(s) {
-#   s <- str_remove(s, "factor")
-#   s <- str_remove_all(s, "\\(")
-#   s <- str_remove_all(s, "\\)")
-#   s
-# }
-# # categorical dummies for BATTER_SEQ_NUM
-# BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
-# names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
-# # data
-# y <- D %>% select(std_EVENT_WOBA_19)
-# X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
-# fit <- readRDS("job_output/fit_rstan2_2_removePit.R.rds")
-# # draws and fit summary
-# NAMES <- c("sigma", names(X), "lp__")
-# s <- summary(fit)$summary
-# rownames(s) <- NAMES
-# #plot(s[2:28,1])
-# d = data.frame(x=1:27,y=s[2:28,1])
-# m = lm(y~x, data=d)
-# ## Coefficients: (Intercept) -0.0065590, x 0.0009337, sigma 0.005033198
-# #d %>% ggplot() + geom_point(aes(x=x,y=y)) + geom_abline(intercept=m$coefficients[1],slope=m$coefficients[2])
-# 
+# read data
+input_file = "./../data/design_matrix2_3.csv" #FIXME
+D <- read_csv(input_file)
+D <- D %>% drop_na()
+# create dummy variables for the categorical variables
+# NO INTERCEPT and INCLUDE FIRST COLUMN
+change_factor_names <- function(s) {
+  s <- str_remove(s, "factor")
+  s <- str_remove_all(s, "\\(")
+  s <- str_remove_all(s, "\\)")
+  s
+}
+# categorical dummies for BATTER_SEQ_NUM
+BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
+names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+# data
+X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
 
 #################################################
 
 ### CHOOSE TRUE PARAMETERS
 G = 2430
-B = 27
+B = dim(BATTER_SEQ_dummies)[2] #27
 N = G*B
-x = 1:27
-alpha_mean = -0.007 + 0.001*x # coefficients(m) 
-alpha_mean = alpha_mean + rnorm(B, sd=.0015)
-tau1 = 0.0025 # sd of noise added to alpha_mean
-alpha = do.call(rbind, replicate(G, alpha_mean + rnorm(B, mean=0, sd=tau1), simplify=FALSE))
-eta_mean = c(.09, .07, -.02, .01) # s[40:43,1]
-tau2 = 0.001 # sd of noise added to eta_mean # s[40:43,]
-eta = do.call(rbind, replicate(N, eta_mean + rnorm(length(eta_mean), mean=0, sd=tau2), simplify=FALSE))
+x = 1:B
+alpha = -0.007 + 0.001*x # coefficients(m) # FIXED ALPHA (ordinary inear model)
+eta = c(.09, .07, -.02, .01) # s[40:43,1] # FIXED ETA (ordinary inear model)
 sig = 0.125 #FIXME - this is what's different in this file # sigma(m) 
 
 # PLOT TRUE DISTRIBUTION OF ALPHA
@@ -120,19 +103,20 @@ true_eta_plot = plot_eta(eta, "True")
 true_eta_plot
 ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_trueEta.png"), true_eta_plot)
 
-# generate S matrix
-S_x_alpha = as.vector(t(alpha))
-S0 = diag(B)
-S = do.call(rbind, replicate(G, S0, simplify=FALSE))
-# generate X matrix
-x_b = rnorm(N) # x_b ~ normal(0,1)
-x_p = rnorm(N) # x_p ~ normal(0,1)
-hand = as.numeric(rbernoulli(N, p=0.55)) # HAND_MATCH ~ bernoulli(0.55) # sum(X$HAND_MATCH)/length(X$HAND_MATCH)
-home = as.numeric(rbernoulli(N, p=0.5)) # BAT_HOME_IND ~ bernoulli(0.5) # sum(X$BAT_HOME_IND)/length(X$BAT_HOME_IND)
-X = cbind(x_b, x_p, hand, home)
-X_x_eta = rowSums(X*eta)
+# # generate S matrix
+# S_x_alpha = as.vector(t(alpha))
+# S0 = diag(B)
+# S = do.call(rbind, replicate(G, S0, simplify=FALSE))
+# # generate X matrix
+# x_b = rnorm(N) # x_b ~ normal(0,1)
+# x_p = rnorm(N) # x_p ~ normal(0,1)
+# hand = as.numeric(rbernoulli(N, p=0.55)) # HAND_MATCH ~ bernoulli(0.55) # sum(X$HAND_MATCH)/length(X$HAND_MATCH)
+# home = as.numeric(rbernoulli(N, p=0.5)) # BAT_HOME_IND ~ bernoulli(0.5) # sum(X$BAT_HOME_IND)/length(X$BAT_HOME_IND)
+# X = cbind(x_b, x_p, hand, home)
+# X_x_eta = rowSums(X*eta)
 # generate y vector
 epsilon = rnorm(N, mean=0, sd=sig)
+beta = 
 y = S_x_alpha + X_x_eta + epsilon 
 ### check
 f <- function(x) mean(y[seq(x,length(y),by=27)])

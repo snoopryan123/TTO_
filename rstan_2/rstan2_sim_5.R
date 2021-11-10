@@ -5,7 +5,7 @@
 # simulation of BATTER_SEQ_NUM model
 
 output_folder = "./job_output/"
-OUTPUT_FILE = "rstan2_sim_3.R" #FIXME
+OUTPUT_FILE = "rstan2_sim_5.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -24,65 +24,55 @@ rstan_options(auto_write = TRUE)
 ########### GENERATE DATA ###########
 #####################################
 
-##### explore the real data before creating simulated data.
-
-# # read data
-# input_file = "./../data/design_matrix2_3.csv" #FIXME
-# D <- read_csv(input_file)
-# D <- D %>% drop_na()
-# # create dummy variables for the categorical variables
-# # NO INTERCEPT and INCLUDE FIRST COLUMN
-# change_factor_names <- function(s) {
-#   s <- str_remove(s, "factor")
-#   s <- str_remove_all(s, "\\(")
-#   s <- str_remove_all(s, "\\)")
-#   s
-# }
-# # categorical dummies for BATTER_SEQ_NUM
-# BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
-# names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
-# # data
-# y <- D %>% select(std_EVENT_WOBA_19)
-# X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
-# fit <- readRDS("job_output/fit_rstan2_2_removePit.R.rds")
-# # draws and fit summary
-# NAMES <- c("sigma", names(X), "lp__")
-# s <- summary(fit)$summary
-# rownames(s) <- NAMES
-# #plot(s[2:28,1])
-# d = data.frame(x=1:27,y=s[2:28,1])
-# m = lm(y~x, data=d)
-# ## Coefficients: (Intercept) -0.0065590, x 0.0009337, sigma 0.005033198
-# #d %>% ggplot() + geom_point(aes(x=x,y=y)) + geom_abline(intercept=m$coefficients[1],slope=m$coefficients[2])
-# 
+# USE THE ACTUAL X DATA MATRIX FROM 2019 
+# read data
+input_file = "./../data/design_matrix2_3.csv" #FIXME
+D <- read_csv(input_file)
+D <- D %>% drop_na() %>% filter(YEAR == 2019)
+# NO INTERCEPT and INCLUDE FIRST COLUMN
+change_factor_names <- function(s) {
+  s <- str_remove(s, "factor")
+  s <- str_remove_all(s, "\\(")
+  s <- str_remove_all(s, "\\)")
+  s
+}
+# categorical dummies for BATTER_SEQ_NUM
+BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
+names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+# X data matrix 
+X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
 
 #################################################
 
 ### CHOOSE TRUE PARAMETERS
-G = 2430
-B = 27
-N = G*B
-x = 1:27
+N = dim(X)[1]
+B = dim(BATTER_SEQ_dummies)[2] #27
+BB = 27
+P = dim(X)[2]
+x = 1:B
+
 alpha_mean = -0.007 + 0.001*x # coefficients(m) 
 alpha_mean = alpha_mean + rnorm(B, sd=.0015)
 tau1 = 0.0025 # sd of noise added to alpha_mean
-alpha = do.call(rbind, replicate(G, alpha_mean + rnorm(B, mean=0, sd=tau1), simplify=FALSE))
+alpha = do.call(rbind, replicate(N, alpha_mean + rnorm(B, mean=0, sd=tau1), simplify=FALSE)) #G
+
 eta_mean = c(.09, .07, -.02, .01) # s[40:43,1]
 tau2 = 0.001 # sd of noise added to eta_mean # s[40:43,]
 eta = do.call(rbind, replicate(N, eta_mean + rnorm(length(eta_mean), mean=0, sd=tau2), simplify=FALSE))
-sig = 0.125 #FIXME - this is what's different in this file # sigma(m) 
+
+sig = 0.125 #FIXME ???
 
 # PLOT TRUE DISTRIBUTION OF ALPHA
 plot_alpha <- function(alpha, descriptor) {
-  lower <- numeric(B)
-  avg <- numeric(B)
-  upper <- numeric(B)
-  for (i in 1:B) {
+  lower <- numeric(BB)
+  avg <- numeric(BB)
+  upper <- numeric(BB)
+  for (i in 1:BB) {
     lower[i] = quantile(alpha[,i],.025)
     avg[i] = mean(alpha[,i])
     upper[i] = quantile(alpha[,i],.975)
   }
-  AAA = data.frame(lower = lower,avg = avg,upper= upper,bn = 1:B)
+  AAA = data.frame(lower = lower,avg = avg,upper= upper,bn = 1:BB)
   AAA %>% 
     ggplot(aes(x=bn, y=avg)) +
     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
@@ -91,7 +81,7 @@ plot_alpha <- function(alpha, descriptor) {
     geom_vline(aes(xintercept = 18.5), size=1.2) +
     labs(title = TeX(sprintf("%s distribution of $\\alpha$ parameters", descriptor))) +
     theme(legend.position="none") +
-    scale_x_continuous(name=TeX("Batter sequence number $k$"),limits = c(0,28), breaks = c(0,5,10,15,20,25)) +
+    scale_x_continuous(name=TeX("Batter sequence number $k$"),limits = c(0,27.5), breaks = c(0,5,10,15,20,25)) +
     scale_y_continuous(name=TeX(sprintf("%s distribution of $\\alpha_k$", descriptor)),limits=c(-0.015,0.03)) 
 }
 true_alpha_plot = plot_alpha(alpha, "True")
@@ -120,29 +110,11 @@ true_eta_plot = plot_eta(eta, "True")
 true_eta_plot
 ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_trueEta.png"), true_eta_plot)
 
-# generate S matrix
-S_x_alpha = as.vector(t(alpha))
-S0 = diag(B)
-S = do.call(rbind, replicate(G, S0, simplify=FALSE))
-# generate X matrix
-x_b = rnorm(N) # x_b ~ normal(0,1)
-x_p = rnorm(N) # x_p ~ normal(0,1)
-hand = as.numeric(rbernoulli(N, p=0.55)) # HAND_MATCH ~ bernoulli(0.55) # sum(X$HAND_MATCH)/length(X$HAND_MATCH)
-home = as.numeric(rbernoulli(N, p=0.5)) # BAT_HOME_IND ~ bernoulli(0.5) # sum(X$BAT_HOME_IND)/length(X$BAT_HOME_IND)
-X = cbind(x_b, x_p, hand, home)
-X_x_eta = rowSums(X*eta)
 # generate y vector
 epsilon = rnorm(N, mean=0, sd=sig)
-y = S_x_alpha + X_x_eta + epsilon 
-### check
-f <- function(x) mean(y[seq(x,length(y),by=27)])
-plot(1:27, sapply(1:27, f))
-
-# package the generated data
-# package and save the generated data
-data_gen <- list(S=S,X=X,y=y,alpha=alpha,eta=eta)
-saveRDS(data_gen, file = paste0(output_folder, "genData_", OUTPUT_FILE, ".rds"))
-#data_gen <- readRDS("job_output/genData_rstan2_sim_3.R.rds") 
+beta = cbind(alpha, eta)
+X_x_beta = rowSums(X*beta)
+y = X_x_beta + epsilon 
 
 #############################
 ########### RSTAN ###########
@@ -155,8 +127,7 @@ file = 'tto2_1.stan' #FIXME
 model <- stan_model(file = file, model_name = file)
 
 # training data
-XX = cbind(S,X)
-data_train <- list(y = y, X = XX, n = nrow(XX), p = ncol(XX))
+data_train <- list(y = y, X = X, n = nrow(X), p = ncol(X))
 
 # Train the models
 fit <- sampling(model,
@@ -177,7 +148,7 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 draws <- as_tibble(as.matrix(fit))
 
 alpha_post <- as.matrix(draws[,2:28])
-eta_post <- as.matrix(draws[,29:32])
+eta_post <- as.matrix(draws[,(ncol(draws)-4):(ncol(draws)-1)])
 
 post_alpha_plot = plot_alpha(alpha_post, "Posterior")
 post_alpha_plot
