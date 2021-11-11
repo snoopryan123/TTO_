@@ -2,10 +2,10 @@
 #### SETUP ####
 ###############
 
-# simulation of BATTER_SEQ_NUM model
+# simulation of BATTER_SEQ_NUM model with TTO effects
 
 output_folder = "./job_output/"
-OUTPUT_FILE = "rstan2_sim_5.R" #FIXME
+OUTPUT_FILE = "rstan2_sim_6.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -51,7 +51,15 @@ BB = 27
 P = dim(X)[2]
 x = 1:B
 
-alpha_mean = -0.007 + 0.001*x # coefficients(m) 
+TTO2_effect = .01
+TTO3_effect = .02
+TTO4_effect = 0
+#alpha_mean = -0.007 + 0.001*x # coefficients(m) 
+alpha_mean = 
+  -0.007 + 0.001*x + 
+  (floor((x-1)/9)==1)*TTO2_effect + 
+  (floor((x-1)/9)==2)*(TTO2_effect+TTO3_effect) +
+  (floor((x-1)/9)==3)*(TTO2_effect+TTO3_effect+TTO4_effect)
 alpha_mean = alpha_mean + rnorm(B, sd=.0015)
 tau1 = 0.0025 # sd of noise added to alpha_mean
 alpha = do.call(rbind, replicate(N, alpha_mean + rnorm(B, mean=0, sd=tau1), simplify=FALSE)) #G
@@ -82,7 +90,10 @@ plot_alpha <- function(alpha, descriptor) {
     labs(title = TeX(sprintf("%s distribution of $\\alpha$ parameters", descriptor))) +
     theme(legend.position="none") +
     scale_x_continuous(name=TeX("Batter sequence number $k$"),limits = c(0,27.5), breaks = c(0,5,10,15,20,25)) +
-    scale_y_continuous(name=TeX(sprintf("%s distribution of $\\alpha_k$", descriptor)),limits=c(-0.015,0.035)) 
+    scale_y_continuous(
+      name=TeX(sprintf("%s distribution of $\\alpha_k$", descriptor)),
+      limits=c(-0.02,0.06)
+    ) 
 }
 true_alpha_plot = plot_alpha(alpha, "True")
 true_alpha_plot
