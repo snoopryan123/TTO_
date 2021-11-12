@@ -1,6 +1,6 @@
 library(tidyverse)
 
-### same as create_design_matrix2_3.R, except include PIT_ID, GAME_ID
+### remove pitchers as batters
 
 ################################
 ########### THE CODE ###########
@@ -22,7 +22,7 @@ D1a <- D1 %>% group_by(GAME_ID) %>%
 D1b <- D1a %>% filter(!PIT_IS_BAT)
 
 # select relevant columns, and view this
-D2 <- D1b %>% select(GAME_ID, INNING, YEAR, BAT_NAME, PIT_NAME,PIT_ID,
+D2 <- D1b %>% select(GAME_ID, INNING, YEAR, BAT_NAME, PIT_NAME,
                     EVENT_WOBA_19, 
                     WOBA_AVG_BAT_19, WOBA_AVG_PIT_19, 
                     WOBA_FINAL_BAT_19, WOBA_FINAL_PIT_19,
@@ -48,7 +48,8 @@ D3 <- D2 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
 #View(D3 %>% select(GAME_ID, INNING, BAT_HOME_IND, PIT_NAME, BAT_NAME, BATTER_IDX))
 
 # remove columns only meant for viewing
-D4 <- D3 %>% select(-c(INNING, BAT_NAME, PIT_NAME))
+D4 <- D3 %>% select(-c(GAME_ID, INNING, BAT_NAME, PIT_NAME))
+# D5 <- D4 %>% select(-c(GAME_ID, INNING, BAT_NAME, PIT_NAME))
 
 # remove columns with NA
 D6 <- D4 %>% drop_na() #FIXME
@@ -70,7 +71,7 @@ D7 <- D6 %>% group_by(YEAR) %>%
 #D7 %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
 
 # select relevant columns
-D8 <- D7 %>% select(YEAR, GAME_ID, PIT_ID,
+D8 <- D7 %>% select(YEAR, 
                    std_EVENT_WOBA_19, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19,
                    EVENT_WOBA_19, WOBA_FINAL_BAT_19, WOBA_FINAL_PIT_19,
                    # NUM_WOBA_APP_BAT, NUM_WOBA_APP_PIT,

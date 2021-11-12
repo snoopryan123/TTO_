@@ -24,18 +24,22 @@ for (iii in 1:length(YEARS)) {
     s <- str_remove_all(s, "\\)")
     s
   }
-  # categorical dummies for BATTER_SEQ_NUM
-  BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0) 
-  names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+  # categorical dummies for BATTER_IDX
+  BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_IDX) + 0) 
+  names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
+  # categorical dummies for ORDER_CT
+  ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
+  names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
   # data 
   y <- D %>% select(std_EVENT_WOBA_19)
-  X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
-  
+  X <- bind_cols(BATTER_IDX_dummies, 
+                 ORDER_CT_dummies,
+                 D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
   # NAMES
   NAMES <- c("sigma", names(X), "lp__")
   
   # fit
-  fit <- readRDS(paste0("job_output/fit_rstan2_yrs2-",iii,".R.rds"))
+  fit <- readRDS(paste0("job_output/fit_rstan2_yrs-",iii,".R.rds"))
   s <- summary(fit)$summary
   rownames(s) <- NAMES
   draws <- as_tibble(as.matrix(fit))
@@ -47,7 +51,6 @@ for (iii in 1:length(YEARS)) {
     2*sd_y*x 
   }
   
-  #FIXME
   # compute mean and 2.5%, 97.5% quantiles of posterior samples
   p = 27 #dim(BATTER_SEQ_dummies)[2]
   bidx <- paste0("BATTER_IDX", 1:9)
@@ -122,7 +125,7 @@ production_plot = A %>%
                      #breaks = seq(-.03, .03, .005)
   ) 
 production_plot
-ggsave("plot_bsn_stack_10_yrs.png", production_plot)
+ggsave("plot_stack_10_yrs.png", production_plot)
 
 
 

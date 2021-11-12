@@ -24,12 +24,18 @@ runnit <- function(YEARS, OUTPUT_FILE) {
     s <- str_remove_all(s, "\\)")
     s
   }
-  # categorical dummies for BATTER_SEQ_NUM
-  BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0) 
-  names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+  
+  # categorical dummies for BATTER_IDX
+  BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_IDX) + 0) 
+  names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
+  # categorical dummies for ORDER_CT
+  ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
+  names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
   # data 
   y <- D %>% select(std_EVENT_WOBA_19)
-  X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
+  X <- bind_cols(BATTER_IDX_dummies, 
+                 ORDER_CT_dummies,
+                 D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
   
   # compile rstan models
   seed = 12345
