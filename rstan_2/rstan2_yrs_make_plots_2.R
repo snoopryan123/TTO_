@@ -4,7 +4,8 @@ theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
 
-YEARS = 2010:2019
+YEAR_GROUPS = list(2010:2013, 2014:2016, 2017:2019)
+indxs = 11:13
 
 results = list()
 
@@ -36,7 +37,7 @@ for (iii in 1:length(YEARS)) {
   NAMES <- c("sigma", names(X), "lp__")
   
   # fit
-  fit <- readRDS(paste0("job_output/fit_rstan2_yrs2-",iii,".R.rds"))
+  fit <- readRDS(paste0("job_output/fit_rstan2_yrs2-",indxs[iii],".R.rds"))
   s <- summary(fit)$summary
   rownames(s) <- NAMES
   draws <- as_tibble(as.matrix(fit))
@@ -78,13 +79,13 @@ for (iii in 1:length(YEARS)) {
 ########### PLOT ###########
 ############################
 
+yr_grp_desc = c("2010-2013", "2014-2016", "2017-2019")
 A = tibble()
 
 for (iii in 1:length(results)) {
   curr = results[[iii]]
-  curr$yr = YEARS[iii]
+  curr$yr = yr_grp_desc[iii]
   A = rbind(A, curr)
-  
 }
 
 #XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
@@ -112,9 +113,6 @@ plot_me <- function(A) {
 }
 production_plot = plot_me(A)
 production_plot
-ggsave("plot_bsn_stack_10_yrs.png", production_plot)
+ggsave("plot_bsn_stack_3_grps.png", production_plot)
 
-plot4 = plot_me(A %>% filter(yr >= 2016 & yr <= 2019))
-plot4
-ggsave("plot_bsn_stack_4_yrs.png", plot4)
 

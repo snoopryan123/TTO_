@@ -66,10 +66,12 @@ num_pit = length(unique(pit))
 TTO2_mean_fx = rnorm(num_pit, mean=delta_2, sd=tau_2)
 TTO3_mean_fx = rnorm(num_pit, mean=delta_3, sd=tau_3)
 # each pitcher has his own mean intercept and slope of fatigue
-nu_b = .0025
-nu_m = .00009
-incpt_mean_fx = rnorm(num_pit, mean= -.007, sd=nu_b)
-slope_mean_fx = rnorm(num_pit, mean= .001, sd=nu_m)
+mu_0 = -.015
+mu_1 = .001
+nu_0 = .0025
+nu_1 = .0001 
+incpt_mean_fx = rnorm(num_pit, mean= mu_0, sd=nu_0) #-.007
+slope_mean_fx = rnorm(num_pit, mean= mu_1, sd=nu_1)
 #########
 temp1 = tibble(PIT_ID = unique(pit), 
                  TTO2_mean_fx,
@@ -78,34 +80,46 @@ temp1 = tibble(PIT_ID = unique(pit),
                  slope_mean_fx)
 E <- D %>% select(YEAR, GAME_ID, PIT_ID, BATTER_SEQ_NUM) %>% left_join(temp1)
 E <- E %>% rename(k = BATTER_SEQ_NUM) %>% mutate(l = floor((k-1)/9)+1)
-E 
+#E 
 # in each game, add noise to the intercept, slope, and TTO effects for the pitcher
-E1 <- E %>% group_by(GAME_ID, PIT_ID) %>% 
+
+# E1 <- E %>% group_by(GAME_ID, PIT_ID) %>% 
+#   filter(row_number() == 1) %>% select(-c(k,l)) %>%
+#   mutate(TTO2_fx = TTO2_mean_fx,
+#          TTO3_fx = TTO3_mean_fx,
+#          incpt = incpt_mean_fx,
+#          slope = slope_mean_fx,
+#   )%>%
+#   ungroup()
+
+E1 <- E %>% group_by(GAME_ID, PIT_ID) %>%
   filter(row_number() == 1) %>% select(-c(k,l)) %>%
-  mutate(TTO2_fx = TTO2_mean_fx,#rnorm(1, mean=TTO2_mean_fx, sd=.0015),
-         TTO3_fx = TTO3_mean_fx,#rnorm(1, mean=TTO3_mean_fx, sd=.0045),
-         incpt = incpt_mean_fx,#rnorm(1, mean=incpt_mean_fx, sd=.0015),
-         slope = slope_mean_fx,#rnorm(1, mean=slope_mean_fx, sd=.00065)
+  mutate(TTO2_fx = rnorm(1, mean=TTO2_mean_fx, sd=.0015/2),
+         TTO3_fx = rnorm(1, mean=TTO3_mean_fx, sd=.0045/2),
+         incpt = rnorm(1, mean=incpt_mean_fx, sd=.0015/2),
+         slope = rnorm(1, mean=slope_mean_fx, sd=.00065/2)
   )%>%
   ungroup()
-E1
+
+#E1
 E2 <- E1 %>% right_join(E) 
 #E2
 E3 <- E2 %>% select(-c(TTO2_mean_fx,TTO3_mean_fx,incpt_mean_fx,slope_mean_fx))
-E3
+#E3
 E4 <- E3 %>% mutate(
-  alpha = incpt + slope*k + 
-            (l==2)*TTO2_fx + 
+  alpha = incpt + slope*k +
+            (l==2)*TTO2_fx +
             (l==3)*(TTO2_fx+TTO3_fx) +
             (l==4)*(TTO2_fx+TTO3_fx+0)
 )
-E4
+#E4
+#E4 = E4 %>% group_by(row_number()) %>% mutate(alpha = rnorm(1,alpha,sd=.001))
 E5 <- E4 %>% group_by(k) %>% summarise(lower = quantile(alpha,.025),
                                        avg = mean(alpha),
                                        upper = quantile(alpha,.975),)
-E5
+#E6
 
-true_alpha_plot = plot_alpha(E5, "True")
+true_alpha_plot = plot_alpha(E5, "Simulated")
 true_alpha_plot
 
 # TTO2_effect = .01
