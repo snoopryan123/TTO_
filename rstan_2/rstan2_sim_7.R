@@ -66,8 +66,10 @@ num_pit = length(unique(pit))
 TTO2_mean_fx = rnorm(num_pit, mean=delta_2, sd=tau_2)
 TTO3_mean_fx = rnorm(num_pit, mean=delta_3, sd=tau_3)
 # each pitcher has his own mean intercept and slope of fatigue
-incpt_mean_fx = rnorm(num_pit, mean=-.007, sd=.001)
-slope_mean_fx = rnorm(num_pit, mean=.001, sd=.0003)
+nu_b = .0025
+nu_m = .00009
+incpt_mean_fx = rnorm(num_pit, mean= -.007, sd=nu_b)
+slope_mean_fx = rnorm(num_pit, mean= .001, sd=nu_m)
 #########
 temp1 = tibble(PIT_ID = unique(pit), 
                  TTO2_mean_fx,
@@ -88,19 +90,19 @@ E1 <- E %>% group_by(GAME_ID, PIT_ID) %>%
   ungroup()
 E1
 E2 <- E1 %>% right_join(E) 
-E2
+#E2
 E3 <- E2 %>% select(-c(TTO2_mean_fx,TTO3_mean_fx,incpt_mean_fx,slope_mean_fx))
 E3
 E4 <- E3 %>% mutate(
-  alpha_k = incpt + slope*k + 
+  alpha = incpt + slope*k + 
             (l==2)*TTO2_fx + 
             (l==3)*(TTO2_fx+TTO3_fx) +
             (l==4)*(TTO2_fx+TTO3_fx+0)
 )
 E4
-E5 <- E4 %>% group_by(k) %>% summarise(lower = quantile(alpha_k,.025),
-                                       avg = mean(alpha_k),
-                                       upper = quantile(alpha_k,.975),)
+E5 <- E4 %>% group_by(k) %>% summarise(lower = quantile(alpha,.025),
+                                       avg = mean(alpha),
+                                       upper = quantile(alpha,.975),)
 E5
 
 true_alpha_plot = plot_alpha(E5, "True")
