@@ -80,6 +80,12 @@ y = S_x_alpha + X_x_eta + epsilon
 ########### PLOT SIMULATED PARAMETER DISTRIBUTIONS ###########
 ##############################################################
 
+# save the alpha and eta distributions
+saveRDS(alpha, file = paste0(output_folder, "alpha_", OUTPUT_FILE, ".rds"))
+saveRDS(eta, file = paste0(output_folder, "eta_", OUTPUT_FILE, ".rds"))
+#alpha <- readRDS("job_output/alpha_rstan3_sim_2.R.rds") 
+#eta <- readRDS("job_output/eta_rstan3_sim_2.R.rds") 
+
 # PLOT SIMULATED DISTRIBUTION OF ALPHA
 plot_alpha <- function(AAA, descriptor) {
   AAA %>% 
@@ -104,7 +110,7 @@ true_alpha_df = tibble(k=D$BATTER_SEQ_NUM, alpha=S_x_alpha) %>%
             upper = quantile(alpha, .975)) 
 true_alpha_plot = plot_alpha(true_alpha_df,"Simulated")
 true_alpha_plot
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaTrue.png"), true_alpha_plot)
+#ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaTrue.png"), true_alpha_plot)
 
 # PLOT SIMULATED DISTRIBUTION OF ETA
 plot_eta <- function(eta, descriptor) {
@@ -126,7 +132,7 @@ plot_eta <- function(eta, descriptor) {
 }
 true_eta_plot = plot_eta(eta, "Simulated")
 true_eta_plot
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_etaTrue.png"), true_eta_plot)
+#ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_etaTrue.png"), true_eta_plot)
 
 
 #############################
@@ -161,21 +167,56 @@ alpha_post <- as.matrix(draws[,2:28])
 eta_post <- as.matrix(draws[,(ncol(draws)-4):(ncol(draws)-1)])
 
 # plot posterior distribution of alpha
-post_alpha_df = tibble(k=1:BB,lower=numeric(BB),avg=numeric(BB),upper=numeric(BB)) %>%
-  group_by(k) %>%
-  mutate(lower = quantile(alpha_post[,k],.025),
-         avg = mean(alpha_post[,k]),
-         upper = quantile(alpha_post[,k], .975)) %>%
-  ungroup()
-post_alpha_plot = plot_alpha(post_alpha_df, "Posterior")
-post_alpha_plot
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaPost.png"), post_alpha_plot)
+{
+  true_alpha_df$post = "simulated"
+  post_alpha_df$post = "posterior"
+  alpha_df = bind_rows(true_alpha_df, post_alpha_df)
+  alpha_plot = alpha_df %>% 
+    ggplot(aes(x=k, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    facet_wrap(~factor(post, levels=c("simulated", "posterior"))) +
+    labs(title = TeX("Distribution of $\\alpha$")) +
+    theme(legend.position="none") +
+    scale_x_continuous(
+      name=TeX("Batter sequence number $k$"),
+      limits = c(0,27.5), breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(
+      name=TeX("$\\alpha_k$"),
+      #limits=c(-0.02,0.065), 
+      breaks=seq(-0.05,0.09,by=.005)
+    ) 
+  alpha_plot
+}
+ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaPlot.png"), alpha_plot)
 
-# plot posterior distribution of eta
-post_eta_plot = plot_eta(eta_post, "Posterior")
-post_eta_plot
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_etaPost.png"), post_eta_plot)
 
-
+# plot posterior distribution of ETA
+{
+  #ETA.NAMES = paste0("eta_",1:(dim(eta)[2]))
+  ETA.NAMES = c(
+      TeX("$\\eta_{batWoba}$"),TeX("$\\eta_{pitWoba}$"),
+      TeX("$\\eta_{hand}$"),TeX("$\\eta_{home}$")
+  )
+  eta.1 = as_tibble(eta)
+  colnames(eta.1) = ETA.NAMES
+  eta.2 = gather(eta.1)
+  eta.2$post = "simulated"
+  eta_post.1 = as_tibble(eta_post)
+  colnames(eta_post.1) = ETA.NAMES
+  eta_post.2 = gather(eta_post.1)
+  eta_post.2$post = "posterior"
+  eta_df = bind_rows(eta.2, eta_post.2)
+  ### plot eta dists.
+  eta_plot = ggplot(eta_df) +
+    geom_density(aes(x=value, y=..scaled.., fill=post), alpha=0.4) +
+    facet_wrap(~key, nrow=2, scales = 'free_x',labeller = label_parsed) +
+    labs(title=TeX("Distributions of $\\eta$")) +
+    xlab(TeX("$\\eta$")) #+ ylab(TeX("density of $\\eta$"))
+  eta_plot
+}
+ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_etaPlot.png"), eta_plot)
 
 

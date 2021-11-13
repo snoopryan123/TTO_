@@ -62,35 +62,13 @@ m = .001
 delta_2 = .01 #.0172
 delta_3 = .02 #.0153
 k = 1:B
-alpha = b + m*k + delta_2*(k>=10) + delta_3*(k>=19)
+alpha = b + m*k + delta_2*(k>=10) + delta_3*(k>=19) # plot(1:27, alpha[1:27])
 eta = c(.09, .07, -.02, .01)
 sigma = .125
 # generate y vector
 epsilon = rnorm(N, mean=0, sd=sigma)
 y = S%*%alpha + X%*%eta + epsilon 
 y = as.numeric(y)
-
-##############################################################
-########### PLOT SIMULATED PARAMETER DISTRIBUTIONS ###########
-##############################################################
-
-# PLOT TRUE DISTRIBUTION OF ALPHA
-df_alpha_true = data.frame(x=1:27,y=alpha[1:27])
-true_alpha_plot = df_alpha_true %>%
-  ggplot(aes(x=x, y=y)) +
-  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") +
-  geom_vline(aes(xintercept = 9.5), size=1.2) +
-  geom_vline(aes(xintercept = 18.5), size=1.2) +
-  labs(title = paste(OUTPUT_FILE, "all pitchers have the same constant effects")) +
-  #labs(title = TeX("Simulated distribution of $\\alpha$ parameters")) +
-  theme(legend.position="none") +
-  scale_x_continuous(name=TeX("Batter sequence number $k$"),limits = c(0,27.5), breaks = c(0,5,10,15,20,25)) +
-  scale_y_continuous(
-    name=TeX("Simulated distribution of $\\alpha_k$"),
-    limits=c(-0.02,0.065), breaks=seq(-0.02,0.065,by=.01)
-  )
-true_alpha_plot
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaTrue.png"), true_alpha_plot)
 
 #############################
 ########### RSTAN ###########
@@ -118,31 +96,6 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 ########### PLOT POSTERIOR PARAMETER DISTRIBUTIONS ###########
 ##############################################################
 
-plot_alpha <- function(alpha, descriptor) {
-  lower <- numeric(BB)
-  avg <- numeric(BB)
-  upper <- numeric(BB)
-  for (i in 1:BB) {
-    lower[i] = quantile(alpha[,i],.025)
-    avg[i] = mean(alpha[,i])
-    upper[i] = quantile(alpha[,i],.975)
-  }
-  AAA = data.frame(lower = lower,avg = avg,upper= upper,bn = 1:BB)
-  AAA %>%
-    ggplot(aes(x=bn, y=avg)) +
-    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
-    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") +
-    geom_vline(aes(xintercept = 9.5), size=1.2) +
-    geom_vline(aes(xintercept = 18.5), size=1.2) +
-    labs(title = TeX(sprintf("%s distribution of $\\alpha$ parameters", descriptor))) +
-    theme(legend.position="none") +
-    scale_x_continuous(name=TeX("Batter sequence number $k$"),limits = c(0,27.5), breaks = c(0,5,10,15,20,25)) +
-    scale_y_continuous(
-      name=TeX(sprintf("%s distribution of $\\alpha_k$", descriptor)),
-      #limits=c(-0.02,0.065), 
-      breaks=seq(-0.03,0.09,by=.01)
-    )
-}
 
 plot_eta <- function(eta, descriptor) {
   eta_df = data.frame(eta)
@@ -164,18 +117,61 @@ plot_eta <- function(eta, descriptor) {
 
 # draws and fit summary
 draws <- as_tibble(as.matrix(fit))
-
 alpha_post <- as.matrix(draws[,2:28])
 eta_post <- as.matrix(draws[,(ncol(draws)-4):(ncol(draws)-1)])
 
-post_alpha_plot = plot_alpha(alpha_post, "Posterior")
-post_alpha_plot
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaPost.png"), post_alpha_plot)
+# plot posterior distribution of alpha
+{
+  lower <- numeric(BB)
+  avg <- numeric(BB)
+  upper <- numeric(BB)
+  for (i in 1:BB) {
+    lower[i] = quantile(alpha_post[,i],.025)
+    avg[i] = mean(alpha_post[,i])
+    upper[i] = quantile(alpha_post[,i],.975)
+  }
+  AAA = data.frame(lower = lower,avg = avg,upper= upper,bn = 1:BB)
+  alpha_plot = AAA %>%
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(x=bn, y=avg, ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") +
+    geom_point(aes(x=bn,y=df_alpha_true$y), color="firebrick") +
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = TeX("Posterior distribution of $\\alpha$")) +
+    scale_x_continuous(name=TeX("Batter sequence number $k$"),limits = c(0,27.5), breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(
+      name=TeX("$\\alpha_k$"),
+      #limits=c(-0.02,0.065), 
+      breaks=seq(-0.03,0.09,by=.01)
+    ) +
+    theme(legend.position="none") 
+  alpha_plot
+}
+ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaPlot.png"), alpha_plot)
 
-post_eta_plot = plot_eta(eta_post, "Posterior")
-post_eta_plot
-ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_etaPost.png"), post_eta_plot)
+# plot posterior distribution of eta
 
-
-
-
+{
+  ETA.NAMES = c(
+    TeX("$\\eta_{batWoba}$"), TeX("$\\eta_{pitWoba}$"), 
+      TeX("$\\eta_{hand}$"), TeX("$\\eta_{home}$")
+  )
+  #ETA.NAMES = paste0("eta",1:length(eta))
+  eta_df = data.frame(eta_post)
+  names(eta_df) = ETA.NAMES
+  eta_mean_df = as_tibble(t(as.matrix(eta)))
+  names(eta_mean_df) = ETA.NAMES
+  eta_plot = ggplot() + 
+    geom_histogram(data=gather(eta_df), aes(value), bins = 20, fill = "grey") + 
+    geom_vline(data=gather(eta_mean_df), aes(xintercept=value), color="firebrick") + 
+    facet_wrap(~key, scales = 'free_x', labeller = label_parsed) +  #label_parsed
+    theme(legend.position="none") +
+    labs(title=TeX("Posterior distribution of $\\eta$")) +
+    theme(panel.spacing.x = unit(6, "mm")) +
+    xlab(TeX("$\\eta$")) +
+    ylab(TeX("density")) + 
+    scale_y_discrete(breaks=NULL)
+  eta_plot
+}
+ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_etaPlot.png"), eta_plot)
