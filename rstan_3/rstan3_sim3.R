@@ -84,6 +84,7 @@ E <- D %>% select(YEAR, GAME_ID, PIT_ID, BATTER_SEQ_NUM) %>%
   left_join(temp1) %>% 
   rename(k = BATTER_SEQ_NUM) %>% 
   mutate(alpha = b_p + m_p*k + delta_2_p*(k>=10) + delta_3_p*(k>=19))
+alpha = E$alpha
 # generate y vector
 epsilon = rnorm(N, mean=0, sd=sigma)
 eta_ = E %>% select(eta_p_1,eta_p_2,eta_p_3,eta_p_4)
@@ -97,7 +98,10 @@ y = E$alpha + X_x_eta + epsilon
 # save the alpha and eta distributions
 saveRDS(E$alpha, file = paste0(output_folder, "alpha_", OUTPUT_FILE, ".rds"))
 saveRDS(eta_, file = paste0(output_folder, "eta_", OUTPUT_FILE, ".rds"))
-#E$alpha <- readRDS("job_output/alpha_rstan3_sim_3.R.rds") 
+saveRDS(E, file = paste0(output_folder, "E_", OUTPUT_FILE, ".rds"))
+#E <- readRDS("job_output/E_rstan3_sim_3.R.rds") 
+#alpha <- readRDS("job_output/alpha_rstan3_sim_3.R.rds") 
+#E$alpha = alpha
 #eta_ <- readRDS("job_output/eta_rstan3_sim_3.R.rds") 
 
 # PLOT SIMULATED DISTRIBUTION OF ALPHA
@@ -117,12 +121,12 @@ plot_alpha <- function(AAA, descriptor) {
     ) 
 }
 
-true_alpha_df = tibble(k=D$BATTER_SEQ_NUM, alpha=E$alpha) %>% 
+AAA_alpha = tibble(k=D$BATTER_SEQ_NUM, alpha=E$alpha) %>% 
   filter(k <= 27) %>% group_by(k) %>%
   summarise(lower = quantile(alpha,.025),
             avg = mean(alpha),
             upper = quantile(alpha, .975)) 
-true_alpha_plot = plot_alpha(true_alpha_df,"Simulated")
+true_alpha_plot = plot_alpha(AAA_alpha,"Simulated")
 true_alpha_plot
 #ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaTrue.png"), true_alpha_plot)
 
@@ -169,6 +173,9 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 #fit <- readRDS("job_output/fit_rstan3_sim_3.R.rds") 
+#alpha <- readRDS("job_output/alpha_rstan3_sim_3.R.rds") 
+#eta_ <- readRDS("job_output/eta_rstan3_sim_3.R.rds") 
+#E <- readRDS("job_output/E_rstan3_sim_3.R.rds") 
 
 ##############################################################
 ########### PLOT POSTERIOR PARAMETER DISTRIBUTIONS ###########
@@ -181,6 +188,18 @@ eta_post <- as.matrix(draws[,(ncol(draws)-4):(ncol(draws)-1)])
 
 # plot posterior distribution of alpha
 {
+  true_alpha_df = tibble(k=D$BATTER_SEQ_NUM, alpha=alpha) %>% 
+    filter(k <= 27) %>% group_by(k) %>%
+    summarise(lower = quantile(alpha,.025),
+              avg = mean(alpha),
+              upper = quantile(alpha, .975)) 
+  colnames(alpha_post) = 1:ncol(alpha_post)
+  post_alpha_df = gather(as_tibble(alpha_post)) %>% 
+    mutate(key = as.numeric(key)) %>% rename(k = key) %>% arrange(k) %>%
+    filter(k <= 27) %>% group_by(k) %>%
+    summarise(lower = quantile(value,.025),
+              avg = mean(value),
+              upper = quantile(value, .975)) 
   true_alpha_df$post = "simulated"
   post_alpha_df$post = "posterior"
   alpha_df = bind_rows(true_alpha_df, post_alpha_df)
@@ -222,9 +241,12 @@ ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaPlot.png"), alpha_plot
   eta_post.2 = gather(eta_post.1)
   eta_post.2$post = "posterior"
   eta_df = bind_rows(eta.2, eta_post.2)
+  eta_mean_df = as_tibble(t(as.matrix(eta)))
+  names(eta_mean_df) = ETA.NAMES
   ### plot eta dists.
   eta_plot = ggplot(eta_df) +
     geom_density(aes(x=value, y=..scaled.., fill=post), alpha=0.4) +
+    geom_vline(data=gather(eta_mean_df), aes(xintercept=value), color="firebrick") + 
     facet_wrap(~key, nrow=2, scales = 'free_x',labeller = label_parsed) +
     labs(title=TeX("Distributions of $\\eta$")) +
     xlab(TeX("$\\eta$")) #+ ylab(TeX("density of $\\eta$"))

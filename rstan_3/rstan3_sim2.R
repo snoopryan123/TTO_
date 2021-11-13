@@ -103,12 +103,12 @@ plot_alpha <- function(AAA, descriptor) {
     ) 
 }
 
-true_alpha_df = tibble(k=D$BATTER_SEQ_NUM, alpha=S_x_alpha) %>% 
+AAA_alpha = tibble(k=D$BATTER_SEQ_NUM, alpha=S_x_alpha) %>% 
   filter(k <= 27) %>% group_by(k) %>%
   summarise(lower = quantile(alpha,.025),
             avg = mean(alpha),
             upper = quantile(alpha, .975)) 
-true_alpha_plot = plot_alpha(true_alpha_df,"Simulated")
+true_alpha_plot = plot_alpha(AAA_alpha,"Simulated")
 true_alpha_plot
 #ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaTrue.png"), true_alpha_plot)
 
@@ -156,6 +156,8 @@ fit <- sampling(model,
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 #fit <- readRDS("job_output/fit_rstan3_sim_2.R.rds") 
+#alpha <- readRDS("job_output/alpha_rstan3_sim_2.R.rds") 
+#eta <- readRDS("job_output/eta_rstan3_sim_2.R.rds") 
 
 ##############################################################
 ########### PLOT POSTERIOR PARAMETER DISTRIBUTIONS ###########
@@ -168,6 +170,18 @@ eta_post <- as.matrix(draws[,(ncol(draws)-4):(ncol(draws)-1)])
 
 # plot posterior distribution of alpha
 {
+  true_alpha_df = tibble(k=D$BATTER_SEQ_NUM, alpha=rowSums(S*alpha)) %>% 
+    filter(k <= 27) %>% group_by(k) %>%
+    summarise(lower = quantile(alpha,.025),
+              avg = mean(alpha),
+              upper = quantile(alpha, .975)) 
+  colnames(alpha_post) = 1:ncol(alpha_post)
+  post_alpha_df = gather(as_tibble(alpha_post)) %>% 
+    mutate(key = as.numeric(key)) %>% rename(k = key) %>% arrange(k) %>%
+    filter(k <= 27) %>% group_by(k) %>%
+    summarise(lower = quantile(value,.025),
+              avg = mean(value),
+              upper = quantile(value, .975)) 
   true_alpha_df$post = "simulated"
   post_alpha_df$post = "posterior"
   alpha_df = bind_rows(true_alpha_df, post_alpha_df)
@@ -209,9 +223,12 @@ ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_alphaPlot.png"), alpha_plot
   eta_post.2 = gather(eta_post.1)
   eta_post.2$post = "posterior"
   eta_df = bind_rows(eta.2, eta_post.2)
+  eta_mean_df = as_tibble(t(as.matrix(eta_mean)))
+  names(eta_mean_df) = ETA.NAMES
   ### plot eta dists.
   eta_plot = ggplot(eta_df) +
     geom_density(aes(x=value, y=..scaled.., fill=post), alpha=0.4) +
+    geom_vline(data=gather(eta_mean_df), aes(xintercept=value), color="firebrick") + 
     facet_wrap(~key, nrow=2, scales = 'free_x',labeller = label_parsed) +
     labs(title=TeX("Distributions of $\\eta$")) +
     xlab(TeX("$\\eta$")) #+ ylab(TeX("density of $\\eta$"))
