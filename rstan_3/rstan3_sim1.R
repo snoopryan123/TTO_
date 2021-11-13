@@ -96,25 +96,6 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 ########### PLOT POSTERIOR PARAMETER DISTRIBUTIONS ###########
 ##############################################################
 
-
-plot_eta <- function(eta, descriptor) {
-  eta_df = data.frame(eta)
-  names(eta_df)  = c(
-    TeX("$\\eta_{batWoba}$"),TeX("$\\eta_{pitWoba}$"), 
-    TeX("$\\eta_{hand}$"),TeX("$\\eta_{home}$")
-  )
-  true_eta_plot = ggplot(gather(eta_df), aes(value)) + 
-    geom_histogram(bins = 20, color = "black", fill = "grey") + 
-    facet_wrap(~key, scales = 'free_x', labeller = label_parsed) +  
-    labs(title=TeX(sprintf("%s distribution of $\\eta$ parameters", descriptor))) +
-    scale_x_continuous(
-      #limits = c(0.4,0.9),
-      breaks= scales::pretty_breaks(n=4)) +
-    theme(panel.spacing.x = unit(6, "mm")) +
-    xlab(TeX("$\\eta$ value")) +
-    ylab(TeX("density of $\\eta$")) + scale_y_discrete(breaks=NULL)
-}
-
 # draws and fit summary
 draws <- as_tibble(as.matrix(fit))
 alpha_post <- as.matrix(draws[,2:28])
