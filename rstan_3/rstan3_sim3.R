@@ -5,7 +5,7 @@
 # simulation of BATTER_SEQ_NUM model with TTO effects
 
 output_folder = "./job_output/"
-OUTPUT_FILE = "rstan3_sim_2.R" #FIXME
+OUTPUT_FILE = "rstan3_sim_3.R" #FIXME
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -47,7 +47,7 @@ X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_M
 ########### GENERATE DATA ###########
 #####################################
 
-# helpful constant
+# helpful constants
 mu_y = mean(D$EVENT_WOBA_19)
 sd_y = sd(D$EVENT_WOBA_19)
 N = dim(X)[1]
@@ -56,25 +56,39 @@ B = dim(BATTER_SEQ_dummies)[2]
 BB = 27
 
 ### GENERATE PARAMETERS
-# all pitchers have the same constant MEAN effects
-b = -.007
+# each pitcher p has his own constant effects, sampled using these hyperparameters
+b= -.007
 m = .001
 delta_2 = .01 #.0172
 delta_3 = .02 #.0153
-k = 1:B
-alpha_mean = b + m*k + delta_2*(k>=10) + delta_3*(k>=19)
-eta_mean = c(.09, .07, -.02, .01)
+tau0 = .01
+tau1 = .002
+tau2 = .01
+tau3 = .01
+eta = c(.09, .07, -.02, .01)
+tau4 = .025
 sigma = .125
-# add iid homoscedastic noise to alpha and eta
-nu_1 = .01
-nu_2 = .025 # sd(D$_) == 0.5
-alpha = do.call(rbind, replicate(N, alpha_mean + rnorm(B, mean=0, sd=nu_1), simplify=FALSE))
-eta = do.call(rbind, replicate(N, eta_mean + rnorm(length(eta_mean), mean=0, sd=nu_2), simplify=FALSE))
+# each pitcher p has his own parameters
+pit = unique(D$PIT_ID)
+num_pit = length(pit)
+b_p = rnorm(num_pit, mean=b, sd=tau0)
+m_p = rnorm(num_pit, mean=m, sd=tau1)
+delta_2_p = rnorm(num_pit, mean=delta_2, sd=tau2)
+delta_3_p = rnorm(num_pit, mean=delta_3, sd=tau3)
+eta_p = as_tibble(MASS::mvrnorm(n=num_pit, mu=eta, Sigma=tau4*diag(length(eta))))
+colnames(eta_p) = paste0("eta_p_",1:length(eta))
+eta_p = as_tibble(eta_p)
+# tibble formulalation
+temp1 = tibble(PIT_ID = pit, b_p, m_p, delta_2_p, delta_3_p, eta_p)
+E <- D %>% select(YEAR, GAME_ID, PIT_ID, BATTER_SEQ_NUM) %>% 
+  left_join(temp1) %>% 
+  rename(k = BATTER_SEQ_NUM) %>% 
+  mutate(alpha = b_p + m_p*k + delta_2_p*(k>=10) + delta_3_p*(k>=19))
 # generate y vector
 epsilon = rnorm(N, mean=0, sd=sigma)
-S_x_alpha = rowSums(S*alpha)
-X_x_eta = rowSums(X*eta)
-y = S_x_alpha + X_x_eta + epsilon 
+eta_ = E %>% select(eta_p_1,eta_p_2,eta_p_3,eta_p_4)
+X_x_eta = rowSums(X*eta_)
+y = E$alpha + X_x_eta + epsilon
 
 ##############################################################
 ########### PLOT SIMULATED PARAMETER DISTRIBUTIONS ###########
@@ -97,7 +111,7 @@ plot_alpha <- function(AAA, descriptor) {
     ) 
 }
 
-true_alpha_df = tibble(k=D$BATTER_SEQ_NUM, alpha=S_x_alpha) %>% 
+true_alpha_df = tibble(k=D$BATTER_SEQ_NUM, alpha=E$alpha) %>% 
   filter(k <= 27) %>% group_by(k) %>%
   summarise(lower = quantile(alpha,.025),
             avg = mean(alpha),
@@ -114,7 +128,7 @@ plot_eta <- function(eta, descriptor) {
     TeX("$\\eta_{hand}$"),TeX("$\\eta_{home}$")
   )
   true_eta_plot = ggplot(gather(eta_df), aes(value)) + 
-    geom_histogram(bins = 20, color = "black", fill = "grey") + 
+    geom_histogram(bins = 30, color = "black", fill = "grey") + 
     facet_wrap(~key, scales = 'free_x', labeller = label_parsed) +  
     labs(title=TeX(sprintf("%s distribution of $\\eta$ parameters", descriptor))) +
     scale_x_continuous(
@@ -124,7 +138,7 @@ plot_eta <- function(eta, descriptor) {
     xlab(TeX("$\\eta$ value")) +
     ylab(TeX("density of $\\eta$")) + scale_y_discrete(breaks=NULL)
 }
-true_eta_plot = plot_eta(eta, "Simulated")
+true_eta_plot = plot_eta(eta_, "Simulated")
 true_eta_plot
 ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, "_etaTrue.png"), true_eta_plot)
 

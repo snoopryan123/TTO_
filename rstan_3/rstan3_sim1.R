@@ -21,7 +21,7 @@ options(mc.cores = cores) ### for HPCC
 rstan_options(auto_write = TRUE)
 
 #####################################
-########### GENERATE DATA ###########
+########### OBSERVED DATA ###########
 #####################################
 
 # USE THE ACTUAL X DATA MATRIX FROM 2019 
@@ -43,7 +43,9 @@ names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
 S <- as.matrix(BATTER_SEQ_dummies)
 X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
 
-#################################################
+#####################################
+########### GENERATE DATA ###########
+#####################################
 
 # helpful constant
 mu_y = mean(D$EVENT_WOBA_19)
