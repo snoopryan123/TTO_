@@ -13,7 +13,7 @@ parameters {
 }
 // transformed parameters {
 //   vector[n] linpred;
-//   linpred_b = X * beta;
+//   linpred = S*alpha + X*eta;
 // }
 model {
   // std. normal priors
