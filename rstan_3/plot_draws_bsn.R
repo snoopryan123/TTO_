@@ -1,0 +1,165 @@
+###############
+#### SETUP ####
+###############
+
+OUTPUT_FILE = "rstan2_2_removePit.R" #FIXME
+NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
+
+library(tidyverse)
+library(rstan)
+library(ggthemes)
+theme_set(theme_bw())
+if(!interactive()) pdf(NULL)
+cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+options(mc.cores = cores) ### for HPCC
+# options(mc.cores = parallel::detectCores()) # use this on my computer
+rstan_options(auto_write = TRUE)
+
+############################
+########### DATA ###########
+############################
+
+# read data
+input_file = "./../data/design_matrix2_3.csv" #FIXME
+output_folder = "./job_output/"
+D <- read_csv(input_file) 
+D <- D %>% drop_na()
+# create dummy variables for the categorical variables
+# NO INTERCEPT and INCLUDE FIRST COLUMN 
+change_factor_names <- function(s) {
+  s <- str_remove(s, "factor")
+  s <- str_remove_all(s, "\\(")
+  s <- str_remove_all(s, "\\)")
+  s
+}
+# categorical dummies for BATTER_SEQ_NUM
+BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0) 
+names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+# data 
+y <- D %>% select(std_EVENT_WOBA_19)
+X <- bind_cols(BATTER_SEQ_dummies, D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
+
+#############################
+########### RSTAN ###########
+#############################
+
+# compile rstan models
+seed = 12345
+set.seed(seed)
+file = 'tto2_1.stan' #FIXME
+model <- stan_model(file = file, model_name = file)
+
+# training data
+data_train <- list(y = y[[1]], X = X, n = nrow(X), p = ncol(X))
+
+# Train the models
+fit <- sampling(model,
+                data = data_train,
+                iter = NUM_ITERS_IN_CHAIN,
+                chains = cores, #1 #cores, 
+                cores = cores, # HPCC
+                seed = seed)
+# save the stan objects
+saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
+
+#fit <- readRDS("job_output/fit_rstan2_2_removePit.R.rds") 
+
+# posterior histogram
+# stan_hist(fit)
+# stan_hist(fit, include=FALSE, pars=NA)
+# # convergence plot
+# stan_trace(fit)
+# stan_trace(fit, include=FALSE, pars=NA)
+# # autocorrelation plot
+# stan_ac(fit)
+# stan_ac(fit, include=FALSE, pars=NA)
+
+#############################
+########### PLOTS ###########
+#############################
+
+# draws and fit summary
+NAMES <- c("sigma", names(X), "lp__")
+s <- summary(fit)$summary
+rownames(s) <- NAMES
+draws <- as_tibble(as.matrix(fit))
+names(draws) <- NAMES
+# write.csv(data.frame(ss), file = paste0(output_folder, "fit_ss", OUTPUT_FILE, ".csv"), row.names=TRUE)
+
+# due to autocorrelation, keep every other posterior sample
+#draws <- draws[seq(1,nrow(draws),2),]
+
+# RESCALE the coefficients back to un-standardized form
+#mu_y = mean(D$EVENT_WOBA_19)
+sd_y = sd(D$EVENT_WOBA_19)
+
+transform_back <- function(x) {
+  2*sd_y*x # +mu_y
+}
+
+# compute mean and 2.5%, 97.5% quantiles of posterior samples
+p = 27 #dim(BATTER_SEQ_dummies)[2]
+bsn <- paste0("BATTER_SEQ_NUM", 1:p)
+lower <- numeric(p)
+avg <- numeric(p)
+upper <- numeric(p)
+for (i in 1:length(bsn)) {
+  b = bsn[i]
+  x = transform_back(draws[[bsn[i]]])
+  lower[i] = quantile(x,.025)
+  avg[i] = mean(x)
+  upper[i] = quantile(x,.975)
+}
+
+# plot
+A4 = data.frame(
+  lower = lower,
+  avg = avg,
+  upper= upper,
+  bn = 1:p
+)
+
+
+plot1 = A4 %>% 
+  ggplot(aes(x=bn, y=avg)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+  #geom_smooth( color="firebrick", se = FALSE) +
+  #geom_line(aes(y = avg), color="firebrick", size=1) +
+  labs(title = paste0(OUTPUT_FILE, "")) +
+  theme(legend.position="none") +
+  scale_x_continuous(name="batter sequence number", 
+                     limits = c(0,28),
+                     breaks = c(0,5,10,15,20,25)) +
+  scale_y_continuous(name="posterior change in wOBA", 
+                     limits = c(-.03,.03),
+                     breaks = seq(-.03,.03,.005)) 
+plot1
+
+
+ggsave(paste0(output_folder, "plot_", OUTPUT_FILE, ".png"), plot1)
+
+# PRODUCTION PLOT
+theme_update(plot.title = element_text(hjust = 0.5))
+production_plot = A4 %>% 
+  ggplot(aes(x=bn, y=avg)) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+  # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+  # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+  geom_vline(aes(xintercept = 9.5), size=1.2) +
+  geom_vline(aes(xintercept = 18.5), size=1.2) +
+  labs(title = "Pitcher Effectiveness") +
+  theme(legend.position="none") +
+  scale_x_continuous(name="Batter Sequence Number", 
+                     limits = c(0,28),
+                     breaks = c(0,5,10,15,20,25)) +
+  scale_y_continuous(name="Posterior Change in wOBA", 
+                     limits = c(-.02, .03),
+                     breaks = seq(-.03, .03, .005)
+  ) 
+production_plot
+#ggsave("plot_model_2.png", production_plot)
+
+
