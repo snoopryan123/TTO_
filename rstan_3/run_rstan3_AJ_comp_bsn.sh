@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan3_10FoldCV-array-job-bsn$SGE_TASK_ID.R
+#$ -N rstan3_10FoldCV-array-job-bsn.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
