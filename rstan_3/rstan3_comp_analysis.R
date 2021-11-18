@@ -13,15 +13,19 @@ for (fold_num in 1:10) {
   U_test = U[test_rows,]
   O_test = O[test_rows,]
   y_test = tibble(y=y[test_rows,])
+  n = nrow(y_test)
   
   # BSN model fit
   fitB <- readRDS(paste0("./job_output/fit_rstan3_comp_bsn-",fold_num,".R.rds")) 
+  #sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
   alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
   #plot_bsn(alpha_fit) # check
   eta_fit = summary(fitB)$summary[(dim(fitB)[3]-4):(dim(fitB)[3]-1),c(4,1,8)]
+  sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
+  epsilon = c(rnorm(n,0,sd=sigma_fitB[1]),rnorm(n,0,sd=sigma_fitB[2]),rnorm(n,0,sd=sigma_fitB[3]))
   colnames(alpha_fit) = c("pplower", "ppmean", "ppupper")
   colnames(eta_fit) = c("pplower", "ppmean", "ppupper")
-  post_predB = S_test%*%alpha_fit + X_test%*%eta_fit
+  post_predB = S_test%*%alpha_fit + X_test%*%eta_fit + epsilon
   df_bsn = bind_cols(y_test, as_tibble(post_predB))
   test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
   
