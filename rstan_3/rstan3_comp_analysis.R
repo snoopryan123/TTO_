@@ -19,7 +19,6 @@ for (fold_num in 1:10) {
   fitB <- readRDS(paste0("./job_output/fit_rstan3_comp_bsn-",fold_num,".R.rds")) 
   #sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
   alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
-  #plot_bsn(alpha_fit) # check
   eta_fit = summary(fitB)$summary[(dim(fitB)[3]-4):(dim(fitB)[3]-1),c(4,1,8)]
   sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
   epsilon = c(rnorm(n,0,sd=sigma_fitB[1]),rnorm(n,0,sd=sigma_fitB[2]),rnorm(n,0,sd=sigma_fitB[3]))
@@ -35,10 +34,12 @@ for (fold_num in 1:10) {
   gamma_fit = summary(fitU)$summary[(dim(U)[2]+2):(dim(U)[2]+dim(O)[2]+1),c(4,1,8)]
   #plot_ubi(beta_fit, gamma_fit) # check
   delta_fit = summary(fitU)$summary[(dim(fitU)[3]-4):(dim(fitU)[3]-1),c(4,1,8)]
+  sigma_fitU = summary(fitU)$summary[1,c(4,1,8)]
+  epsilonU = c(rnorm(n,0,sd=sigma_fitU[1]),rnorm(n,0,sd=sigma_fitU[2]),rnorm(n,0,sd=sigma_fitU[3]))
   colnames(beta_fit) = c("pplower", "ppmean", "ppupper")
   colnames(gamma_fit) = c("pplower", "ppmean", "ppupper")
   colnames(delta_fit) = c("pplower", "ppmean", "ppupper")
-  post_predU = U_test%*%beta_fit + O_test%*%gamma_fit + X_test%*%delta_fit
+  post_predU = U_test%*%beta_fit + O_test%*%gamma_fit + X_test%*%delta_fit + epsilonU
   df_ubi = bind_cols(y_test, as_tibble(post_predU))
   test_tib_ubi = bind_rows(test_tib_ubi, df_ubi)
 }
@@ -101,8 +102,7 @@ plot_bsn <- function(A) {
     ) 
   production_plot
 }
-#plot_bsn(alpha_fit)
-
+plot_bsn(alpha_fit)
 
 plot_ubi <- function(beta_fit,gamma_fit) {
   B = do.call(rbind, replicate(3, beta_fit[1:9,], simplify=FALSE))
@@ -139,5 +139,5 @@ plot_ubi <- function(beta_fit,gamma_fit) {
     ) 
   production_plot
 }
-#plot_ubi(beta_fit,gamma_fit)
+plot_ubi(beta_fit,gamma_fit)
 

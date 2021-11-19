@@ -21,11 +21,11 @@ rstan_options(auto_write = TRUE)
 ########### OBSERVED DATA ###########
 #####################################
 
-# USE THE ACTUAL X DATA MATRIX FROM 2019 
+# USE THE ACTUAL X DATA MATRIX
 # read data
 input_file = "./../data/design_matrix2_3.csv" #FIXME
 D <- read_csv(input_file)
-D <- D %>% drop_na() %>% filter(YEAR == 2019) #FIXME
+D <- D %>% drop_na() #%>% filter(YEAR == 2019) #FIXME
   #filter(YEAR >= 2015 & YEAR <= 2019) #FIXME
 # NO INTERCEPT and INCLUDE FIRST COLUMN
 change_factor_names <- function(s) {
@@ -61,8 +61,9 @@ file_bsn = 'tto3_bsn.stan'
 model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
 
 fit_model_bsn <- function(fold_num) {
-  # training data - exclude FOLD_NUM
-  train_rows = which(folds != fold_num)
+  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
+  train_rows = ifelse(is.na(fold_num), TRUE, which(folds != fold_num))
+  #train_rows = which(folds != fold_num)
   y_train = y[train_rows,]
   X_train = X[train_rows,]
   S_train = S[train_rows,]
@@ -91,8 +92,9 @@ file_ubi = 'tto3_ubi.stan'
 model_ubi <- stan_model(file = file_ubi, model_name = file_ubi)
 
 fit_model_ubi <- function(fold_num) {
-  # training data - exclude FOLD_NUM
-  train_rows = which(folds != fold_num)
+  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
+  train_rows = ifelse(is.na(fold_num), TRUE, which(folds != fold_num))
+  #train_rows = which(folds != fold_num)
   y_train = y[train_rows,]
   X_train = X[train_rows,]
   U_train = U[train_rows,]
@@ -102,7 +104,7 @@ fit_model_ubi <- function(fold_num) {
     n=nrow(X_train),p_x=ncol(X_train),p_u=ncol(U_train),p_o=ncol(O_train)
   )
   # Train the models
-  NUM_ITERS_IN_CHAIN = 2500
+  NUM_ITERS_IN_CHAIN = 1500
   seed = 12345
   set.seed(seed)
   fit <- sampling(model_ubi,
@@ -114,3 +116,71 @@ fit_model_ubi <- function(fold_num) {
   fit
 }
 
+######################################
+########### PLOT FUNCTIONS ###########
+######################################
+
+plot_bsn_ <- function(fitB) {
+  alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
+  A = alpha_fit
+  colnames(A) = c("lower","avg","upper")
+  A = as_tibble(A[1:27,])
+  A$bn = 1:27
+  # PRODUCTION PLOT
+  theme_update(plot.title = element_text(hjust = 0.5))
+  production_plot = A %>% 
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    #labs(title = "Pitcher Effectiveness") +
+    labs(title = TeX("Posterior distribution of $\\alpha$")) + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("Batter sequence number $k$"),
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(name=TeX("$\\alpha_k$"),
+                       #limits = c(-.02, .03),
+                       breaks = seq(-.09, .09, .005)
+    ) 
+  production_plot
+}
+
+plot_ubi_ <- function(fitU) {
+  beta_fit = summary(fitU)$summary[2:(dim(U)[2]+1),c(4,1,8)]
+  gamma_fit = summary(fitU)$summary[(dim(U)[2]+2):(dim(U)[2]+dim(O)[2]+1),c(4,1,8)]
+  B = do.call(rbind, replicate(3, beta_fit[1:9,], simplify=FALSE))
+  G = rbind(
+    do.call(rbind, replicate(9, gamma_fit[1,], simplify=FALSE)),
+    do.call(rbind, replicate(9, gamma_fit[2,], simplify=FALSE)),
+    do.call(rbind, replicate(9, gamma_fit[3,], simplify=FALSE))
+  )
+  A = B+G
+  rownames(A) = NULL
+  colnames(A) = c("lower","avg","upper")
+  A = as_tibble(A)
+  A$bn = 1:27
+  # PRODUCTION PLOT
+  theme_update(plot.title = element_text(hjust = 0.5))
+  XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
+  BREAKS = seq(1,28,by=2)#c(1,6,11,16,21,26)#c(0,5,10,15,20,25)
+  production_plot = A %>% 
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    #labs(title = "Pitcher Effectiveness") +
+    labs(title = TeX("Posterior distribution of $\\beta +\\gamma$")) + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("(order Count $l$, unique batter index $k$)"),
+                       limits = c(0,28),
+                       breaks = BREAKS,
+                       labels =  XLABS[BREAKS+1]) +
+    scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"),
+                       #limits = c(-.02, .03),
+                       #breaks = seq(-.09, .09, .005)
+    ) 
+  production_plot
+}
