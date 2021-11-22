@@ -12,8 +12,8 @@ library(latex2exp)
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
-NUM_ITERS_IN_CHAIN = 10#1500 #FIXME #10 
-cores = 1#strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
+cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
