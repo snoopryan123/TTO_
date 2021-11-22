@@ -9,3 +9,5 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 p = plot_ubi_(fit)
 p
 ggsave(paste0("./job_output/plot_",OUTPUT_FILE,".png"), p)
+
+
