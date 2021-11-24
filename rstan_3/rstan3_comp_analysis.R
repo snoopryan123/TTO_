@@ -25,12 +25,6 @@ for (fold_num in 1:10) {
   eta_draws = drawsB[,str_detect(colnames(drawsB), "^eta")]
   sigma_draws = drawsB[,str_detect(colnames(drawsB), "^sigma")]$sigma
   post_pred_means = S_test%*%t(alpha_draws) + X_test%*%t(eta_draws)
-  # epsilon = do.call(
-  #   rbind, 
-  #   replicate(n, 
-  #             matrix(sapply(sigma_draws, function(s) { rnorm(1,0,sd=s) }), nrow=1), 
-  #             simplify=FALSE)
-  # )
   epsilon0 = matrix(sapply(sigma_draws, function(s) { rnorm(1,0,sd=s) }), nrow=1)
   epsilon = do.call(rbind, replicate(n, epsilon0, simplify=FALSE))
   post_pred = post_pred_means + epsilon
