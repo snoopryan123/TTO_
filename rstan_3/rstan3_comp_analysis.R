@@ -17,24 +17,22 @@ for (fold_num in 1:10) {
   y_test = tibble(y=y[test_rows,])
   n = nrow(y_test)
   
-  # BSN model fit
+  ### BSN model fit
   fitB <- readRDS(paste0("./job_output/fit_rstan3_comp_bsn-",fold_num,".R.rds")) 
   #plot_bsn0(fitB)
-  
   drawsB <- as_tibble(as.matrix(fitB))
   alpha_draws = drawsB[,str_detect(colnames(drawsB), "^alpha")]
   eta_draws = drawsB[,str_detect(colnames(drawsB), "^eta")]
   sigma_draws = drawsB[,str_detect(colnames(drawsB), "^sigma")]$sigma
   post_pred_means = S_test%*%t(alpha_draws) + X_test%*%t(eta_draws)
-  
-  epsilon = do.call(
-    rbind, 
-    replicate(n, 
-              matrix(sapply(sigma_draws, function(s) { rnorm(1,0,sd=s) }), nrow=1), 
-              simplify=FALSE)
-  )
-    
-  
+  # epsilon = do.call(
+  #   rbind, 
+  #   replicate(n, 
+  #             matrix(sapply(sigma_draws, function(s) { rnorm(1,0,sd=s) }), nrow=1), 
+  #             simplify=FALSE)
+  # )
+  epsilon0 = matrix(sapply(sigma_draws, function(s) { rnorm(1,0,sd=s) }), nrow=1)
+  epsilon = do.call(rbind, replicate(n, epsilon0, simplify=FALSE))
   post_pred = post_pred_means + epsilon
   
   pplower = apply(post_pred, 1, function(x) quantile(x,.025))
@@ -43,34 +41,24 @@ for (fold_num in 1:10) {
   df_bsn = bind_cols(y_test, pplower=pplower, ppmean=ppmean, ppupper=ppupper)
   test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
   
-  # sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
-  # alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
-  # eta_fit = summary(fitB)$summary[(dim(fitB)[3]-4):(dim(fitB)[3]-1),c(4,1,8)]
-  # sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
-  # epsilon = c(rnorm(n,0,sd=sigma_fitB[1]),rnorm(n,0,sd=sigma_fitB[2]),rnorm(n,0,sd=sigma_fitB[3]))
-  # colnames(alpha_fit) = c("pplower", "ppmean", "ppupper")
-  # colnames(eta_fit) = c("pplower", "ppmean", "ppupper")
-  # post_predB = S_test%*%alpha_fit + X_test%*%eta_fit + epsilon
-  # df_bsn = bind_cols(y_test, as_tibble(post_predB))
-  # test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
-  
-  # UBI model fit
+  ### UBI model fit
   fitU <- readRDS(paste0("./job_output/fit_rstan3_comp_ubi-",fold_num,".R.rds"))
   #plot_ubi0(fitU)
-  
   drawsU <- as_tibble(as.matrix(fitU))
+  beta_draws = drawsU[,str_detect(colnames(drawsU), "^beta")]
+  gamma_draws = drawsU[,str_detect(colnames(drawsU), "^gamma")]
+  delta_draws = drawsU[,str_detect(colnames(drawsU), "^delta")]
+  sigma_drawsU = drawsU[,str_detect(colnames(drawsU), "^sigma")]$sigma
+  post_pred_meansU = U_test%*%t(beta_draws) + O_test%*%t(gamma_draws) + X_test%*%t(delta_draws)
+  epsilon0U = matrix(sapply(sigma_drawsU, function(s) { rnorm(1,0,sd=s) }), nrow=1)
+  epsilonU = do.call(rbind, replicate(n, epsilon0U, simplify=FALSE))
+  post_predU = post_pred_meansU + epsilonU
   
-  # beta_fit = summary(fitU)$summary[2:(dim(U)[2]+1),c(4,1,8)]
-  # gamma_fit = summary(fitU)$summary[(dim(U)[2]+2):(dim(U)[2]+dim(O)[2]+1),c(4,1,8)]
-  # delta_fit = summary(fitU)$summary[(dim(fitU)[3]-4):(dim(fitU)[3]-1),c(4,1,8)]
-  # sigma_fitU = summary(fitU)$summary[1,c(4,1,8)]
-  # epsilonU = c(rnorm(n,0,sd=sigma_fitU[1]),rnorm(n,0,sd=sigma_fitU[2]),rnorm(n,0,sd=sigma_fitU[3]))
-  # colnames(beta_fit) = c("pplower", "ppmean", "ppupper")
-  # colnames(gamma_fit) = c("pplower", "ppmean", "ppupper")
-  # colnames(delta_fit) = c("pplower", "ppmean", "ppupper")
-  # post_predU = U_test%*%beta_fit + O_test%*%gamma_fit + X_test%*%delta_fit + epsilonU
-  # df_ubi = bind_cols(y_test, as_tibble(post_predU))
-  # test_tib_ubi = bind_rows(test_tib_ubi, df_ubi)
+  pplowerU = apply(post_predU, 1, function(x) quantile(x,.025))
+  ppmeanU = apply(post_predU, 1, function(x) mean(x))
+  ppupperU = apply(post_predU, 1, function(x) quantile(x,.975))
+  df_ubi = bind_cols(y_test, pplower=pplowerU, ppmean=ppmeanU, ppupper=ppupperU)
+  test_tib_ubi = bind_rows(test_tib_ubi, df_ubi)
 }
 
 ########################################
@@ -97,76 +85,50 @@ lengths_ubi = test_tib_ubi$ppupper - test_tib_ubi$pplower
 length_ratios = lengths_ubi/lengths_bsn
 mean(length_ratios)
 sd(length_ratios)
-as_tibble(length_ratios) %>% ggplot(aes(x=value)) + 
-  geom_histogram(bins=80) + 
-  #geom_vline(xintercept = mean(length_ratios), color="firebrick") +
-  xlim(c(0,150)) + 
-  xlab("ratio of UBI length to BSN length")
+lp = as_tibble(length_ratios) %>% ggplot(aes(x=value)) + 
+  geom_histogram(binwidth=.001) + 
+  geom_vline(xintercept = mean(length_ratios), color="firebrick") +
+  geom_vline(xintercept = 1, color="dodgerblue2") +
+  xlim(c(0.9,1.2)) + 
+  xlab("Ratio of UBI length to BSN length") +
+  annotate(x=1,y=+Inf,label="1",vjust=2,geom="label",color="dodgerblue2") +
+  annotate(x=mean(length_ratios),y=2900,label="Mean ratio of lengths",vjust=2,geom="label",color="firebrick")
+lp
+ggsave("job_output/plot_ppLengthRatio.png", lp)
 
-#############################
-########### PLOTS ########### for sanity checks
-#############################
 
-# plot_bsn <- function(A) {
-#   colnames(A) = c("lower","avg","upper")
-#   A = as_tibble(A[1:27,])
-#   A$bn = 1:27
-#   # PRODUCTION PLOT
-#   theme_update(plot.title = element_text(hjust = 0.5))
-#   production_plot = A %>% 
-#     ggplot(aes(x=bn, y=avg)) +
-#     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
-#     geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-#     geom_vline(aes(xintercept = 9.5), size=1.2) +
-#     geom_vline(aes(xintercept = 18.5), size=1.2) +
-#     #labs(title = "Pitcher Effectiveness") +
-#     labs(title = TeX("Posterior distribution of $\\alpha$")) + 
-#     theme(legend.position="none") +
-#     scale_x_continuous(name=TeX("Batter sequence number $k$"),
-#                        limits = c(0,28),
-#                        breaks = c(0,5,10,15,20,25)) +
-#     scale_y_continuous(name=TeX("$\\alpha_k$"),
-#                        #limits = c(-.02, .03),
-#                        breaks = seq(-.09, .09, .005)
-#     ) 
-#   production_plot
-# }
-# plot_bsn(alpha_fit)
-# 
-# plot_ubi <- function(beta_fit,gamma_fit) {
-#   B = do.call(rbind, replicate(3, beta_fit[1:9,], simplify=FALSE))
-#   G = rbind(
-#     do.call(rbind, replicate(9, gamma_fit[1,], simplify=FALSE)),
-#     do.call(rbind, replicate(9, gamma_fit[2,], simplify=FALSE)),
-#     do.call(rbind, replicate(9, gamma_fit[3,], simplify=FALSE))
-#   )
-#   A = B+G
-#   rownames(A) = NULL
-#   colnames(A) = c("lower","avg","upper")
-#   A = as_tibble(A)
-#   A$bn = 1:27
-#   # PRODUCTION PLOT
-#   theme_update(plot.title = element_text(hjust = 0.5))
-#   XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
-#   BREAKS = seq(1,28,by=2)#c(1,6,11,16,21,26)#c(0,5,10,15,20,25)
-#   production_plot = A %>% 
-#     ggplot(aes(x=bn, y=avg)) +
-#     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
-#     geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-#     geom_vline(aes(xintercept = 9.5), size=1.2) +
-#     geom_vline(aes(xintercept = 18.5), size=1.2) +
-#     #labs(title = "Pitcher Effectiveness") +
-#     labs(title = TeX("Posterior distribution of $\\beta +\\gamma$")) + 
-#     theme(legend.position="none") +
-#     scale_x_continuous(name=TeX("(order Count $l$, unique batter index $k$)"),
-#                        limits = c(0,28),
-#                        breaks = BREAKS,
-#                        labels =  XLABS[BREAKS+1]) +
-#     scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"),
-#                        #limits = c(-.02, .03),
-#                        #breaks = seq(-.09, .09, .005)
-#     ) 
-#   production_plot
-# }
-# plot_ubi(beta_fit,gamma_fit)
 
+
+
+
+
+
+
+##############################################################################
+########### wrong way to get the posterior predictive intervals... ########### 
+##############################################################################
+
+# sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
+# alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
+# eta_fit = summary(fitB)$summary[(dim(fitB)[3]-4):(dim(fitB)[3]-1),c(4,1,8)]
+# sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
+# epsilon = c(rnorm(n,0,sd=sigma_fitB[1]),rnorm(n,0,sd=sigma_fitB[2]),rnorm(n,0,sd=sigma_fitB[3]))
+# colnames(alpha_fit) = c("pplower", "ppmean", "ppupper")
+# colnames(eta_fit) = c("pplower", "ppmean", "ppupper")
+# post_predB = S_test%*%alpha_fit + X_test%*%eta_fit + epsilon
+# df_bsn = bind_cols(y_test, as_tibble(post_predB))
+# test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
+
+
+
+# beta_fit = summary(fitU)$summary[2:(dim(U)[2]+1),c(4,1,8)]
+# gamma_fit = summary(fitU)$summary[(dim(U)[2]+2):(dim(U)[2]+dim(O)[2]+1),c(4,1,8)]
+# delta_fit = summary(fitU)$summary[(dim(fitU)[3]-4):(dim(fitU)[3]-1),c(4,1,8)]
+# sigma_fitU = summary(fitU)$summary[1,c(4,1,8)]
+# epsilonU = c(rnorm(n,0,sd=sigma_fitU[1]),rnorm(n,0,sd=sigma_fitU[2]),rnorm(n,0,sd=sigma_fitU[3]))
+# colnames(beta_fit) = c("pplower", "ppmean", "ppupper")
+# colnames(gamma_fit) = c("pplower", "ppmean", "ppupper")
+# colnames(delta_fit) = c("pplower", "ppmean", "ppupper")
+# post_predU = U_test%*%beta_fit + O_test%*%gamma_fit + X_test%*%delta_fit + epsilonU
+# df_ubi = bind_cols(y_test, as_tibble(post_predU))
+# test_tib_ubi = bind_rows(test_tib_ubi, df_ubi)
