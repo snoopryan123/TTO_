@@ -6,6 +6,8 @@ test_tib_bsn = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=
 test_tib_ubi = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=numeric(0))
 
 for (fold_num in 1:10) {
+  print(fold_num)
+  
   # testing data matrices
   test_rows = which(folds == fold_num)
   X_test = X[test_rows,]
@@ -18,32 +20,57 @@ for (fold_num in 1:10) {
   # BSN model fit
   fitB <- readRDS(paste0("./job_output/fit_rstan3_comp_bsn-",fold_num,".R.rds")) 
   #plot_bsn0(fitB)
-  #sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
-  alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
-  eta_fit = summary(fitB)$summary[(dim(fitB)[3]-4):(dim(fitB)[3]-1),c(4,1,8)]
-  sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
-  epsilon = c(rnorm(n,0,sd=sigma_fitB[1]),rnorm(n,0,sd=sigma_fitB[2]),rnorm(n,0,sd=sigma_fitB[3]))
-  colnames(alpha_fit) = c("pplower", "ppmean", "ppupper")
-  colnames(eta_fit) = c("pplower", "ppmean", "ppupper")
-  post_predB = S_test%*%alpha_fit + X_test%*%eta_fit + epsilon
-  df_bsn = bind_cols(y_test, as_tibble(post_predB))
+  
+  drawsB <- as_tibble(as.matrix(fitB))
+  alpha_draws = drawsB[,str_detect(colnames(drawsB), "^alpha")]
+  eta_draws = drawsB[,str_detect(colnames(drawsB), "^eta")]
+  sigma_draws = drawsB[,str_detect(colnames(drawsB), "^sigma")]$sigma
+  post_pred_means = S_test%*%t(alpha_draws) + X_test%*%t(eta_draws)
+  
+  epsilon = do.call(
+    rbind, 
+    replicate(n, 
+              matrix(sapply(sigma_draws, function(s) { rnorm(1,0,sd=s) }), nrow=1), 
+              simplify=FALSE)
+  )
+    
+  
+  post_pred = post_pred_means + epsilon
+  
+  pplower = apply(post_pred, 1, function(x) quantile(x,.025))
+  ppmean = apply(post_pred, 1, function(x) mean(x))
+  ppupper = apply(post_pred, 1, function(x) quantile(x,.975))
+  df_bsn = bind_cols(y_test, pplower=pplower, ppmean=ppmean, ppupper=ppupper)
   test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
+  
+  # sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
+  # alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
+  # eta_fit = summary(fitB)$summary[(dim(fitB)[3]-4):(dim(fitB)[3]-1),c(4,1,8)]
+  # sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
+  # epsilon = c(rnorm(n,0,sd=sigma_fitB[1]),rnorm(n,0,sd=sigma_fitB[2]),rnorm(n,0,sd=sigma_fitB[3]))
+  # colnames(alpha_fit) = c("pplower", "ppmean", "ppupper")
+  # colnames(eta_fit) = c("pplower", "ppmean", "ppupper")
+  # post_predB = S_test%*%alpha_fit + X_test%*%eta_fit + epsilon
+  # df_bsn = bind_cols(y_test, as_tibble(post_predB))
+  # test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
   
   # UBI model fit
   fitU <- readRDS(paste0("./job_output/fit_rstan3_comp_ubi-",fold_num,".R.rds"))
   #plot_ubi0(fitU)
-  beta_fit = summary(fitU)$summary[2:(dim(U)[2]+1),c(4,1,8)]
-  gamma_fit = summary(fitU)$summary[(dim(U)[2]+2):(dim(U)[2]+dim(O)[2]+1),c(4,1,8)]
-  #plot_ubi(beta_fit, gamma_fit) # check
-  delta_fit = summary(fitU)$summary[(dim(fitU)[3]-4):(dim(fitU)[3]-1),c(4,1,8)]
-  sigma_fitU = summary(fitU)$summary[1,c(4,1,8)]
-  epsilonU = c(rnorm(n,0,sd=sigma_fitU[1]),rnorm(n,0,sd=sigma_fitU[2]),rnorm(n,0,sd=sigma_fitU[3]))
-  colnames(beta_fit) = c("pplower", "ppmean", "ppupper")
-  colnames(gamma_fit) = c("pplower", "ppmean", "ppupper")
-  colnames(delta_fit) = c("pplower", "ppmean", "ppupper")
-  post_predU = U_test%*%beta_fit + O_test%*%gamma_fit + X_test%*%delta_fit + epsilonU
-  df_ubi = bind_cols(y_test, as_tibble(post_predU))
-  test_tib_ubi = bind_rows(test_tib_ubi, df_ubi)
+  
+  drawsU <- as_tibble(as.matrix(fitU))
+  
+  # beta_fit = summary(fitU)$summary[2:(dim(U)[2]+1),c(4,1,8)]
+  # gamma_fit = summary(fitU)$summary[(dim(U)[2]+2):(dim(U)[2]+dim(O)[2]+1),c(4,1,8)]
+  # delta_fit = summary(fitU)$summary[(dim(fitU)[3]-4):(dim(fitU)[3]-1),c(4,1,8)]
+  # sigma_fitU = summary(fitU)$summary[1,c(4,1,8)]
+  # epsilonU = c(rnorm(n,0,sd=sigma_fitU[1]),rnorm(n,0,sd=sigma_fitU[2]),rnorm(n,0,sd=sigma_fitU[3]))
+  # colnames(beta_fit) = c("pplower", "ppmean", "ppupper")
+  # colnames(gamma_fit) = c("pplower", "ppmean", "ppupper")
+  # colnames(delta_fit) = c("pplower", "ppmean", "ppupper")
+  # post_predU = U_test%*%beta_fit + O_test%*%gamma_fit + X_test%*%delta_fit + epsilonU
+  # df_ubi = bind_cols(y_test, as_tibble(post_predU))
+  # test_tib_ubi = bind_rows(test_tib_ubi, df_ubi)
 }
 
 ########################################

@@ -25,7 +25,7 @@ rstan_options(auto_write = TRUE)
 # read data
 input_file = "./../data/design_matrix2_3.csv" #FIXME
 D <- read_csv(input_file)
-D <- D %>% drop_na() #%>% filter(YEAR == 2019) #FIXME
+D <- D %>% drop_na() %>% filter(YEAR == 2019) #FIXME
   #filter(YEAR >= 2015 & YEAR <= 2019) #FIXME
 # NO INTERCEPT and INCLUDE FIRST COLUMN
 change_factor_names <- function(s) {
