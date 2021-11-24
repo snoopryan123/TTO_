@@ -17,6 +17,7 @@ for (fold_num in 1:10) {
   
   # BSN model fit
   fitB <- readRDS(paste0("./job_output/fit_rstan3_comp_bsn-",fold_num,".R.rds")) 
+  #plot_bsn0(fitB)
   #sigma_fitB = summary(fitB)$summary[1,c(4,1,8)]
   alpha_fit = summary(fitB)$summary[2:(dim(S)[2]+1),c(4,1,8)]
   eta_fit = summary(fitB)$summary[(dim(fitB)[3]-4):(dim(fitB)[3]-1),c(4,1,8)]
@@ -30,6 +31,7 @@ for (fold_num in 1:10) {
   
   # UBI model fit
   fitU <- readRDS(paste0("./job_output/fit_rstan3_comp_ubi-",fold_num,".R.rds"))
+  #plot_ubi0(fitU)
   beta_fit = summary(fitU)$summary[2:(dim(U)[2]+1),c(4,1,8)]
   gamma_fit = summary(fitU)$summary[(dim(U)[2]+2):(dim(U)[2]+dim(O)[2]+1),c(4,1,8)]
   #plot_ubi(beta_fit, gamma_fit) # check
@@ -78,66 +80,66 @@ as_tibble(length_ratios) %>% ggplot(aes(x=value)) +
 ########### PLOTS ########### for sanity checks
 #############################
 
-plot_bsn <- function(A) {
-  colnames(A) = c("lower","avg","upper")
-  A = as_tibble(A[1:27,])
-  A$bn = 1:27
-  # PRODUCTION PLOT
-  theme_update(plot.title = element_text(hjust = 0.5))
-  production_plot = A %>% 
-    ggplot(aes(x=bn, y=avg)) +
-    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
-    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-    geom_vline(aes(xintercept = 9.5), size=1.2) +
-    geom_vline(aes(xintercept = 18.5), size=1.2) +
-    #labs(title = "Pitcher Effectiveness") +
-    labs(title = TeX("Posterior distribution of $\\alpha$")) + 
-    theme(legend.position="none") +
-    scale_x_continuous(name=TeX("Batter sequence number $k$"),
-                       limits = c(0,28),
-                       breaks = c(0,5,10,15,20,25)) +
-    scale_y_continuous(name=TeX("$\\alpha_k$"),
-                       #limits = c(-.02, .03),
-                       breaks = seq(-.09, .09, .005)
-    ) 
-  production_plot
-}
-plot_bsn(alpha_fit)
-
-plot_ubi <- function(beta_fit,gamma_fit) {
-  B = do.call(rbind, replicate(3, beta_fit[1:9,], simplify=FALSE))
-  G = rbind(
-    do.call(rbind, replicate(9, gamma_fit[1,], simplify=FALSE)),
-    do.call(rbind, replicate(9, gamma_fit[2,], simplify=FALSE)),
-    do.call(rbind, replicate(9, gamma_fit[3,], simplify=FALSE))
-  )
-  A = B+G
-  rownames(A) = NULL
-  colnames(A) = c("lower","avg","upper")
-  A = as_tibble(A)
-  A$bn = 1:27
-  # PRODUCTION PLOT
-  theme_update(plot.title = element_text(hjust = 0.5))
-  XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
-  BREAKS = seq(1,28,by=2)#c(1,6,11,16,21,26)#c(0,5,10,15,20,25)
-  production_plot = A %>% 
-    ggplot(aes(x=bn, y=avg)) +
-    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
-    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-    geom_vline(aes(xintercept = 9.5), size=1.2) +
-    geom_vline(aes(xintercept = 18.5), size=1.2) +
-    #labs(title = "Pitcher Effectiveness") +
-    labs(title = TeX("Posterior distribution of $\\beta +\\gamma$")) + 
-    theme(legend.position="none") +
-    scale_x_continuous(name=TeX("(order Count $l$, unique batter index $k$)"),
-                       limits = c(0,28),
-                       breaks = BREAKS,
-                       labels =  XLABS[BREAKS+1]) +
-    scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"),
-                       #limits = c(-.02, .03),
-                       #breaks = seq(-.09, .09, .005)
-    ) 
-  production_plot
-}
-plot_ubi(beta_fit,gamma_fit)
+# plot_bsn <- function(A) {
+#   colnames(A) = c("lower","avg","upper")
+#   A = as_tibble(A[1:27,])
+#   A$bn = 1:27
+#   # PRODUCTION PLOT
+#   theme_update(plot.title = element_text(hjust = 0.5))
+#   production_plot = A %>% 
+#     ggplot(aes(x=bn, y=avg)) +
+#     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+#     geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+#     geom_vline(aes(xintercept = 9.5), size=1.2) +
+#     geom_vline(aes(xintercept = 18.5), size=1.2) +
+#     #labs(title = "Pitcher Effectiveness") +
+#     labs(title = TeX("Posterior distribution of $\\alpha$")) + 
+#     theme(legend.position="none") +
+#     scale_x_continuous(name=TeX("Batter sequence number $k$"),
+#                        limits = c(0,28),
+#                        breaks = c(0,5,10,15,20,25)) +
+#     scale_y_continuous(name=TeX("$\\alpha_k$"),
+#                        #limits = c(-.02, .03),
+#                        breaks = seq(-.09, .09, .005)
+#     ) 
+#   production_plot
+# }
+# plot_bsn(alpha_fit)
+# 
+# plot_ubi <- function(beta_fit,gamma_fit) {
+#   B = do.call(rbind, replicate(3, beta_fit[1:9,], simplify=FALSE))
+#   G = rbind(
+#     do.call(rbind, replicate(9, gamma_fit[1,], simplify=FALSE)),
+#     do.call(rbind, replicate(9, gamma_fit[2,], simplify=FALSE)),
+#     do.call(rbind, replicate(9, gamma_fit[3,], simplify=FALSE))
+#   )
+#   A = B+G
+#   rownames(A) = NULL
+#   colnames(A) = c("lower","avg","upper")
+#   A = as_tibble(A)
+#   A$bn = 1:27
+#   # PRODUCTION PLOT
+#   theme_update(plot.title = element_text(hjust = 0.5))
+#   XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
+#   BREAKS = seq(1,28,by=2)#c(1,6,11,16,21,26)#c(0,5,10,15,20,25)
+#   production_plot = A %>% 
+#     ggplot(aes(x=bn, y=avg)) +
+#     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+#     geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+#     geom_vline(aes(xintercept = 9.5), size=1.2) +
+#     geom_vline(aes(xintercept = 18.5), size=1.2) +
+#     #labs(title = "Pitcher Effectiveness") +
+#     labs(title = TeX("Posterior distribution of $\\beta +\\gamma$")) + 
+#     theme(legend.position="none") +
+#     scale_x_continuous(name=TeX("(order Count $l$, unique batter index $k$)"),
+#                        limits = c(0,28),
+#                        breaks = BREAKS,
+#                        labels =  XLABS[BREAKS+1]) +
+#     scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"),
+#                        #limits = c(-.02, .03),
+#                        #breaks = seq(-.09, .09, .005)
+#     ) 
+#   production_plot
+# }
+# plot_ubi(beta_fit,gamma_fit)
 

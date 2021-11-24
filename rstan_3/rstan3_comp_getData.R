@@ -129,19 +129,14 @@ transform_back <- function(x) {
 }
 
 plot_bsn0 <- function(fit) {
-  NAMES <- c("sigma", colnames(S), colnames(X), "lp__")
-  s <- summary(fit)$summary
-  rownames(s) <- NAMES
   draws <- as_tibble(as.matrix(fit))
-  names(draws) <- NAMES
-  # write.csv(data.frame(ss), file = paste0(output_folder, "fit_ss", OUTPUT_FILE, ".csv"), row.names=TRUE)
-  
+
   # due to autocorrelation, keep every other posterior sample
   #draws <- draws[seq(1,nrow(draws),2),]
   
   # compute mean and 2.5%, 97.5% quantiles of posterior samples
   p = 27 #dim(BATTER_SEQ_dummies)[2]
-  bsn <- paste0("BATTER_SEQ_NUM", 1:p)
+  bsn <- paste0("alpha[",1:p,"]")
   lower <- numeric(p)
   avg <- numeric(p)
   upper <- numeric(p)
@@ -177,36 +172,19 @@ plot_bsn0 <- function(fit) {
                        limits = c(0,28),
                        breaks = c(0,5,10,15,20,25)) +
     scale_y_continuous(name=TeX("$\\alpha_k$"), 
-                       limits = c(-.02, .03),
+                       #limits = c(-.02, .03),
                        breaks = seq(-.03, .03, .005)
     ) 
   production_plot
 }
 
 plot_ubi0 <- function(fit) {
-  # draws and fit summary
-  NAMES <- c("sigma", colnames(U), colnames(O), colnames(X), "lp__")
-  s <- summary(fit)$summary
-  rownames(s) <- NAMES
   draws <- as_tibble(as.matrix(fit))
-  names(draws) <- NAMES
-  # write.csv(data.frame(ss), file = paste0(output_folder, "fit_ss", OUTPUT_FILE, ".csv"), row.names=TRUE)
-  
-  # due to autocorrelation, keep every other posterior sample
-  #draws <- draws[seq(1,nrow(draws),2),]
-  
-  # RESCALE the coefficients back to un-standardized form
-  #mu_y = mean(D$EVENT_WOBA_19)
-  sd_y = sd(D$EVENT_WOBA_19)
-  
-  transform_back <- function(x) {
-    2*sd_y*x # +mu_y
-  }
-  
+
   # compute mean and 2.5%, 97.5% quantiles of posterior samples
   p = 27 #dim(BATTER_SEQ_dummies)[2]
-  bidx <- paste0("BATTER_IDX", 1:9)
-  oc <- paste0("ORDER_CT", 1:3)
+  bidx <- paste0("beta[",1:9,"]")
+  oc <- paste0("gamma[",1:3,"]")
   lower <- numeric(p)
   avg <- numeric(p)
   upper <- numeric(p)
@@ -252,7 +230,7 @@ plot_ubi0 <- function(fit) {
                        breaks = BREAKS,
                        labels =  XLABS[BREAKS+1]) +
     scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"), 
-                       limits = c(-.015, .03),
+                       #limits = c(-.015, .03),
                        breaks = seq(-.03, .03, .005)
     ) 
   production_plot
