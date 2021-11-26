@@ -59,6 +59,16 @@ for (fold_num in 1:10) {
 ########### MODEL COMPARISON ###########
 ########################################
 
+# sd of woba
+sd(D$EVENT_WOBA_19)
+
+# mae (mean absolute error) of posterior predictive mean of y
+mae <- function(d) {
+  sum(abs(d$y - d$ppmean))/nrow(d)
+}
+mae(test_tib_bsn)
+mae(test_tib_ubi)
+
 # rmse of posterior predictive mean of y
 rmse <- function(d) {
   sqrt(sum((d$y - d$ppmean)^2)/nrow(d))
@@ -88,7 +98,7 @@ lp = as_tibble(length_ratios) %>% ggplot(aes(x=value)) +
   annotate(x=1,y=+Inf,label="1",vjust=2,geom="label",color="dodgerblue2") +
   annotate(x=mean(length_ratios),y=2900,label="Mean ratio of lengths",vjust=2,geom="label",color="firebrick")
 lp
-ggsave("job_output/plot_ppLengthRatio.png", lp)
+#ggsave("job_output/plot_ppLengthRatio.png", lp)
 
 
 
