@@ -59,12 +59,12 @@ BB = 27
 # all pitchers have the same constant effects
 b = -.007
 m = .001
-delta_2 = .01 #.0172
-delta_3 = .02 #.0153
+lambda_2 = .01 #.0172
+lambda_3 = .02 #.0153
 k = 1:B
-alpha = b + m*k + delta_2*(k>=10) + delta_3*(k>=19) # plot(1:27, alpha[1:27])
+alpha = b + m*k + lambda_2*(k>=10) + lambda_3*(k>=19) # plot(1:27, alpha[1:27])
 eta = c(.09, .07, -.02, .01)
-sigma = .125
+sigma = 0.5 #.125
 # generate y vector
 epsilon = rnorm(N, mean=0, sd=sigma)
 y = S%*%alpha + X%*%eta + epsilon 
@@ -100,7 +100,7 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 draws <- as_tibble(as.matrix(fit))
 alpha_post <- as.matrix(draws[,2:28])
 eta_post <- as.matrix(draws[,(ncol(draws)-4):(ncol(draws)-1)])
-
+  
 # plot posterior distribution of alpha
 {
   lower <- numeric(BB)
@@ -112,6 +112,7 @@ eta_post <- as.matrix(draws[,(ncol(draws)-4):(ncol(draws)-1)])
     upper[i] = quantile(alpha_post[,i],.975)
   }
   AAA = data.frame(lower = lower,avg = avg,upper= upper,bn = 1:BB)
+  df_alpha_true = tibble(bn=1:BB,y=alpha[1:BB])
   alpha_plot = AAA %>%
     ggplot(aes(x=bn, y=avg)) +
     geom_errorbar(aes(x=bn, y=avg, ymin = lower, ymax = upper), fill = "black", width = .4) +
