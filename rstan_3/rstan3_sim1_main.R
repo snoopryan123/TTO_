@@ -76,7 +76,8 @@ fit_model_bsn <- function(y) {
   # training data
   data_train <- list(y=y,S=S,X=X,n=nrow(X),p_s=ncol(S),p_x=ncol(X))
   # set seed
-  set.seed(12345)
+  seed = 12345
+  #set.seed(12345)
   # train the model
   fit <- sampling(model_bsn,
                   data = data_train,
