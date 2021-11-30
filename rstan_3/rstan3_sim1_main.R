@@ -82,16 +82,13 @@ model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
 fit_model_bsn <- function(y_train) {
   # training data
   data_train <- list(y=y_train,S=S_train,X=X_train,n=nrow(X_train),p_s=ncol(S_train),p_x=ncol(X_train))
-  # set seed
-  seed = 12345
-  #set.seed(12345)
   # train the model
   fit <- sampling(model_bsn,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
                   chains = cores, #1 #cores, 
                   cores = cores, # HPCC
-                  seed = seed)
+                  seed = 12345)
   fit
 }
 

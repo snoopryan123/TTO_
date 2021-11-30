@@ -5,6 +5,7 @@ output_folder = "./job_output/"
 OUTPUT_FILE = "rstan3_sim1_bsn-2.R" #FIXME
 
 # generate new epsilon and y vector
+set.seed(2)
 epsilon = rnorm(N, mean=0, sd=sigma)
 y = S%*%alpha + X%*%eta + epsilon 
 y = as.numeric(y)
