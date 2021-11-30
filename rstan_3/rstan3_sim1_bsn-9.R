@@ -13,10 +13,12 @@ saveRDS(epsilon, file = paste0(output_folder, "epsilon_", OUTPUT_FILE, ".rds"))
 #epsilon <- readRDS("job_output/epsilon_rstan3_sim1_bsn-1.R.rds") 
 saveRDS(y, file = paste0(output_folder, "y_", OUTPUT_FILE, ".rds"))
 #epsilon <- readRDS("job_output/y_rstan3_sim1_bsn-1.R.rds") 
-
+# y train and test
+y_train = y[!test_idxs]
+y_test = y[test_idxs]
 
 # fit the model
-fit = fit_model_bsn(y)
+fit = fit_model_bsn(y_train)
 # save the stan objects
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 #fit <- readRDS("job_output/fit_rstan3_sim1_bsn-9.R.rds") 

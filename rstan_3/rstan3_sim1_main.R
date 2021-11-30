@@ -40,6 +40,13 @@ names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
 # Observed data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
 X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
+# Train and Test (20%) data
+set.seed(12345) # make sure to have the same test set each time!
+test_idxs <- loo::kfold_split_random(K=5,N=nrow(X)) == 5
+S_train = S[!test_idxs,]
+X_train = X[!test_idxs,]
+S_test = S[test_idxs,]
+X_test = X[test_idxs,]
 
 #####################################
 ########### GENERATE DATA ###########
@@ -72,9 +79,9 @@ sigma = 0.5 #.125
 file_bsn = 'tto3_bsn.stan'
 model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
 
-fit_model_bsn <- function(y) {
+fit_model_bsn <- function(y_train) {
   # training data
-  data_train <- list(y=y,S=S,X=X,n=nrow(X),p_s=ncol(S),p_x=ncol(X))
+  data_train <- list(y=y_train,S=S_train,X=X_train,n=nrow(X_train),p_s=ncol(S_train),p_x=ncol(X_train))
   # set seed
   seed = 12345
   #set.seed(12345)
