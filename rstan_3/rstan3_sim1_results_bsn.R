@@ -52,7 +52,9 @@ for (i in 1:25) {
   
   # PLOTS
   alpha_plot = plot_alpha_post(alpha_post)
+  #ggsave(paste0("sim1_", i, "_alphaPlot.png"), alpha_plot)
   eta_plot = plot_eta_post(eta_post)
+  #ggsave(paste0("sim1_", i, "_etaPlot.png"), eta_plot)
 }
 
 # average rmse for BSN model

@@ -3,7 +3,7 @@
 ###############
 
 # simulation of BATTER_SEQ_NUM model with TTO effects
-
+output_folder = "./job_output/"
 NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
 
 library(tidyverse)
@@ -37,26 +37,40 @@ change_factor_names <- function(s) {
 # categorical dummies for BATTER_SEQ_NUM
 BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
 names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+# categorical dummies for BATTER_IDX
+BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_IDX) + 0) 
+names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
+# categorical dummies for ORDER_CT
+ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
+names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 # Observed data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
 X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
+U <- as.matrix(BATTER_IDX_dummies)
+O <- as.matrix(ORDER_CT_dummies)
 # Train and Test (20%) data
 set.seed(12345) # make sure to have the same test set each time!
 test_idxs <- loo::kfold_split_random(K=5,N=nrow(X)) == 5
 S_train = S[!test_idxs,]
 X_train = X[!test_idxs,]
+U_train = U[!test_idxs,]
+O_train = O[!test_idxs,]
 S_test = S[test_idxs,]
 X_test = X[test_idxs,]
+U_test = U[test_idxs,]
+O_test = O[test_idxs,]
 
 #####################################
 ########### GENERATE DATA ###########
 #####################################
 
-# helpful constant
+# helpful constants
 mu_y = mean(D$EVENT_WOBA_19)
 sd_y = sd(D$EVENT_WOBA_19)
 N = dim(X)[1]
 P = dim(X)[2]
+p_s = dim(S)[2] 
+p_u = dim(U)[2] 
 B = dim(BATTER_SEQ_dummies)[2] 
 BB = 27
 
@@ -66,19 +80,28 @@ b = -.007
 m = .001
 lambda_2 = .01 #.0172
 lambda_3 = .02 #.0153
+lambda_4 = .03
 k = 1:B
 alpha = b + m*k + lambda_2*(k>=10) + lambda_3*(k>=19) # plot(1:27, alpha[1:27])
 eta = c(.09, .07, -.02, .01)
 sigma = 0.5 #.125
+# UBI simulated params
+beta = b + m*(1:p_u)
+gamma = c(0, lambda_2+9*m, lambda_2+lambda_3+18*m, lambda_2+lambda_3+lambda_4+27*m)
+delta = eta
+# check
+m1_tto = (rep(beta[1:9],4) + c(rep(gamma[1],9), rep(gamma[2],9), rep(gamma[3],9), rep(gamma[4],9)))[1:p_s]
+alpha
+m1_tto
+sum(m1_tto-alpha)
 
 #############################
 ########### RSTAN ###########
 #############################
 
-# compile rstan model
+# compile BSN model
 file_bsn = 'tto3_bsn.stan'
 model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
-
 fit_model_bsn <- function(y_train) {
   # training data
   data_train <- list(y=y_train,S=S_train,X=X_train,n=nrow(X_train),p_s=ncol(S_train),p_x=ncol(X_train))
@@ -92,19 +115,45 @@ fit_model_bsn <- function(y_train) {
   fit
 }
 
+# compile BSN model
+file_ubi = 'tto3_ubi.stan'
+model_ubi <- stan_model(file = file_ubi, model_name = file_ubi)
+fit_model_ubi <- function(y_train) {
+  # training data
+  data_train <- list(y=y_train,U=U_train,O=O_train,X=X_train,n=nrow(X_train),
+                     p_u=ncol(U_train),p_o=ncol(O_train),p_x=ncol(X_train))
+  # train the model
+  fit <- sampling(model_ubi,
+                  data = data_train,
+                  iter = NUM_ITERS_IN_CHAIN,
+                  chains = cores, #1 #cores, 
+                  cores = cores, # HPCC
+                  seed = 12345)
+  fit
+}
+
 ##############################################################
 ########### PLOT POSTERIOR PARAMETER DISTRIBUTIONS ###########
 ##############################################################
 
+# RESCALE the coefficients back to un-standardized form
+#mu_y = mean(D$EVENT_WOBA_19)
+sd_y = sd(D$EVENT_WOBA_19)
+
+transform_back <- function(x) {
+  2*sd_y*x # +mu_y
+}
+
 # plot posterior distribution of alpha
 plot_alpha_post <- function(alpha_post) {
+  #alpha_post = transform_back(alpha_post)
   lower <- numeric(BB)
   avg <- numeric(BB)
   upper <- numeric(BB)
-  for (i in 1:BB) {
-    lower[i] = quantile(alpha_post[,i],.025)
-    avg[i] = mean(alpha_post[,i])
-    upper[i] = quantile(alpha_post[,i],.975)
+  for (j in 1:BB) {
+    lower[j] = quantile(alpha_post[,j],.025)
+    avg[j] = mean(alpha_post[,j])
+    upper[j] = quantile(alpha_post[,j],.975)
   }
   AAA = data.frame(lower = lower,avg = avg,upper= upper,bn = 1:BB)
   df_alpha_true = tibble(bn=1:BB,y=alpha[1:BB])
@@ -124,6 +173,60 @@ plot_alpha_post <- function(alpha_post) {
     ) +
     theme(legend.position="none") 
   alpha_plot
+}
+
+# plot posterior distribution of beta + gamma
+plot_beta_plus_gamma_post <- function(beta_post, gamma_post) {
+  # compute mean and 2.5%, 97.5% quantiles of posterior samples
+  p = 27 #dim(BATTER_SEQ_dummies)[2]
+  bidx <- paste0("beta[",1:9,"]")
+  oc <- paste0("gamma[",1:3,"]")
+  lower <- numeric(p)
+  avg <- numeric(p)
+  upper <- numeric(p)
+  for (i in 1:length(oc)) {
+    o = oc[i]
+    x0 = gamma_post[,o] #transform_back(gamma_post[,o])
+    for (j in 1:length(bidx)) {
+      b = bidx[j]
+      xb = beta_post[,b] #transform_back(beta_post[,b])
+      x = x0 + xb
+      lower[(i-1)*length(bidx) + j] = quantile(x,.025)
+      avg[(i-1)*length(bidx) + j] = mean(x)
+      upper[(i-1)*length(bidx) + j] = quantile(x,.975)
+    }
+  }
+  
+  # plot
+  A4 = data.frame(
+    lower = lower,
+    avg = avg,
+    upper= upper,
+    bn = 1:p
+  )
+  
+  XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
+  BREAKS = seq(1,28,by=2)#c(1,6,11,16,21,26)#c(0,5,10,15,20,25)
+  
+  # PRODUCTION PLOT
+  theme_update(plot.title = element_text(hjust = 0.5))
+  production_plot = A4 %>% 
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = TeX("Posterior distribution of $\\beta +\\gamma$")) + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("(order Count $l$, unique batter index $k$)"), 
+                       limits = c(0,28),
+                       breaks = BREAKS,
+                       labels =  XLABS[BREAKS+1]) +
+    scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"), 
+                       #limits = c(-.015, .03),
+                       breaks = seq(-.03, .03, .005)
+    ) 
+  production_plot
 }
 
 # plot posterior distribution of eta
@@ -150,3 +253,31 @@ plot_eta_post <- function(eta_post) {
     scale_y_discrete(breaks=NULL)
   eta_plot
 }
+
+# plot posterior distribution of delta
+
+plot_delta_post <- function(delta_post) {
+  ETA.NAMES = c(
+    TeX("$\\delta_{batWoba}$"), TeX("$\\delta_{pitWoba}$"), 
+    TeX("$\\delta_{hand}$"), TeX("$\\delta_{home}$")
+  )
+  #ETA.NAMES = paste0("eta",1:length(eta))
+  eta_df = data.frame(delta_post)
+  names(eta_df) = ETA.NAMES
+  eta_mean_df = as_tibble(t(as.matrix(eta)))
+  names(eta_mean_df) = ETA.NAMES
+  eta_plot = ggplot() + 
+    geom_histogram(data=gather(eta_df), aes(value), bins = 20, fill = "grey") + 
+    geom_vline(data=gather(eta_mean_df), aes(xintercept=value), color="firebrick") + 
+    facet_wrap(~key, scales = 'free_x', labeller = label_parsed) +  #label_parsed
+    theme(legend.position="none") +
+    labs(title=TeX("Posterior distribution of $\\delta$")) +
+    theme(panel.spacing.x = unit(6, "mm")) +
+    xlab(TeX("$\\delta$")) +
+    ylab(TeX("density")) + 
+    scale_y_discrete(breaks=NULL)
+  eta_plot
+}
+
+
+
