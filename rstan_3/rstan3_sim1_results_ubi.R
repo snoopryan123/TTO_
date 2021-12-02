@@ -76,7 +76,7 @@ mean(rmse_vec)
 # average coverage for BSN model
 mean(covg_vec)
 # average parameter-coverage for BSN model
-param_covered = cbind(alpha_covered, eta_covered, sigma_covered)
+param_covered = cbind(beta_covered, gamma_covered, delta_covered, sigma_covered)
 mean( rowSums(param_covered)/ncol(param_covered) )
 # beta coverage for BSN model
 colSums(beta_covered)/nrow(beta_covered)

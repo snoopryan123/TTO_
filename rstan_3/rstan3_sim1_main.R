@@ -78,16 +78,16 @@ BB = 27
 # all pitchers have the same constant effects
 b = -.007
 m = .001
-lambda_2 = .01 #.0172
-lambda_3 = .02 #.0153
-lambda_4 = .03
+t_2 = .0191 #.01
+t_3 = .0172 #.02
+t_4 = 0 #.03
 k = 1:B
-alpha = b + m*k + lambda_2*(k>=10) + lambda_3*(k>=19) # plot(1:27, alpha[1:27])
+alpha = b + m*k + t_2*(k>=10) + t_3*(k>=19) # plot(1:27, alpha[1:27])
 eta = c(.09, .07, -.02, .01)
 sigma = 0.5 #.125
 # UBI simulated params
 beta = b + m*(1:p_u)
-gamma = c(0, lambda_2+9*m, lambda_2+lambda_3+18*m, lambda_2+lambda_3+lambda_4+27*m)
+gamma = c(0, t_2 + 9*m, t_2 + t_3 + 18*m, t_2 + t_3 + t_4 + 27*m)
 delta = eta
 # check
 m1_tto = (rep(beta[1:9],4) + c(rep(gamma[1],9), rep(gamma[2],9), rep(gamma[3],9), rep(gamma[4],9)))[1:p_s]
