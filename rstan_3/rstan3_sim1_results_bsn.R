@@ -5,7 +5,7 @@ rmse_vec = numeric(25)
 covg_vec = numeric(25)
 alpha_covered = matrix(nrow=25, ncol=27)
 eta_covered = matrix(nrow=25,ncol=4)
-
+sigma_covered = matrix(nrow=25,ncol=1)
 for (i in 1:25) {
   print(i)
   
@@ -49,6 +49,12 @@ for (i in 1:25) {
   eta_true = eta
   eta_upper = apply(eta_post, 2, function(x) quantile(x,.975))
   eta_covered[i,] = eta_lower <= eta_true & eta_true <= eta_upper
+  # coverage of true sigma
+  sigma_post <- drawsB[,1]
+  sigma_lower = quantile(sigma_post,.025)
+  sigma_true = sigma
+  sigma_upper = quantile(sigma_post,.975)
+  sigma_covered[i,] = sigma_lower <= sigma_true & sigma_true <= sigma_upper
   
   # PLOTS
   alpha_plot = plot_alpha_post(alpha_post)
@@ -61,10 +67,14 @@ for (i in 1:25) {
 mean(rmse_vec)
 # average coverage for BSN model
 mean(covg_vec)
+# average parameter-coverage for BSN model
+param_covered = cbind(alpha_covered, eta_covered, sigma_covered)
+mean( rowSums(param_covered)/ncol(param_covered) )
 # alpha coverage for BSN model
 colSums(alpha_covered)/nrow(alpha_covered)
 # eta coverage for BSN model
 colSums(eta_covered)/nrow(eta_covered)
+
 
 
 
