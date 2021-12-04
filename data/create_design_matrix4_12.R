@@ -7,8 +7,8 @@ output_filename = "design_matrix4_11.csv" #FIXME
 E0 <- read_csv(input_filename)
 
 #############################################################################
-#### WOBA_AVG_BAT_19, WOBA_FINAL_BAT_19, WOBA_AVG_PIT_19, WOBA_FINAL_PIT_19, 
-#### NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT, NUM_WOBA_APP_PIT, NUM_WOBA_APP_FINAL_PIT,
+#### get data ready for RSTAN
+#### standardize the relevant columns, and remove unnecessary columns
 #############################################################################
 
 {
@@ -181,7 +181,7 @@ E1a = get_PQ(E00, sigma_scale=4)
 # check
 # "weavj003" "pinej001" "takah001" "cainm001"
 #(E1a %>% filter(YEAR==2010) %>%select(PIT_ID) %>% distinct() )[50:60,]
-View(E1a %>% filter(PIT_ID == "cainm001",YEAR==2010) %>% arrange(DATE,row_idx) %>% 
+View(E1a %>% filter(PIT_ID == "weavj003",YEAR==2010) %>% arrange(DATE,row_idx) %>% 
        mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
        select(row_idx,YEAR,DATE,GAME_ID,PIT_ID,NUM_WOBA_APP_PIT,NUM_WOBA_APP_FINAL_PIT,WOBA_APP,EVENT_WOBA_19,WOBA_FINAL_PIT_19,cum_avg_woba,WOBA_AVG_PIT_19,PQ))
 
@@ -207,48 +207,10 @@ View(E1b %>% filter(BAT_ID == "mauej001",YEAR==2012) %>% arrange(DATE) %>%
        mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
        select(row_idx,YEAR,DATE,GAME_ID,BAT_ID,NUM_WOBA_APP_BAT,NUM_WOBA_APP_FINAL_BAT,WOBA_APP,EVENT_WOBA_19,WOBA_FINAL_BAT_19,cum_avg_woba,WOBA_AVG_BAT_19,BQ))
 
-# new DF with both Pitcher and Batter quality
-X1 = E1a %>% left_join(E1b)
-
-#############################################################################
-#### get data ready for RSTAN
-#### standardize the relevant columns, and remove unnecessary columns
-#############################################################################
-
-# keep relevant columns
-X2 = X1 %>% select(-c(row_idx, PIT_ID, BAT_ID,
-                      NUM_WOBA_APP_PIT, NUM_WOBA_APP_FINAL_PIT, 
-                      NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT,
-                      WOBA_AVG_PIT_19, WOBA_AVG_BAT_19))
-
-# standardize the vector x to have mean 0 and s.d. 1/2
-std <- function(x) {
-  (x-mean(x))/(sd(x) * 2)
-}
-
-# standardize these columns
-X3 = X2 %>% 
-  group_by(YEAR) %>%
-  mutate(std_EVENT_WOBA_19 = std(EVENT_WOBA_19),
-         std_WOBA_FINAL_BAT_19 = std(WOBA_FINAL_BAT_19),
-         std_WOBA_FINAL_PIT_19 = std(WOBA_FINAL_PIT_19),
-         std_BQ = std(BQ),
-         std_PQ = std(PQ)) %>%
-  ungroup()
-
-# # standardize by year
-# D7 <- D6 %>% group_by(YEAR) %>%
-#              mutate(std_EVENT_WOBA_19 = std(EVENT_WOBA_19),
-#                     std_WOBA_FINAL_BAT_19 = std(WOBA_FINAL_BAT_19),
-#                     std_WOBA_FINAL_PIT_19 = std(WOBA_FINAL_PIT_19)) %>%
-#              ungroup()
-# #D7 %>% group_by(YEAR) %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
-# #D7 %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
-
-
-
 ########### write csv ########### 
+# new DF with both Pitcher and Batter quality
 
+X = E1a %>% left_join(E1b)
 
 write_csv(X, output_filename)
             

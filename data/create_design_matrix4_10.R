@@ -45,23 +45,6 @@ sapply(1:ncol(D3),fun <- function(i) {sum(is.na(D3[,i]))})
 D6 <- D3 %>% mutate(HAND_MATCH = ifelse(is.na(HAND_MATCH), 0.5, HAND_MATCH))
 
 ###############################################################
-
-# # standardize the vector x to have mean 0 and s.d. 1/2
-# std <- function(x) {
-#   (x-mean(x))/(sd(x) * 2)
-# }
-# 
-# # standardize by year
-# D7 <- D6 %>% group_by(YEAR) %>%
-#              mutate(std_EVENT_WOBA_19 = std(EVENT_WOBA_19),
-#                     std_WOBA_FINAL_BAT_19 = std(WOBA_FINAL_BAT_19),
-#                     std_WOBA_FINAL_PIT_19 = std(WOBA_FINAL_PIT_19)) %>%
-#              ungroup()
-# #D7 %>% group_by(YEAR) %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
-# #D7 %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
-
-
-###############################################################
   
 ### design matrix!
 X <- D6
