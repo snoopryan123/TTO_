@@ -37,36 +37,39 @@ E0 <- read_csv(input_filename)
 ########### PITCHER QUALITY FUNCTION ###########
 ################################################
 
-get_PQ <- function(E0) {
+get_PQ <- function(E00) {
     ########### theta_bar_0 for pitchers ########### 
-    CUTOFF_WOBA_APP = 1 #FIXME #50
-    
-    pit_szns = E0 %>% group_by(YEAR, PIT_ID) %>% 
-      summarise(num_woba_app = sum(WOBA_APP)) %>% 
-      ungroup() %>% 
+    G0 = E00
+    ###CUTOFF_WOBA_APP = 1 #FIXME #50
+  
+    # prev_szn_avg_woba === pitcher's end-of-season avg. wOBA from the previous season
+    pit_szns = G0 %>% group_by(YEAR, PIT_ID) %>%
+      summarise(final_szn_woba = unique(WOBA_FINAL_PIT_19)) %>% 
       arrange(PIT_ID,YEAR) %>%
-      group_by(PIT_ID) %>% 
-      mutate(num_woba_app_prev = lag(num_woba_app,default=0),
-             use_prev_szn_woba = num_woba_app_prev >= CUTOFF_WOBA_APP
-        #PIT_PREV_SZN = lag(YEAR,default=0),
-      ) %>%
-      left_join(E0 %>% select(YEAR,PIT_ID,WOBA_FINAL_PIT_19) %>% distinct()) %>%
-      mutate(woba_prev = lag(WOBA_FINAL_PIT_19)) %>%
+      ungroup() %>%
+      group_by(PIT_ID) %>%
+      mutate(prev_szn_avg_woba = lag(final_szn_woba)) %>%
       ungroup()
     pit_szns
+      
+    # prev_szn_avg_woba_allPit === for a given season y, the mean wOBA 
+    szns = pit_szns %>% select(-c(final_szn_woba)) %>% drop_na() %>%
+      group_by(YEAR) %>%
+      summarise(prev_szn_avg_woba_allPit = mean(prev_szn_avg_woba)) 
+    szns
     
-    year_avg_woba_df = pit_szns %>% 
-      #filter(num_woba_app >= CUTOFF_WOBA_APP) %>% 
-      group_by(YEAR) %>% 
-      summarise(year_avg_woba = mean(WOBA_FINAL_PIT_19)) %>%
-      mutate(prev_year_avg_woba = lag(year_avg_woba))
-    year_avg_woba_df
-    
-    pit_szns1 = pit_szns %>% left_join(year_avg_woba_df %>% select(YEAR,prev_year_avg_woba)) %>%
-      mutate(theta_bar_0 = ifelse(use_prev_szn_woba, woba_prev, prev_year_avg_woba)) 
+    # insert prev_szn_avg_woba_allPit into pit_szns dataset 
+    pit_szns1 = pit_szns %>% left_join(szns)
     pit_szns1
     
-    theta_bar_0_df = pit_szns1 %>% select(YEAR,PIT_ID,theta_bar_0)
+    # theta_bar_0 
+    pit_szns2 = pit_szns1 %>% 
+      mutate(pit_played_in_prev_szn = !is.na(prev_szn_avg_woba),
+             theta_bar_0 = ifelse(pit_played_in_prev_szn, prev_szn_avg_woba, prev_szn_avg_woba_allPit)) 
+    pit_szns2
+    
+    # theta_bar_0 dataframe
+    theta_bar_0_df = pit_szns2 %>% select(YEAR,PIT_ID,theta_bar_0)
     theta_bar_0_df
     
     ########### sigma for pitchers ########### 
@@ -75,7 +78,7 @@ get_PQ <- function(E0) {
       TTR::runSD(x, n = 1, cumulative = TRUE)
     }
     
-    pit_szns2 = pit_szns1 %>% select(-c(use_prev_szn_woba,prev_year_avg_woba,theta_bar_0)) %>% #select(YEAR,PIT_ID,WOBA_FINAL_PIT_19,woba_prev) %>% 
+    pit_szns2 = pit_szns1 %>% select(-c(use_prev_szn_avg_woba,prev_year_avg_woba,theta_bar_0)) %>% #select(YEAR,PIT_ID,WOBA_FINAL_PIT_19,woba_prev) %>% 
       group_by(PIT_ID) %>%
       mutate(has_2_prev_szns = n() > 2 & row_number() > 2) %>%
       mutate(sigma = ifelse(has_2_prev_szns, c(-1, cumsd(woba_prev[2:n()])), NA)) %>%
@@ -98,7 +101,7 @@ get_PQ <- function(E0) {
     
     ########### tau for pitchers ########### 
     
-    pit_games = E0 %>% group_by(YEAR,GAME_ID,PIT_ID,DATE) %>%
+    pit_games = E00 %>% group_by(YEAR,GAME_ID,PIT_ID,DATE) %>%
       summarise(game_avg_woba = mean(EVENT_WOBA_19)) %>%
       ungroup() %>%
       arrange(PIT_ID,YEAR)
@@ -153,7 +156,7 @@ get_PQ <- function(E0) {
     pit_games4 = pit_games3 %>% left_join(pit_szns %>% select(YEAR,PIT_ID,num_woba_app, num_woba_app_prev))
     pit_games4
     
-    R = E0 %>% filter(YEAR >= 2010) %>% left_join(pit_games4) 
+    R = E00 %>% filter(YEAR >= 2010) %>% left_join(pit_games4) 
     # check
     C1 = R %>% select(YEAR,DATE,GAME_ID,PIT_ID,WOBA_FINAL_PIT_19,PQ,num_woba_app,num_woba_app_prev) %>% distinct()
     #View(R %>% filter(PIT_ID == "weavj003"))
@@ -169,8 +172,9 @@ get_PQ <- function(E0) {
 # get Pitcher Quality
 E1a = get_PQ(E00)
 # check
-# "weavj003" "pinej001" "takah001
-View(E1a %>% filter(PIT_ID == "takah001",YEAR==2010) %>% arrange(DATE,row_idx) %>% 
+# "weavj003" "pinej001" "takah001" "cainm001"
+#(E1a %>% filter(YEAR==2010) %>%select(PIT_ID) %>% distinct() )[50:60,]
+View(E1a %>% filter(PIT_ID == "cainm001",YEAR==2010) %>% arrange(DATE,row_idx) %>% 
        mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
        select(row_idx,YEAR,DATE,GAME_ID,PIT_ID,NUM_WOBA_APP_PIT,NUM_WOBA_APP_FINAL_PIT,WOBA_APP,EVENT_WOBA_19,WOBA_FINAL_PIT_19,cum_avg_woba,WOBA_AVG_PIT_19,PQ))
 
@@ -180,7 +184,10 @@ View(E1a %>% filter(PIT_ID == "takah001",YEAR==2010) %>% arrange(DATE,row_idx) %
 ##########################################
 
 # get Batter Quality by re-using the Pitcher Quality function
-E0b = E00 %>% select(row_idx,YEAR,GAME_ID,DATE,BAT_ID,NUM_WOBA_APP_BAT,NUM_WOBA_APP_FINAL_BAT,WOBA_FINAL_BAT_19,WOBA_AVG_BAT_19,WOBA_APP,EVENT_WOBA_19) 
+E0b = E00 %>% select(row_idx,YEAR,GAME_ID,DATE,BAT_ID,
+                     NUM_WOBA_APP_BAT,NUM_WOBA_APP_FINAL_BAT,
+                     WOBA_FINAL_BAT_19,WOBA_AVG_BAT_19,
+                     WOBA_APP,EVENT_WOBA_19) 
 E1b = E0b %>% 
   rename(PIT_ID = BAT_ID, 
          WOBA_FINAL_PIT_19 = WOBA_FINAL_BAT_19) %>% 
