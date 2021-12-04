@@ -39,7 +39,7 @@ D3 <- D2 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
 
 
 # check columns with NA
-sapply(1:ncol(D3),fun <- function(i) {sum(is.na(D3[,i]))})
+names(D3)[sapply(1:ncol(D3),fun <- function(i) {sum(is.na(D3[,i]))}) > 0]
 # only HAND_MATCH has NA
 # change HAND_MATCH NA to 0.5
 D6 <- D3 %>% mutate(HAND_MATCH = ifelse(is.na(HAND_MATCH), 0.5, HAND_MATCH))

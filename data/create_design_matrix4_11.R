@@ -136,6 +136,8 @@ get_PQ <- function(G0, sigma_scale=1) {
       # tau dataframe
       tau_df = sigma_df %>% left_join(pit_szns32) 
       tau_df # recall we want only years 2010-2019, so dont worry abt the NA's
+      
+      
     }
   
     ########### pitcher quality ########### 
@@ -144,11 +146,20 @@ get_PQ <- function(G0, sigma_scale=1) {
       PIT_SZNS = tau_df %>% filter(YEAR >= 2010)
       PIT_SZNS
       
+      # fix sigma==0 or tau==0, since these guys played 1 game that season...
+      PIT_SZNS %>% filter(sigma == 0 | tau == 0)
+      ### "adamc001"
+      # View(G0 %>% filter(YEAR==2015,PIT_ID == "adamc001"))
+      PIT_SZNS = PIT_SZNS %>% mutate(
+        sigma = ifelse(sigma != 0, sigma, (med_sig %>% filter(YEAR == YEAR))$med_sig),
+        tau = ifelse(tau != 0, tau, (med_tau %>% filter(YEAR == YEAR))$med_tau),
+      )
+      
       # theta
       pit_games41 = pit_games %>% 
         filter(YEAR >= 2010) %>%
         rename(theta = game_avg_woba) %>% 
-        left_join(tau_df)
+        left_join(PIT_SZNS)
       pit_games41
       
       #FIXME # adjust sigma??? 
@@ -206,8 +217,8 @@ E1b = get_PQ(E00b, sigma_scale = 4) %>%
          BAT_ID = PIT_ID,
          WOBA_FINAL_BAT_19 = WOBA_FINAL_PIT_19,
          WOBA_AVG_BAT_19 = WOBA_AVG_PIT_19)
-# check "mauej001" "ellsj001" "vottj001" "ryanb002"
-View(E1b %>% filter(BAT_ID == "vottj001",YEAR==2012) %>% arrange(DATE) %>% 
+# check "mauej001" "ellsj001" "vottj001" "ryanb002" "manzt001"
+View(E1b %>% filter(BAT_ID == "manzt001",YEAR==2010) %>% arrange(DATE) %>% 
        mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
        select(row_idx,YEAR,DATE,GAME_ID,BAT_ID,
               #NUM_WOBA_APP_BAT,NUM_WOBA_APP_FINAL_BAT,
@@ -215,6 +226,11 @@ View(E1b %>% filter(BAT_ID == "vottj001",YEAR==2012) %>% arrange(DATE) %>%
 
 # new DF with both Pitcher and Batter quality
 X1 = E1a %>% left_join(E1b)
+
+# check columns with NA
+names(X1)[sapply(1:ncol(X1),fun <- function(i) {sum(is.na(X1[,i]))}) > 0]
+sum(is.na(X1$BQ))
+View(X1[97210:97240,])
 
 #############################################################################
 #### get data ready for RSTAN
@@ -242,15 +258,9 @@ X3 = X2 %>%
          std_PQ = std(PQ)) %>%
   ungroup()
 
-# # standardize by year
-# D7 <- D6 %>% group_by(YEAR) %>%
-#              mutate(std_EVENT_WOBA_19 = std(EVENT_WOBA_19),
-#                     std_WOBA_FINAL_BAT_19 = std(WOBA_FINAL_BAT_19),
-#                     std_WOBA_FINAL_PIT_19 = std(WOBA_FINAL_PIT_19)) %>%
-#              ungroup()
-# #D7 %>% group_by(YEAR) %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
-# #D7 %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
-
+# hist checks
+hist(X3$std_PQ)
+hist(X3$std_BQ)
 
 
 ########### write csv ########### 
