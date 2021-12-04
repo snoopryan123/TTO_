@@ -40,11 +40,8 @@ E0 <- read_csv(input_filename)
 get_PQ <- function(E00) {
     ########### theta_bar_0 for pitchers ########### 
     {
-      G0 = E00
-      ###CUTOFF_WOBA_APP = 1 #FIXME #50
-    
       # prev_szn_avg_woba === pitcher's end-of-season avg. wOBA from the previous season
-      pit_szns = G0 %>% group_by(YEAR, PIT_ID) %>%
+      pit_szns = E00 %>% group_by(YEAR, PIT_ID) %>%
         summarise(final_szn_woba = unique(WOBA_FINAL_PIT_19)) %>% 
         arrange(PIT_ID,YEAR) %>%
         ungroup() %>%
@@ -70,11 +67,11 @@ get_PQ <- function(E00) {
       pit_szns2
       
       # theta_bar_0 dataframe
-      A1 = pit_szns2 %>% select(YEAR,PIT_ID,theta_bar_0)
-      A1
+      theta_bar_0_df = pit_szns2 %>% select(YEAR,PIT_ID,theta_bar_0)
+      theta_bar_0_df
     }  
+  
     ########### sigma for pitchers ########### 
-    
     {
       # cumulative s.d.
       cumsd <- function(x) {
@@ -106,69 +103,68 @@ get_PQ <- function(E00) {
     }
   
     ########### tau for pitchers ########### 
-    
-    pit_games = E00 %>% group_by(YEAR,GAME_ID,PIT_ID,DATE) %>%
-      summarise(game_avg_woba = mean(EVENT_WOBA_19)) %>%
-      ungroup() %>%
-      arrange(PIT_ID,YEAR)
-    pit_games
-    
-    pit_szns10 = pit_games %>% group_by(YEAR,PIT_ID) %>%
-      summarise(sd_game2game = sd(game_avg_woba)) %>%
-      ungroup() %>%
-      arrange(PIT_ID,YEAR) 
-    pit_szns10
-    
-    
-    pit_szns11 = pit_szns10 %>%
-      group_by(PIT_ID) %>%
-      mutate(tau = lag(sd_game2game)) %>%
-      ungroup()
-    pit_szns11
-    
-    med_tau = pit_szns11 %>% group_by(YEAR) %>% drop_na() %>%
-      summarise(med_tau = median(tau)) %>%
-      mutate(med_tau = ifelse(YEAR >= 2010, med_tau, NA)) #want 2010-2019
-    med_tau
-    
-    pit_szns12 = pit_szns11 %>% left_join(med_tau) %>%
-      mutate(tau = ifelse(is.na(tau), med_tau, tau)) %>%
-      select(-c(sd_game2game,med_tau))
-    pit_szns12
-    
-    tau_df = sigma_df %>% left_join(pit_szns12) 
-    tau_df = tau_df %>% filter(YEAR >= 2010) # want years 2010-2019
-    tau_df
-    
+    {
+      # avg. wOBA for each pitcher-game
+      pit_games = E00 %>% group_by(YEAR,GAME_ID,PIT_ID,DATE) %>%
+        summarise(game_avg_woba = mean(EVENT_WOBA_19)) %>%
+        ungroup() %>%
+        arrange(PIT_ID,YEAR,DATE)
+      pit_games
+      
+      # tau === pitcher-specific game-to-game s.d. in avg. wOBA over all games from previous season
+      pit_szns31 = pit_games %>% group_by(YEAR,PIT_ID) %>%
+        summarise(sd_game2game = sd(game_avg_woba)) %>%
+        ungroup() %>%
+        arrange(PIT_ID,YEAR) %>%
+        group_by(PIT_ID) %>%
+        mutate(tau = lag(sd_game2game)) %>%
+        ungroup()
+      pit_szns31[999:1010,]
+      
+      # tau === median of the tau of all pitchers who did pitch in the previous season
+      med_tau = pit_szns31 %>% group_by(YEAR) %>% drop_na() %>% summarise(med_tau = median(tau)) %>%
+        mutate(med_tau = ifelse(YEAR >= 2010, med_tau, NA)) #want 2010-2019
+      med_tau
+      
+      # fix the NA's of tau
+      pit_szns32 = pit_szns31 %>% left_join(med_tau) %>%
+        mutate(tau = ifelse(is.na(tau), med_tau, tau)) %>%
+        select(-c(sd_game2game,med_tau))
+      pit_szns32[999:1010,]
+      
+      # tau dataframe
+      tau_df = sigma_df %>% left_join(pit_szns32) 
+      tau_df # recall we want only years 2010-2019, so dont worry abt the NA's
+    }
+  
     ########### pitcher quality ########### 
+    {
+      # use only years 2010-2019
+      PIT_SZNS = tau_df %>% filter(YEAR >= 2010)
+      PIT_SZNS
+      
+      pit_games41 = pit_games %>% 
+        filter(YEAR >= 2010) %>%
+        rename(theta = game_avg_woba) %>% 
+        left_join(tau_df)
+      pit_games41
+      
+      pit_games42 = pit_games41 %>% 
+        relocate(theta, .after=tau) %>%
+        arrange(PIT_ID,DATE) %>%
+        group_by(YEAR,PIT_ID) %>%
+        mutate(i = row_number(),
+               sum_1_im1_theta = cumsum(lag(theta, default=0))) %>%
+        ungroup() %>%
+        mutate(PQ = ( (1/tau^2)*sum_1_im1_theta + (1/sigma^2)*theta_bar_0 )/( (i-1)/(tau^2) + (1/sigma^2) ))
+      pit_games42
+      
+      pit_games43 = pit_games42 %>% select(YEAR,DATE,PIT_ID,PQ) 
+      pit_games43
+    }
     
-    pit_games1 = pit_games %>% filter(YEAR >= 2010) %>%
-      rename(theta = game_avg_woba) %>% left_join(tau_df)
-    pit_games1
-    
-    pit_games2 = pit_games1 %>% 
-      relocate(theta, .after=tau) %>%
-      arrange(PIT_ID,DATE) %>%
-      group_by(YEAR,PIT_ID) %>%
-      mutate(i = row_number(),
-             sum_1_im1_theta = cumsum(lag(theta, default=0))) %>%
-      ungroup() %>%
-      mutate(PQ = ( (1/tau^2)*sum_1_im1_theta + (1/sigma^2)*theta_bar_0 )/( (i-1)/(tau^2) + (1/sigma^2) ))
-    pit_games2
-    
-    pit_games3 = pit_games2 %>% select(YEAR,DATE,PIT_ID,PQ) 
-    pit_games3
-    
-    pit_games4 = pit_games3 %>% left_join(pit_szns %>% select(YEAR,PIT_ID,num_woba_app, num_woba_app_prev))
-    pit_games4
-    
-    R = E00 %>% filter(YEAR >= 2010) %>% left_join(pit_games4) 
-    # check
-    C1 = R %>% select(YEAR,DATE,GAME_ID,PIT_ID,WOBA_FINAL_PIT_19,PQ,num_woba_app,num_woba_app_prev) %>% distinct()
-    #View(R %>% filter(PIT_ID == "weavj003"))
-    #View(C1)
-    
-    return(R %>% select(-c(num_woba_app, num_woba_app_prev)))
+    R = E00 %>% filter(YEAR >= 2010) %>% left_join(pit_games43) 
+    return(R)
 }
 
 ###########################################
