@@ -6,10 +6,11 @@ library(tidyverse)
 ########### THE CODE ###########
 ################################
 
-input_filename = "retro_final_PA_1990-2020b.csv" #FIXME
+input_filename = "retro_final_PA_1990-2020c.csv" #FIXME
 output_filename = "design_matrix2_3.csv" #FIXME
 D0 <- read_csv(input_filename)
-D0 <- D0 %>% filter(YEAR >= 2010, YEAR <= 2019) #FIXME
+D0 <- D0 %>% filter(YEAR >= 2006, YEAR <= 2019) #FIXME
+# need 2006-2019 to get 2010-2019 for the running avg. wOBA estimator...
 
 # only include starting pitchers and wOBA-appearances
 D1 <- D0 %>% filter(SP_IND == 1, WOBA_APP == 1) 
@@ -22,7 +23,7 @@ D1a <- D1 %>% group_by(GAME_ID) %>%
 D1b <- D1a %>% filter(!PIT_IS_BAT)
 
 # select relevant columns, and view this
-D2 <- D1b %>% select(GAME_ID, INNING, YEAR, BAT_NAME, PIT_NAME,PIT_ID,
+D2 <- D1b %>% select(GAME_ID, DATE, INNING, YEAR, BAT_NAME,PIT_NAME,PIT_ID,BAT_ID,WOBA_APP,
                     EVENT_WOBA_19, 
                     WOBA_AVG_BAT_19, WOBA_AVG_PIT_19, 
                     WOBA_FINAL_BAT_19, WOBA_FINAL_PIT_19,
@@ -70,7 +71,7 @@ D7 <- D6 %>% group_by(YEAR) %>%
 #D7 %>% summarise(m = mean(std_EVENT_WOBA_19), s = sd(std_EVENT_WOBA_19))
 
 # select relevant columns
-D8 <- D7 %>% select(YEAR, GAME_ID, PIT_ID,
+D8 <- D7 %>% select(YEAR, GAME_ID, DATE, PIT_ID, BAT_ID, WOBA_APP,
                    std_EVENT_WOBA_19, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19,
                    EVENT_WOBA_19, WOBA_FINAL_BAT_19, WOBA_FINAL_PIT_19,
                    # NUM_WOBA_APP_BAT, NUM_WOBA_APP_PIT,
