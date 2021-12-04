@@ -147,14 +147,20 @@ get_PQ <- function(G0, sigma_scale=1) {
       PIT_SZNS
       
       # fix sigma==0 or tau==0, since these guys played 1 game that season...
+      #PIT_SZNS %>% filter(sigma <= .001 | tau <= .001)
       PIT_SZNS %>% filter(sigma == 0 | tau == 0)
+      (PIT_SZNS %>% filter(is.na(sigma) | is.na(tau)))
       ### "adamc001"
       # View(G0 %>% filter(YEAR==2015,PIT_ID == "adamc001"))
-      PIT_SZNS = PIT_SZNS %>% mutate(
-        sigma = ifelse(sigma != 0, sigma, (med_sig %>% filter(YEAR == YEAR))$med_sig),
-        tau = ifelse(tau != 0, tau, (med_tau %>% filter(YEAR == YEAR))$med_tau),
-      )
-      
+      PIT_SZNS = PIT_SZNS %>% 
+        group_by(YEAR) %>%
+        mutate(
+          # sigma = ifelse(!is.na(sigma) & sigma != 0, sigma, (med_sig %>% filter(YEAR == unique(YEAR)))$med_sig ),
+          # tau = ifelse(!is.na(tau) & tau != 0, tau,  (med_tau %>% filter(YEAR == unique(YEAR)))$med_tau )
+          sigma = ifelse(!is.na(sigma) & sigma != 0, sigma, med_sig[med_sig$YEAR==2010,]$med_sig),
+          tau = ifelse(!is.na(tau) & tau != 0, tau,  med_tau[med_tau$YEAR==2010,]$med_tau)
+        ) %>% ungroup()
+     
       # theta
       pit_games41 = pit_games %>% 
         filter(YEAR >= 2010) %>%
@@ -217,8 +223,8 @@ E1b = get_PQ(E00b, sigma_scale = 4) %>%
          BAT_ID = PIT_ID,
          WOBA_FINAL_BAT_19 = WOBA_FINAL_PIT_19,
          WOBA_AVG_BAT_19 = WOBA_AVG_PIT_19)
-# check "mauej001" "ellsj001" "vottj001" "ryanb002" "manzt001"
-View(E1b %>% filter(BAT_ID == "manzt001",YEAR==2010) %>% arrange(DATE) %>% 
+# check "mauej001" "ellsj001" "vottj001" "ryanb002" // "manzt001" "duncs001"
+View(E1b %>% filter(BAT_ID == "ryanb002",YEAR==2010) %>% arrange(DATE) %>% 
        mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
        select(row_idx,YEAR,DATE,GAME_ID,BAT_ID,
               #NUM_WOBA_APP_BAT,NUM_WOBA_APP_FINAL_BAT,
@@ -229,8 +235,9 @@ X1 = E1a %>% left_join(E1b)
 
 # check columns with NA
 names(X1)[sapply(1:ncol(X1),fun <- function(i) {sum(is.na(X1[,i]))}) > 0]
-sum(is.na(X1$BQ))
-View(X1[97210:97240,])
+# sum(is.na(X1$BQ))
+# which(is.na(X1$BQ))
+# View(X1[(108696-10):(108696+10),])
 
 #############################################################################
 #### get data ready for RSTAN
@@ -264,9 +271,8 @@ hist(X3$std_BQ)
 
 
 ########### write csv ########### 
-
-
-write_csv(X, output_filename)
+R = X3
+write_csv(R, output_filename)
             
 
 
