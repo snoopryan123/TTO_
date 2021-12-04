@@ -2,8 +2,8 @@ library(tidyverse)
 
 ### create moving avg. estimator for batter and pitcher quality
 
-input_filename = "design_matrix4_10.csv" #FIXME
-output_filename = "design_matrix4_11.csv" #FIXME
+input_filename = "TTO_dataset_410.csv" #FIXME
+output_filename = "TTO_dataset_411.csv" #FIXME
 E0 <- read_csv(input_filename)
 
 #############################################################################

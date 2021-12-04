@@ -5,7 +5,7 @@ library(tidyverse)
 ################################
 
 input_filename = "retro_final_PA_1990-2020d.csv" #FIXME
-output_filename = "design_matrix4_10.csv" #FIXME
+output_filename = "TTO_dataset_410.csv" #FIXME
 D0 <- read_csv(input_filename)
 
 # need 2006-2019 to get 2010-2019 for the running avg. wOBA estimator...
