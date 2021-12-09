@@ -45,8 +45,7 @@ ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0)
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 # Observed data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
-####X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
-X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND))
+X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
 U <- as.matrix(BATTER_IDX_dummies)
 O <- as.matrix(ORDER_CT_dummies)
 # Train and Test (20%) data
