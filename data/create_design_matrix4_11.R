@@ -268,6 +268,9 @@ X3 = X2 %>%
 # hist checks
 hist(X3$std_PQ)
 hist(X3$std_BQ)
+#
+View(X3 %>% filter(YEAR==2019) %>% select(YEAR,DATE,GAME_ID,#row_idx,BAT_ID,cum_avg_woba
+     WOBA_APP,EVENT_WOBA_19,std_WOBA_FINAL_BAT_19,std_BQ))
 
 
 ########### write csv ########### 

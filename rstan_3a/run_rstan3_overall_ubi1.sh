@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan3_overall_ubi2.R
+#$ -N rstan3_overall_ubi1.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -14,4 +14,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript --vanilla rstan3_overall_ubi2.R
+Rscript --vanilla rstan3_overall_ubi1.R
