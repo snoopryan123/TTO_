@@ -61,7 +61,7 @@ model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
 
 fit_model_bsn <- function(fold_num) {
   # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
-  train_rows = ifelse(is.na(fold_num), TRUE, which(folds != fold_num))
+  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
   #train_rows = which(folds != fold_num)
   y_train = y[train_rows,]
   X_train = X[train_rows,]
@@ -92,7 +92,7 @@ model_ubi <- stan_model(file = file_ubi, model_name = file_ubi)
 
 fit_model_ubi <- function(fold_num) {
   # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
-  train_rows = ifelse(is.na(fold_num), TRUE, which(folds != fold_num))
+  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
   #train_rows = which(folds != fold_num)
   y_train = y[train_rows,]
   X_train = X[train_rows,]
@@ -234,3 +234,4 @@ plot_ubi0 <- function(fit) {
     ) 
   production_plot
 }
+
