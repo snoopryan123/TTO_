@@ -48,6 +48,7 @@ U <- as.matrix(BATTER_IDX_dummies)
 O <- as.matrix(ORDER_CT_dummies)
 ####X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
 X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND))
+X0 <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND))
 y <- matrix(D$std_EVENT_WOBA_19, ncol=1)
 # 10 Fold CV folds
 set.seed(12345) # make sure to have the same folds each time!
