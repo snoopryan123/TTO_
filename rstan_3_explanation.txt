@@ -1,0 +1,19 @@
+
+rstan_3::   "input_file = "./../data/design_matrix3.csv" & std_woba_final, 2019 only [DEPRECATED]
+rstan_3a::  "input_file = "./../data/TTO_dataset_411.csv" & std_woba_final, 2019 only
+rstan_3b::  "input_file = "./../data/TTO_dataset_411.csv" & std_BQ, std_PQ, 2019 only
+
+rstan_3c::  "input_file = "./../data/TTO_dataset_411.csv" & std_BQ, std_PQ --> 2nd half of the year only, 2019 only
+rstan_3d::  "input_file = "./../data/TTO_dataset_411.csv" & std_woba_final --> 2nd half of the year only, 2019 only
+
+rstan_3e::  "input_file = "./../data/TTO_dataset_411.csv" & std_BQ, std_PQ --> remove 1st year batters, 2019 only
+rstan_3f::  "input_file = "./../data/TTO_dataset_411.csv" & std_woba_final --> remove 1st year batters, 2019 only
+
+
+
+
+
+
+rstan_3g::  "input_file = "./../data/TTO_dataset_411.csv" & std_BQ, std_PQ, all years
+
+  
