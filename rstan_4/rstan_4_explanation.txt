@@ -3,6 +3,7 @@ rstan4x
 
 4-1	std_final_woba, 2019 only
 4-2	std_BQ std_PQ, 2019 only
+4-8	std_curr_woba, 2019 only
 4-3	std_final_woba, 2019 only, 2nd half of season
 4-4	std_BQ std_PQ, 2019 only, 2nd half of season
 4-5	std_curr_woba, 2019 only, 2nd half of season
