@@ -1,0 +1,8 @@
+rstan5x
+	dataset = TTO_dataset_511.csv
+
+5-1	std_BQ std_PQ, 2019 only, sigma_scale = 20
+
+
+
+
