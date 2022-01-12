@@ -16,7 +16,7 @@ fit = fit_model_bsn(NA)
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
 ### plot
-# fit <- readRDS("./job_output/fit_rstan4a_overall_bsn.R.rds") 
+# fit <- readRDS("./job_output/fit_rstan4_overall_bsn-1.R.rds") 
 p = plot_bsn0(fit)
 p
 ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
