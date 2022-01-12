@@ -1,13 +1,13 @@
 rstan4x
 	dataset = TTO_dataset_412.csv
 
-4a	std_final_woba, 2019 only
-4b	std_BQ std_PQ, 2019 only
-4c	std_final_woba, 2019 only, 2nd half of season
-4d	std_BQ std_PQ, 2019 only, 2nd half of season
-4e	std_curr_woba, 2019 only, 2nd half of season
-4f	std_final_woba, 2019 only, remove rookies
-4g	std_BQ std_PQ, 2019 only, remove rookies
+4-1	std_final_woba, 2019 only
+4-2	std_BQ std_PQ, 2019 only
+4-3	std_final_woba, 2019 only, 2nd half of season
+4-4	std_BQ std_PQ, 2019 only, 2nd half of season
+4-5	std_curr_woba, 2019 only, 2nd half of season
+4-6	std_final_woba, 2019 only, remove rookies
+4-7	std_BQ std_PQ, 2019 only, remove rookies
 
 
 

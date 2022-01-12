@@ -9,7 +9,7 @@ D <- D %>% drop_na()
 D <- D %>% filter(YEAR == 2019) 
 D <- D %>% filter(!FIRST_SZN_PIT) # remove rookies
 X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan4g_overall_bsn.R"
+OUTPUT_FILE = "rstan4_overall_bsn-7.R"
 
 ### rstan
 source("rstan4_main.R")

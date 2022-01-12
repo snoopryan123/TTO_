@@ -7,9 +7,9 @@ D <- read_csv(input_file)
 D <- D %>% drop_na() 
 #FIXME 
 D <- D %>% filter(YEAR == 2019) 
-D <- D %>% filter(!FIRST_SZN_PIT) # remove rookies
+D <- D %>% filter(DATE > "2019-07-09") #2nd half of season
 X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan4f_overall_bsn.R"
+OUTPUT_FILE = "rstan4_overall_bsn-3.R"
 
 ### rstan
 source("rstan4_main.R")

@@ -8,8 +8,8 @@ D <- D %>% drop_na()
 #FIXME 
 D <- D %>% filter(YEAR == 2019) 
 D <- D %>% filter(DATE > "2019-07-09") #2nd half of season
-X <- as.matrix(D %>% select(std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan4e_overall_bsn.R"
+X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND)) 
+OUTPUT_FILE = "rstan4_overall_bsn-4.R"
 
 ### rstan
 source("rstan4_main.R")

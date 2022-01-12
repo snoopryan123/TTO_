@@ -7,8 +7,9 @@ D <- read_csv(input_file)
 D <- D %>% drop_na() 
 #FIXME 
 D <- D %>% filter(YEAR == 2019) 
-X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan4a_overall_bsn.R"
+D <- D %>% filter(DATE > "2019-07-09") #2nd half of season
+X <- as.matrix(D %>% select(std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, HAND_MATCH, BAT_HOME_IND)) 
+OUTPUT_FILE = "rstan4_overall_bsn-5.R"
 
 ### rstan
 source("rstan4_main.R")
@@ -16,7 +17,7 @@ fit = fit_model_bsn(NA)
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
 ### plot
-# fit <- readRDS("./job_output/fit_rstan4a_overall_bsn.R.rds") 
+# fit <- readRDS("./job_output/fit_rstan4b_overall_bsn.R.rds") 
 p = plot_bsn0(fit)
 p
 ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
