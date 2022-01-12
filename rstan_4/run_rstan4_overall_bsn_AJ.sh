@@ -12,4 +12,4 @@
 ## MORE RAM
 ####$ -l m_mem_free=10G
 
-Rscript --vanilla rstan4_overall_bsn.R-$SGE_TASK_ID.R
+Rscript --vanilla rstan4_overall_bsn-$SGE_TASK_ID.R
