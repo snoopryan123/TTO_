@@ -27,6 +27,12 @@ rstan4a-x
 4a-21	std_final_woba, 2019 only, remove rookies
 4a-22	std_curr_woba, 2019 only, remove rookies
 
+4a-23	std_BQ10 std_PQ10, 2019 only, 2nd half of season & remove rookies
+4a-24	std_BQ11 std_PQ11, 2019 only, 2nd half of season & remove rookies
+4a-25	std_BQ12 std_PQ12, 2019 only, 2nd half of season & remove rookies
+4a-26	std_final_woba, 2019 only, 2nd half of season & remove rookies
+4a-27	std_curr_woba, 2019 only, 2nd half of season & remove rookies
+
 
 
 
