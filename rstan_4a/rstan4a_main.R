@@ -166,6 +166,7 @@ plot_bsn0 <- function(fit) {
                        breaks = c(0,5,10,15,20,25)) +
     scale_y_continuous(name=TeX("$\\alpha_k$"), 
                        #limits = c(-.02, .03),
+                       limits = c(-.1, .1),
                        breaks = seq(-.1, .1, .005)
     ) 
   production_plot
@@ -224,6 +225,7 @@ plot_ubi0 <- function(fit) {
                        labels =  XLABS[BREAKS+1]) +
     scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"), 
                        #limits = c(-.015, .03),
+                       limits = c(-.1, .1),
                        breaks = seq(-.1, .1, .005)
     ) 
   production_plot
