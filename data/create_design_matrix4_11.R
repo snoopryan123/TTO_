@@ -198,10 +198,10 @@ get_PQ <- function(G0, sigma_scale=1) {
 E1a = get_PQ(E00, sigma_scale=4)
 # check
 # "weavj003" "pinej001" "takah001" "cainm001"
-#(E1a %>% filter(YEAR==2010) %>%select(PIT_ID) %>% distinct() )[50:60,]
-View(E1a %>% filter(PIT_ID == "cainm001",YEAR==2010) %>% arrange(DATE,row_idx) %>% 
-       mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
-       select(row_idx,YEAR,DATE,GAME_ID,PIT_ID,NUM_WOBA_APP_PIT,NUM_WOBA_APP_FINAL_PIT,WOBA_APP,EVENT_WOBA_19,WOBA_FINAL_PIT_19,cum_avg_woba,WOBA_AVG_PIT_19,PQ))
+##(E1a %>% filter(YEAR==2010) %>%select(PIT_ID) %>% distinct() )[50:60,]
+# View(E1a %>% filter(PIT_ID == "cainm001",YEAR==2010) %>% arrange(DATE,row_idx) %>% 
+#        mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
+#        select(row_idx,YEAR,DATE,GAME_ID,PIT_ID,NUM_WOBA_APP_PIT,NUM_WOBA_APP_FINAL_PIT,WOBA_APP,EVENT_WOBA_19,WOBA_FINAL_PIT_19,cum_avg_woba,WOBA_AVG_PIT_19,PQ))
 
 
 ##########################################
@@ -222,13 +222,13 @@ E1b = get_PQ(E00b, sigma_scale = 4) %>%
   rename(BQ = PQ,
          BAT_ID = PIT_ID,
          WOBA_FINAL_BAT_19 = WOBA_FINAL_PIT_19,
-         WOBA_AVG_BAT_19 = WOBA_AVG_PIT_19)
+         WOBA_AVG_BAT_19 = WOBA_AVG_PIT_19) 
 # check "mauej001" "ellsj001" "vottj001" "ryanb002" // "manzt001" "duncs001"
-View(E1b %>% filter(BAT_ID == "ryanb002",YEAR==2010) %>% arrange(DATE) %>% 
-       mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
-       select(row_idx,YEAR,DATE,GAME_ID,BAT_ID,
-              #NUM_WOBA_APP_BAT,NUM_WOBA_APP_FINAL_BAT,
-              WOBA_APP,EVENT_WOBA_19,WOBA_FINAL_BAT_19,cum_avg_woba,WOBA_AVG_BAT_19,BQ))
+# View(E1b %>% filter(BAT_ID == "ryanb002",YEAR==2010) %>% arrange(DATE) %>% 
+#        mutate(cum_avg_woba = cumsum(EVENT_WOBA_19)/cumsum(WOBA_APP)) %>%
+#        select(row_idx,YEAR,DATE,GAME_ID,BAT_ID,
+#               #NUM_WOBA_APP_BAT,NUM_WOBA_APP_FINAL_BAT,
+#               WOBA_APP,EVENT_WOBA_19,WOBA_FINAL_BAT_19,cum_avg_woba,WOBA_AVG_BAT_19,BQ))
 
 # new DF with both Pitcher and Batter quality
 X1 = E1a %>% left_join(E1b)
@@ -245,10 +245,10 @@ names(X1)[sapply(1:ncol(X1),fun <- function(i) {sum(is.na(X1[,i]))}) > 0]
 #############################################################################
 
 # keep relevant columns
-X2 = X1 %>% select(-c(row_idx, PIT_ID, BAT_ID,
+X2 = X1 %>% select(-c(row_idx, #PIT_ID, BAT_ID,
+                      #WOBA_AVG_PIT_19, WOBA_AVG_BAT_19,
                       NUM_WOBA_APP_PIT, NUM_WOBA_APP_FINAL_PIT, 
-                      NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT,
-                      WOBA_AVG_PIT_19, WOBA_AVG_BAT_19))
+                      NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT))
 
 # standardize the vector x to have mean 0 and s.d. 1/2
 std <- function(x) {
@@ -262,15 +262,17 @@ X3 = X2 %>%
          std_WOBA_FINAL_BAT_19 = std(WOBA_FINAL_BAT_19),
          std_WOBA_FINAL_PIT_19 = std(WOBA_FINAL_PIT_19),
          std_BQ = std(BQ),
-         std_PQ = std(PQ)) %>%
+         std_PQ = std(PQ),
+         std_WOBA_CURR_BAT_19 = std(WOBA_AVG_BAT_19),
+         std_WOBA_CURR_PIT_19 = std(WOBA_AVG_PIT_19)) %>%
   ungroup()
 
 # hist checks
 hist(X3$std_PQ)
 hist(X3$std_BQ)
 #
-View(X3 %>% filter(YEAR==2019) %>% select(YEAR,DATE,GAME_ID,#row_idx,BAT_ID,cum_avg_woba
-     WOBA_APP,EVENT_WOBA_19,std_WOBA_FINAL_BAT_19,std_BQ))
+# View(X3 %>% filter(YEAR==2019) %>% select(YEAR,DATE,GAME_ID,#row_idx,BAT_ID,cum_avg_woba
+#      WOBA_APP,EVENT_WOBA_19,std_WOBA_FINAL_BAT_19,std_BQ))
 
 
 ########### write csv ########### 

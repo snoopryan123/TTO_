@@ -9,7 +9,7 @@ data {
 parameters {
   real<lower=0> sigma;        // sd of normal likelihood
   vector[p_s] alpha;          // batter sequence number parameters 
-  vector[p_x] eta;            // confounder parameters
+  vector[p_x] eta;            // adjustment parameters
 }
 // transformed parameters {
 //   vector[n] linpred;

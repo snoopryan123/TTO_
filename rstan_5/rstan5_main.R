@@ -18,7 +18,7 @@ rstan_options(auto_write = TRUE)
 ########### OBSERVED DATA ###########
 #####################################
 
-### HERE get `D` from rstan_4x.R
+### HERE get `D` from rstan_5x.R
 
 # NO INTERCEPT and INCLUDE FIRST COLUMN
 change_factor_names <- function(s) {
@@ -50,7 +50,7 @@ folds <- loo::kfold_split_random(K=10,N=nrow(y))
 ########### BATTER_SEQ_NUM MODEL ###########
 ############################################
 
-file_bsn = 'tto3_bsn.stan'
+file_bsn = 'tto5_bsn.stan'
 model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
 
 fit_model_bsn <- function(fold_num) {
@@ -81,7 +81,7 @@ fit_model_bsn <- function(fold_num) {
 ########### UNIQUE_BAT_IDX MODEL ###########
 ############################################
 
-file_ubi = 'tto3_ubi.stan'
+file_ubi = 'tto5_ubi.stan'
 model_ubi <- stan_model(file = file_ubi, model_name = file_ubi)
 
 fit_model_ubi <- function(fold_num) {

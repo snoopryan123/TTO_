@@ -3,7 +3,7 @@ rstan4a-x
 
 4a-1	std_BQ1 std_PQ1, 2019 only
 4a-2	std_BQ2 std_PQ2, 2019 only
-4a-3	std_BQ3 std_PQ3, 2019 only
+4a-3	std_BQ3 std_PQ3, 2019 only ** original running avg. estimator
 4a-4	std_BQ4 std_PQ4, 2019 only
 4a-5	std_BQ5 std_PQ5, 2019 only
 4a-6	std_BQ6 std_PQ6, 2019 only

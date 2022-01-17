@@ -12,19 +12,19 @@ parameters {
   real<lower=0> sigma;        // sd of normal likelihood
   vector[p_u] beta;           // unique batter index parameters 
   vector[p_o] gamma;          // order count parameters 
-  vector[p_x] delta;          // confounder parameters
+  vector[p_x] eta;            // adjustment parameters
 }
 // transformed parameters {
 //   vector[n] linpred;
-//   linpred = U*beta + O*gamma + X*delta;
+//   linpred = U*beta + O*gamma + X*eta;
 // }
 model {
   // std. normal priors
   to_vector(beta) ~ normal(0,1);
   to_vector(gamma) ~ normal(0,1);
-  to_vector(delta) ~ normal(0,1);
+  to_vector(eta) ~ normal(0,1);
   // likelihood
-  y ~ normal(U*beta + O*gamma + X*delta, sigma); 
+  y ~ normal(U*beta + O*gamma + X*eta, sigma); 
 }
 
 
