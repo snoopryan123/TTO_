@@ -1,6 +1,3 @@
-########################################
-### 10 FOLD CV: COMPARE THE 2 MODELS ###
-########################################
 
 library(tidyverse)
 library(rstan)
@@ -9,10 +6,6 @@ library(latex2exp)
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
-cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
-options(mc.cores = cores) ### for HPCC
-# options(mc.cores = parallel::detectCores()) # use this on my computer
-rstan_options(auto_write = TRUE)
 
 #####################################
 ########### OBSERVED DATA ###########
@@ -45,69 +38,6 @@ y <- matrix(D$std_EVENT_WOBA_19, ncol=1)
 # 10 Fold CV folds
 set.seed(12345) # make sure to have the same folds each time!
 folds <- loo::kfold_split_random(K=10,N=nrow(y))
-
-############################################
-########### BATTER_SEQ_NUM MODEL ###########
-############################################
-
-file_bsn = 'tto5_bsn.stan'
-model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
-
-fit_model_bsn <- function(fold_num) {
-  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
-  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
-  #train_rows = which(folds != fold_num)
-  y_train = y[train_rows,]
-  X_train = X[train_rows,]
-  S_train = S[train_rows,]
-  data_train <- list(
-    y=y_train,S=S_train,X=X_train,
-    n=nrow(X_train),p_x=ncol(X_train),p_s=ncol(S_train)
-  )
-  # Train the models
-  seed = 12345
-  set.seed(seed)
-  NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
-  fit <- sampling(model_bsn,
-                  data = data_train,
-                  iter = NUM_ITERS_IN_CHAIN,
-                  chains = cores, #1 #cores, 
-                  cores = cores, # HPCC
-                  seed = seed)
-  fit
-}
-
-############################################
-########### UNIQUE_BAT_IDX MODEL ###########
-############################################
-
-file_ubi = 'tto5_ubi.stan'
-model_ubi <- stan_model(file = file_ubi, model_name = file_ubi)
-
-fit_model_ubi <- function(fold_num) {
-  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
-  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
-  #train_rows = which(folds != fold_num)
-  y_train = y[train_rows,]
-  X_train = X[train_rows,]
-  U_train = U[train_rows,]
-  O_train = O[train_rows,]
-  data_train <- list(
-    y=y_train,X=X_train,U=U_train,O=O_train,
-    n=nrow(X_train),p_x=ncol(X_train),p_u=ncol(U_train),p_o=ncol(O_train)
-  )
-  # Train the models
-  NUM_ITERS_IN_CHAIN = 1500
-  seed = 12345
-  set.seed(seed)
-  fit <- sampling(model_ubi,
-                  data = data_train,
-                  iter = NUM_ITERS_IN_CHAIN,
-                  chains = cores, #1 #cores, 
-                  cores = cores, # HPCC
-                  seed = seed)
-  fit
-}
 
 ######################################
 ########### PLOT FUNCTIONS ###########
@@ -227,5 +157,38 @@ plot_ubi0 <- function(fit) {
                        breaks = seq(-.1, .1, .005)
     ) 
   production_plot
+}
+
+
+plot_3hist_bsn1 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- transform_back(draws)
+  d1 = draws[["alpha[1]"]]
+  d2 = draws[["alpha[2]"]]
+  d9 = draws[["alpha[9]"]]
+  d10 = draws[["alpha[10]"]]
+  d18 = draws[["alpha[18]"]]
+  d19 = draws[["alpha[19]"]]
+  diff1 = as_tibble(d2 - d1)
+  diff2 = as_tibble(d10 - d9)
+  diff3 = as_tibble(d19 - d18)
+  diff1$name = "diff1"
+  diff2$name = "diff2"
+  diff3$name = "diff3"
+  diffs = bind_rows(diff1,diff2,diff3)
+  labs <- c(bquote(paste("posterior dist. of ", alpha[2] - alpha[1])), 
+            bquote(paste("posterior dist. of ", alpha[10] - alpha[9])),
+            bquote(paste("posterior dist. of ", alpha[19] - alpha[18])))
+  p1 = diffs %>% 
+    ggplot(aes(value, fill = name)) + 
+    geom_density(alpha = 0.2) +
+    scale_fill_discrete(labels=labs,
+                        name = "") +
+    theme(#axis.title.y=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks.y=element_blank()) +
+    xlab("") +
+    labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
+  p1
 }
 
