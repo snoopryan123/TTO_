@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan5_overall-x.R
+#$ -N rstan5_z_adjusted-3.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -14,4 +14,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript --vanilla rstan5_overall-2.R
+Rscript --vanilla rstan5_z_adjusted-3.R
