@@ -192,3 +192,35 @@ plot_3hist_bsn1 <- function(fit) {
   p1
 }
 
+plot_3hist_ubi1 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- transform_back(draws)
+  d1 = draws[["beta[1]"]] + draws[["gamma[1]"]]
+  d2 = draws[["beta[2]"]] + draws[["gamma[1]"]]
+  d9 = draws[["beta[9]"]] + draws[["gamma[1]"]]
+  d10 = draws[["beta[1]"]] + draws[["gamma[2]"]]
+  d18 = draws[["beta[9]"]] + draws[["gamma[2]"]]
+  d19 = draws[["beta[1]"]] + draws[["gamma[3]"]]
+  diff1 = as_tibble(d2 - d1)
+  diff2 = as_tibble(d10 - d9)
+  diff3 = as_tibble(d19 - d18)
+  diff1$name = "diff1"
+  diff2$name = "diff2"
+  diff3$name = "diff3"
+  diffs = bind_rows(diff1,diff2,diff3)
+  labs <- c(bquote(paste("posterior dist. of ", (beta[2] + gamma[1]) - (beta[1] + gamma[1]))), 
+            bquote(paste("posterior dist. of ", (beta[1] + gamma[2]) - (beta[9] + gamma[1]))),
+            bquote(paste("posterior dist. of ", (beta[1] + gamma[3]) - (beta[9] + gamma[2]))))
+  p1 = diffs %>% 
+    ggplot(aes(value, fill = name)) + 
+    geom_density(alpha = 0.2) +
+    scale_fill_discrete(labels=labs,
+                        name = "") +
+    theme(#axis.title.y=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks.y=element_blank()) +
+    xlab("") +
+    labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
+  p1
+}
+
