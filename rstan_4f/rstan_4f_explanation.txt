@@ -20,3 +20,10 @@ rstan4f-x
 4f-16	UBI, std_WOBA_FINAL_PIT_19, last 1/4th of 2019
 4f-17	UBI, std_WOBA_CURR_PIT_19, last 1/4th of 2019
 4f-18	UBI, std_PQ, last 1/4th of 2019
+
+4f-19	BSN, all 2019 [control]
+4f-20	UBI, all 2019 [control]
+
+4f-21	BSN, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, last 1/4th of 2019
+4f-22	BSN, std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, last 1/4th of 2019
+4f-23	BSN, std_BQ, std_PQ, last 1/4th of 2019
