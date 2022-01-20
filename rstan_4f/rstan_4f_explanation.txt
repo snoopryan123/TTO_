@@ -27,3 +27,10 @@ rstan4f-x
 4f-21	BSN, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, last 1/4th of 2019
 4f-22	BSN, std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, last 1/4th of 2019
 4f-23	BSN, std_BQ, std_PQ, last 1/4th of 2019
+
+4f-24	BSN, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, last 3/8th of 2019
+4f-25	BSN, std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, last 3/8th of 2019
+4f-26	BSN, std_BQ, std_PQ, last 3/8th of 2019
+4f-27	BSN, std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, last 1/2 of 2019
+4f-28	BSN, std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, last 1/2 of 2019
+4f-29	BSN, std_BQ, std_PQ, last last 1/2 of 2019
