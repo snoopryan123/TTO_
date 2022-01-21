@@ -44,4 +44,20 @@ rstan4f-x
 4f-37	BSN, std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, all of 2019
 4f-38	BSN, std_BQ, std_PQ, all of 2019
 
+	dataset = TTO_dataset_411ff.csv
+
+4f-39	BSN, std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, all of 2019
+4f-40	BSN, std_BQ, std_PQ, all of 2019
+4f-41	BSN, std_BQ2, std_PQ2, all of 2019
+4f-42	BSN, std_BQ3, std_PQ3, all of 2019
+4f-43	BSN, std_BQ4, std_PQ4, all of 2019
+4f-44	BSN, std_BQ5, std_PQ5, all of 2019
+4f-45	BSN, std_BQ6, std_PQ6, all of 2019
+4f-46	BSN, std_BQ7, std_PQ7, all of 2019
+4f-47	BSN, std_BQ8, std_PQ8, all of 2019
+4f-48	BSN, std_BQ9, std_PQ9, all of 2019
+4f-49	BSN, std_BQ10, std_PQ10, all of 2019
+4f-50	BSN, std_BQ11, std_PQ11, all of 2019
+
+
 
