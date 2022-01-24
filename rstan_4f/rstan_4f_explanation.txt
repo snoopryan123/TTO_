@@ -63,9 +63,9 @@ rstan4f-x
 
 4f-51	BSN, std_WOBA_CURR_BAT_19, std_WOBA_CURR_PIT_19, all of 2019
 4f-52	BSN, std_BQ, std_PQ, all of 2019
-4f-53	BSN, std_BQ2, std_PQ2, all of 2019
-4f-54	BSN, std_BQ3, std_PQ3, all of 2019
-4f-55	BSN, std_BQ4, std_PQ4, all of 2019
+4f-53	BSN, std_BQ2, std_PQ2, all of 2019 ### sigma = 0.05
+4f-54	BSN, std_BQ3, std_PQ3, all of 2019 ### sigma = 0.075
+4f-55	BSN, std_BQ4, std_PQ4, all of 2019 ### sigma = 0.1
 4f-56	BSN, std_BQ5, std_PQ5, all of 2019
 4f-57	BSN, std_BQ6, std_PQ6, all of 2019
 4f-58	BSN, std_BQ7, std_PQ7, all of 2019

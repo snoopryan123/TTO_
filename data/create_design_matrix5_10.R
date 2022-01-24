@@ -3,14 +3,15 @@ library(tidyverse)
 ### create moving avg. estimator for batter and pitcher quality
 
 input_filename = "TTO_dataset_410.csv" #FIXME
-output_filename = "TTO_dataset_411g.csv" #FIXME
+output_filename = "TTO_dataset_510.csv" #FIXME
 E0 <- read_csv(input_filename)
 
 #############################################################################
 #### WOBA_AVG_BAT_19, WOBA_FINAL_BAT_19, WOBA_AVG_PIT_19, WOBA_FINAL_PIT_19, 
-#### NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT, NUM_WOBA_APP_PIT, NUM_WOBA_APP_FINAL_PIT,
+#### NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT, NUM_WOBA_APP_PIT, NUM_WOBA_APP_FINAL_PIT
 #############################################################################
 
+### dataset with updated columns
 {
   E00 = E0 %>% 
       group_by(YEAR, PIT_ID) %>%
@@ -33,11 +34,68 @@ E0 <- read_csv(input_filename)
       ungroup() 
 }
 
+##############################################################
+########### JUSTIFYING THE CHOICE OF SIGMA AND TAU ###########
+##############################################################
+
+### sigma === median of season-by-season player-specific s.d. in event woba
+{
+  sig_by_yr_PIT = E00 %>% 
+    group_by(YEAR,PIT_ID) %>%
+    summarise(szn_woba_p = WOBA_FINAL_PIT_19[n()]) %>%
+    group_by(PIT_ID) %>%
+    summarise(sig_p = sd(szn_woba_p)) %>%
+    filter(!is.na(sig_p) & sig_p != 0) %>%
+    summarise(sig = median(sig_p))
+  sig_p = median(sig_by_yr_PIT$sig, na.rm = TRUE)
+  sig_p
+  
+  sig_by_yr_BAT = E00 %>% 
+    group_by(YEAR,BAT_ID) %>%
+    summarise(szn_woba_b = WOBA_FINAL_BAT_19[n()]) %>%
+    group_by(BAT_ID) %>%
+    summarise(sig_b = sd(szn_woba_b)) %>%
+    filter(!is.na(sig_b) & sig_b != 0) %>%
+    summarise(sig = median(sig_b))
+  sig_b = median(sig_by_yr_BAT$sig, na.rm = TRUE)
+  sig_b
+  
+  mean(c(sig_b,sig_p))
+  print(paste("sigma is ", round(mean(c(sig_b,sig_p)),2)) ) # .05
+}
+
+### tau === median of event-by-event player-specific s.d. in event woba
+{
+  tau_by_yr_PIT = E00 %>% 
+  group_by(YEAR,PIT_ID) %>%
+  summarise(tau_p = sd(EVENT_WOBA_19)) %>%
+  filter(!is.na(tau_p) & tau_p != 0) %>%
+  group_by(YEAR) %>%
+  summarise(tau = median(tau_p))
+  tau_p = median(tau_by_yr_PIT$tau, na.rm = TRUE)
+  tau_p
+  
+  tau_by_yr_BAT = E00 %>% 
+    group_by(YEAR,BAT_ID) %>%
+    summarise(tau_b = sd(EVENT_WOBA_19)) %>%
+    filter(!is.na(tau_b) & tau_b != 0) %>%
+    group_by(YEAR) %>%
+    summarise(tau = median(tau_b))
+  tau_b = median(tau_by_yr_BAT$tau, na.rm = TRUE)
+  tau_b
+  
+  mean(c(tau_b,tau_p))
+  print(paste("tau is ", round(mean(c(tau_b,tau_p)),2)) ) # .4
+}
+
 ################################################
 ########### PITCHER QUALITY FUNCTION ###########
 ################################################
 
-get_PQ <- function(E00, sigma=0.125, tau=0.5) {
+SIG = 0.1 #0.05 #0.1
+TAU = 0.5
+
+get_PQ <- function(E00, sigma=SIG, tau=TAU) {
 
   ########### theta_bar_0 for pitchers ########### 
   {
@@ -97,63 +155,13 @@ get_PQ <- function(E00, sigma=0.125, tau=0.5) {
   # View(ex1)
   
   return(R)
-}
-
-##############################################################
-########### JUSTIFYING THE CHOICE OF SIGMA AND TAU ###########
-##############################################################
-
-### sigma === median of season-by-season player-specific s.d. in event woba
-sig_by_yr_PIT = E00 %>% 
-  group_by(YEAR,PIT_ID) %>%
-  summarise(szn_woba_p = WOBA_FINAL_PIT_19[n()]) %>%
-  group_by(PIT_ID) %>%
-  summarise(sig_p = sd(szn_woba_p)) %>%
-  filter(!is.na(sig_p) & sig_p != 0) %>%
-  summarise(sig = median(sig_p))
-sig_p = median(sig_by_yr_PIT$sig, na.rm = TRUE)
-sig_p
-
-sig_by_yr_BAT = E00 %>% 
-  group_by(YEAR,BAT_ID) %>%
-  summarise(szn_woba_b = WOBA_FINAL_BAT_19[n()]) %>%
-  group_by(BAT_ID) %>%
-  summarise(sig_b = sd(szn_woba_b)) %>%
-  filter(!is.na(sig_b) & sig_b != 0) %>%
-  summarise(sig = median(sig_b))
-sig_b = median(sig_by_yr_BAT$sig, na.rm = TRUE)
-sig_b
-
-mean(c(sig_b,sig_p)) # .05
-
-### tau === median of event-by-event player-specific s.d. in event woba
-tau_by_yr_PIT = E00 %>% 
-  group_by(YEAR,PIT_ID) %>%
-  summarise(tau_p = sd(EVENT_WOBA_19)) %>%
-  filter(!is.na(tau_p) & tau_p != 0) %>%
-  group_by(YEAR) %>%
-  summarise(tau = median(tau_p))
-tau_p = median(tau_by_yr_PIT$tau, na.rm = TRUE)
-tau_p
-
-tau_by_yr_BAT = E00 %>% 
-  group_by(YEAR,BAT_ID) %>%
-  summarise(tau_b = sd(EVENT_WOBA_19)) %>%
-  filter(!is.na(tau_b) & tau_b != 0) %>%
-  group_by(YEAR) %>%
-  summarise(tau = median(tau_b))
-tau_b = median(tau_by_yr_BAT$tau, na.rm = TRUE)
-tau_b
-
-mean(c(tau_b,tau_p)) # .5
-
-
+}     ##sigma=0.125
 
 ####################################################
 ########### GET PITCHER & BATTER QUALITY ###########
 ####################################################
 
-get_PQBQ <- function(full=TRUE, sigma=0.125, tau=0.5) {
+get_PQBQ <- function(full=TRUE, sigma=SIG, tau=TAU) {
   # get Pitcher Quality
   E1a = get_PQ(E00, sigma=sigma, tau=tau)
   
@@ -177,20 +185,14 @@ get_PQBQ <- function(full=TRUE, sigma=0.125, tau=0.5) {
            NUM_WOBA_APP_BAT = NUM_WOBA_APP_PIT) 
   X1 = E1a %>% left_join(E1b)
   # check columns with NA
-  print("\n"); print(names(X1)[sapply(1:ncol(X1),fun <- function(i) {sum(is.na(X1[,i]))}) > 0]); print("\n");
+  print("!!!!!"); print(names(X1)[sapply(1:ncol(X1),fun <- function(i) {sum(is.na(X1[,i]))}) > 0]); print("!!!!!");
   if (full) return(X1) else return(X1 %>% select(PQ,BQ))
 }
 
-X1 = get_PQBQ(full=TRUE, sigma=0.0357, tau=0.5) 
-pb2 = get_PQBQ(full=FALSE, sigma=0.05, tau=0.5) %>% rename(BQ2=BQ, PQ2=PQ) # WINNER!
-pb3 = get_PQBQ(full=FALSE, sigma=0.075, tau=0.5) %>% rename(BQ3=BQ, PQ3=PQ)
-pb4 = get_PQBQ(full=FALSE, sigma=0.1, tau=0.5) %>% rename(BQ4=BQ, PQ4=PQ)
-pb5 = get_PQBQ(full=FALSE, sigma=0.125, tau=0.5) %>% rename(BQ5=BQ, PQ5=PQ)
-pb6 = get_PQBQ(full=FALSE, sigma=0.15, tau=0.5) %>% rename(BQ6=BQ, PQ6=PQ)
-pb7 = get_PQBQ(full=FALSE, sigma=0.2, tau=0.5) %>% rename(BQ7=BQ, PQ7=PQ)
-pb8 = get_PQBQ(full=FALSE, sigma=0.375, tau=0.5) %>% rename(BQ8=BQ, PQ8=PQ)
-pb9 = get_PQBQ(full=FALSE, sigma=0.5, tau=0.5) %>% rename(BQ9=BQ, PQ9=PQ)
-pb10 = get_PQBQ(full=FALSE, sigma=1, tau=0.5) %>% rename(BQ10=BQ, PQ10=PQ)
+X1 = get_PQBQ(full=TRUE, sigma=0.05, tau=TAU) 
+pb2 = get_PQBQ(full=FALSE, sigma=0.1, tau=TAU) %>% rename(PQ2=PQ, BQ2=BQ)
+
+X1a = bind_cols(X1, pb2)
 
 # sum(is.na(X1$BQ))
 # which(is.na(X1$BQ))
@@ -201,7 +203,8 @@ pb10 = get_PQBQ(full=FALSE, sigma=1, tau=0.5) %>% rename(BQ10=BQ, PQ10=PQ)
 #   select(row_idx,DATE,GAME_ID,INNING,PIT_ID,BAT_ID,EVENT_WOBA_19, #top,bottom,
 #          NUM_WOBA_APP_PIT,WOBA_AVG_PIT_19,theta_bar_0_pit,PQ,WOBA_FINAL_PIT_19)
 # View(ex1p)
-# ex1b = X1 %>% filter(BAT_ID == "zobrb001" & YEAR == 2019) %>%
+## Batter Examples: suare001, zobrb001, goldp001
+# ex1b = X1 %>% filter(BAT_ID == "goldp001" & YEAR == 2019) %>%
 #   mutate(idx = row_number()) %>%
 #   select(row_idx,DATE,GAME_ID,INNING,PIT_ID,BAT_ID,EVENT_WOBA_19, #top,bottom,
 #          NUM_WOBA_APP_BAT,WOBA_AVG_BAT_19,theta_bar_0_bat,BQ,WOBA_FINAL_BAT_19)
@@ -213,11 +216,11 @@ pb10 = get_PQBQ(full=FALSE, sigma=1, tau=0.5) %>% rename(BQ10=BQ, PQ10=PQ)
 #############################################################################
 
 # keep relevant columns
-X2 = bind_cols(X1,pb2,pb3,pb4,pb5,pb6,pb7,pb8,pb9,pb10) %>% 
-          select(-c(row_idx, 
-                      #PIT_ID, BAT_ID, WOBA_AVG_PIT_19, WOBA_AVG_BAT_19,
-                      NUM_WOBA_APP_PIT, NUM_WOBA_APP_FINAL_PIT, 
-                      NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT))
+X2 = X1a %>% select(-c(row_idx, 
+                    theta_bar_0_pit, theta_bar_0_bat,
+                    #PIT_ID, BAT_ID, WOBA_AVG_PIT_19, WOBA_AVG_BAT_19,
+                    NUM_WOBA_APP_PIT, NUM_WOBA_APP_FINAL_PIT, 
+                    NUM_WOBA_APP_BAT, NUM_WOBA_APP_FINAL_BAT))
 
 # standardize the vector x to have mean 0 and s.d. 1/2
 std <- function(x) {
@@ -230,73 +233,27 @@ X3 = X2 %>%
   mutate(std_EVENT_WOBA_19 = std(EVENT_WOBA_19),
          std_WOBA_FINAL_BAT_19 = std(WOBA_FINAL_BAT_19),
          std_WOBA_FINAL_PIT_19 = std(WOBA_FINAL_PIT_19),
+         std_WOBA_CURR_BAT_19 = std(WOBA_AVG_BAT_19),
+         std_WOBA_CURR_PIT_19 = std(WOBA_AVG_PIT_19),
          std_BQ = std(BQ),
          std_PQ = std(PQ),
          std_BQ2 = std(BQ2),
-         std_PQ2 = std(PQ2),
-         std_BQ3 = std(BQ3),
-         std_PQ3 = std(PQ3),
-         std_BQ4 = std(BQ4),
-         std_PQ4 = std(PQ4),
-         std_BQ5 = std(BQ5),
-         std_PQ5 = std(PQ5),
-         std_BQ6 = std(BQ6),
-         std_PQ6 = std(PQ6),
-         std_BQ7 = std(BQ7),
-         std_PQ7 = std(PQ7),
-         std_BQ8 = std(BQ8),
-         std_PQ8 = std(PQ8),
-         std_BQ9 = std(BQ9),
-         std_PQ9 = std(PQ9),
-         std_BQ10 = std(BQ10),
-         std_PQ10 = std(PQ10),
-         std_WOBA_CURR_BAT_19 = std(WOBA_AVG_BAT_19),
-         std_WOBA_CURR_PIT_19 = std(WOBA_AVG_PIT_19)) %>%
+         std_PQ2 = std(PQ2)) %>%
   ungroup()
 
 # hist checks
 # hist(X3$std_PQ)
 # hist(X3$std_BQ)
 
-
-#### look at the trajectory of certain players, 
-#### compare curr_avg_woba to BQ,PQ trajectories....
-X3 %>% filter(BAT_ID == "suare001" & YEAR == 2019) %>% mutate(idx = row_number()) %>% ggplot() +
-  geom_line(aes(x=idx, y=std_BQ), col="royalblue4") +
-  geom_line(aes(x=idx, y=std_BQ2), col="royalblue3") +
-  geom_line(aes(x=idx, y=std_BQ3), col="royalblue2") +
-  # geom_line(aes(x=idx, y=std_BQ4), col="royalblue1") +
-  # geom_line(aes(x=idx, y=std_BQ5), col="royalblue") +
-  # geom_line(aes(x=idx, y=std_BQ6), col="dodgerblue4") +
-  # geom_line(aes(x=idx, y=std_BQ7), col="dodgerblue3") +
-  # geom_line(aes(x=idx, y=std_BQ8), col="dodgerblue2") +
-  # geom_line(aes(x=idx, y=std_BQ9), col="dodgerblue1") +
-  # geom_line(aes(x=idx, y=std_BQ10), col="firebrick")+
-  geom_line(aes(x=idx, y=std_WOBA_CURR_BAT_19), col="black", size=1.5) +
-  geom_line(aes(x=idx, y=std_WOBA_FINAL_BAT_19), col="black", size=1.5)+
-  ylim(c(-0.4,1)) #ylim(c(-0.75,0.75))
-
-##suare001
-##as_tibble(as.data.frame(table((X3 %>% filter(YEAR==2019))$BAT_ID))) %>% arrange(-Freq)
-X3 %>% filter(BAT_ID == "zobrb001" & YEAR == 2019) %>% mutate(idx = row_number()) %>%
-  #filter(row_number() <= 50) %>%
-  # filter(row_number() >= 50) %>%
+## Batter Examples: suare001, zobrb001, goldp001, braur002, longe001
+######(X3 %>% filter(YEAR == 2019) %>% select(BAT_ID))$BAT_ID
+X3 %>% filter(BAT_ID == "longe001" & YEAR == 2019) %>% 
+  mutate(idx = row_number()) %>% 
   ggplot() +
-  geom_line(aes(x=idx, y=std_BQ), col="royalblue4") +
-  geom_line(aes(x=idx, y=std_BQ2), col="royalblue3") +
-  geom_line(aes(x=idx, y=std_BQ3), col="royalblue2") +
-  # geom_line(aes(x=idx, y=std_BQ4), col="royalblue1") +
-  # geom_line(aes(x=idx, y=std_BQ5), col="royalblue") +
-  # geom_line(aes(x=idx, y=std_BQ6), col="tomato4") +
-  # geom_line(aes(x=idx, y=std_BQ7), col="tomato3") +
-  # geom_line(aes(x=idx, y=std_BQ8), col="tomato2") +
-  # geom_line(aes(x=idx, y=std_BQ9), col="tomato1") +
-  # geom_line(aes(x=idx, y=std_BQ10), col="tomato")+
-  geom_line(aes(x=idx, y=std_WOBA_CURR_BAT_19), col="black", size=1.5) +
-  geom_line(aes(x=idx, y=std_WOBA_FINAL_BAT_19), col="black", size=1.5)+
-  ylim(c(-1,0.75))
-
-
+  geom_line(aes(x=idx, y=WOBA_AVG_BAT_19), col="black", size=1) +
+  geom_line(aes(x=idx, y=WOBA_FINAL_BAT_19), col="black", size=1)+
+  geom_line(aes(x=idx, y=BQ), col="tomato3", size=1) +
+  geom_line(aes(x=idx, y=BQ2), col="dodgerblue", size=1)
 
 ########### write csv ########### 
 R = X3
