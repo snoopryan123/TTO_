@@ -9,7 +9,7 @@ library(latex2exp)
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
-cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+cores = 1#strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
@@ -67,7 +67,7 @@ fit_model_bsn <- function(fold_num) {
   # Train the models
   seed = 12345
   set.seed(seed)
-  NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
+  NUM_ITERS_IN_CHAIN = 10#1500 #FIXME #10 
   fit <- sampling(model_bsn,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
@@ -228,4 +228,66 @@ plot_ubi0 <- function(fit) {
     ) 
   production_plot
 }
+
+plot_bsn_spline <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  p = dim(B)[2]
+  names(draws)[2:(1+p)] = names(B)
+  
+  bsn <- paste0("B", 1:p)
+  lower <- numeric(p)
+  avg <- numeric(p)
+  upper <- numeric(p)
+  for (i in 1:length(bsn)) {
+    b = bsn[i]
+    x = transform_back(draws[[bsn[i]]])
+    lower[i] = quantile(x,.025)
+    avg[i] = mean(x)
+    upper[i] = quantile(x,.975)
+  }
+  
+  # spline basis matrix 
+  aa = unique(D$BATTER_SEQ_NUM) 
+  BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
+  colnames(BB_) = paste0("B",1:ncol(BB_))
+  BB = as_tibble(BB_)
+  bbb = as.matrix(BB)
+  
+  # quantiles of each batter sequence number
+  lower_ = bbb %*% lower
+  avg_ = bbb %*% avg
+  upper_ = bbb %*% upper
+  
+  # plot
+  A = data.frame(
+    lower = lower_[1:27],
+    avg = avg_[1:27],
+    upper= upper_[1:27],
+    bn = 1:27
+  )
+  
+  # PRODUCTION PLOT
+  production_plot = A %>% 
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = TeX("Pitcher effectiveness over the course of a game")) + # "Pitcher Effectiveness"
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("Batter sequence number"), # $k$ 
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(name=TeX("Posterior change in wOBA"), # "Posterior change in wOBA" "$\\alpha_k$"
+                       #limits = c(-.02, .03),
+                       breaks = seq(-.1, .1, .005)
+    ) 
+  production_plot
+}
+
+
+
 

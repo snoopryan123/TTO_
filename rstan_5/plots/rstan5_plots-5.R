@@ -2,14 +2,14 @@ library(tidyverse)
 output_folder = './' #'./job_output/'
 
 ### load data
-input_file = "../../data/TTO_dataset_411.csv"  
+input_file = "../../data/TTO_dataset_510.csv"  
 D <- read_csv(input_file)
 D <- D %>% drop_na() 
 #FIXME 
 D <- D %>% filter(YEAR == 2019) 
 X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan5_plots-3.R"
-fit <- readRDS("../job_output/fit_rstan5_overall-3.R.rds") 
+OUTPUT_FILE = "rstan5_plots-5.R"
+fit <- readRDS("../job_output/fit_rstan5-5.R.rds") 
 
 source("rstan5_plots_main.R")
 
@@ -18,19 +18,21 @@ source("rstan5_plots_main.R")
 #############################
 
 # plot full trajectory 
-p = plot_bsn0(fit)
+p = plot_ubi0(fit)
 p
-ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
+ggsave(paste0("./plot_series_",OUTPUT_FILE,".png"), p)
 
 # plot 3 panel histogram B1->B2, B9->B10, B18->B19
-p1 = plot_3hist_bsn1(fit)
+p1 = plot_3hist_ubi1(fit)
 p1
 ggsave(paste0("./plot_3hist1_",OUTPUT_FILE,".png"), p1)
 
 # plot 3 panel histogram avg TTO1, TTO2, TTO3
-p2 = plot_3hist_bsn2(fit)
+p2 = plot_3hist_ubi2(fit)
 p2
 ggsave(paste0("./plot_3hist2_",OUTPUT_FILE,".png"), p2)
+
+
 
 
 

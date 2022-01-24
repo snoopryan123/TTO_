@@ -54,9 +54,6 @@ transform_back <- function(x) {
 plot_bsn0 <- function(fit) {
   draws <- as_tibble(as.matrix(fit))
 
-  # due to autocorrelation, keep every other posterior sample
-  #draws <- draws[seq(1,nrow(draws),2),]
-  
   # compute mean and 2.5%, 97.5% quantiles of posterior samples
   p = 27 #dim(BATTER_SEQ_dummies)[2]
   bsn <- paste0("alpha[",1:p,"]")
@@ -89,13 +86,13 @@ plot_bsn0 <- function(fit) {
     # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
     geom_vline(aes(xintercept = 9.5), size=1.2) +
     geom_vline(aes(xintercept = 18.5), size=1.2) +
-    labs(title = TeX("Posterior distribution of $\\alpha$")) + 
     theme(legend.position="none") +
     scale_x_continuous(name=TeX("Batter sequence number $k$"), 
                        limits = c(0,28),
-                       breaks = c(0,5,10,15,20,25)) +
+                       breaks = c(1,5,9,10,14,18,19,23,27)) +
+    labs(title = TeX("Posterior distribution of $\\alpha$")) + 
     scale_y_continuous(name=TeX("$\\alpha_k$"), 
-                       #limits = c(-.02, .03),
+                       limits = c(-.05, .06),
                        breaks = seq(-.1, .1, .005)
     ) 
   production_plot
@@ -153,7 +150,7 @@ plot_ubi0 <- function(fit) {
                        breaks = BREAKS,
                        labels =  XLABS[BREAKS+1]) +
     scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"), 
-                       #limits = c(-.015, .03),
+                       limits = c(-.03, .04),
                        breaks = seq(-.1, .1, .005)
     ) 
   production_plot
@@ -187,7 +184,7 @@ plot_3hist_bsn1 <- function(fit) {
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
-    xlab("") +
+    xlab("change in wOBA") +
     labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
   p1
 }
@@ -219,7 +216,7 @@ plot_3hist_ubi1 <- function(fit) {
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
-    xlab("") +
+    xlab("change in wOBA") +
     labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
   p1
 }
@@ -251,8 +248,8 @@ plot_3hist_bsn2 <- function(fit) {
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
-    xlab("") +
-    labs(title = "Posterior dists. of pitcher performance averaged \n over each TTO, after adjustments")
+    xlab("change in wOBA") +
+    labs(title = "Posterior dists. of pitcher performance \n averaged over each TTO, after adjustments")
     #labs(title=bquote(paste("Average ", alpha,  " posterior dists. in each TTO")))
   p2
 }
@@ -287,9 +284,9 @@ plot_3hist_ubi2 <- function(fit) {
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
-    xlab("") +
-    labs(title = "Posterior dists. of pitcher performance averaged \n over each TTO, after adjustments")
-    #labs(title=bquote(paste("Average ", alpha,  " posterior dists. in each TTO")))
+    xlab("change in wOBA") +
+    labs(title = "Posterior dists. of pitcher performance \n averaged over each TTO, after adjustments")
+  #labs(title=bquote(paste("Average ", alpha,  " posterior dists. in each TTO")))
   p2
 }
 
