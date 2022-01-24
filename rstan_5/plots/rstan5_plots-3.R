@@ -27,6 +27,10 @@ p1 = plot_3hist_bsn1(fit)
 p1
 ggsave(paste0("./plot_3hist1_",OUTPUT_FILE,".png"), p1)
 
+# plot 3 panel histogram avg TTO1, TTO2, TTO3
+p2 = plot_3hist_bsn2(fit)
+p2
+ggsave(paste0("./plot_3hist2_",OUTPUT_FILE,".png"), p2)
 
 
 

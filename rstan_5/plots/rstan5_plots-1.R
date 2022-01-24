@@ -27,40 +27,46 @@ p1 = plot_3hist_bsn1(fit)
 p1
 ggsave(paste0("./plot_3hist1_",OUTPUT_FILE,".png"), p1)
 
-
-
-
-draws <- as_tibble(as.matrix(fit))
-draws <- as_tibble(transform_back(draws))
-tto1 = draws[paste0("alpha[",1:9,"]")]
-tto2 = draws[paste0("alpha[",10:18,"]")]
-tto3 = draws[paste0("alpha[",19:27,"]")]
-tto1_means = tto1 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
-tto2_means = tto2 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
-tto3_means = tto3 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
-tto1_means$tto = "1"
-tto2_means$tto = "2"
-tto3_means$tto = "3"
-tto_means = bind_rows(tto1_means,tto2_means,tto3_means)
-# labs <- c("first TTO",
-#           "second TTO",
-#           "third TTO")
-labs <- c(bquote(paste("1st TTO: mean posterior dist. of {", alpha[k], ": k=1,...,9}"  )), 
-          bquote(paste("2nd TTO: mean posterior dist. of {", alpha[k], ": k=10,...,18}"  )), 
-          bquote(paste("3rd TTO: mean posterior dist. of {", alpha[k], ": k=19,...,27}"  )) )
-p2 = tto_means %>% 
-  ggplot(aes(tto_means, fill = tto)) + 
-  geom_density(alpha = 0.2) +
-  scale_fill_discrete(labels=labs, name="") +
-  theme(#axis.title.y=element_blank(),
-    axis.text.y=element_blank(),
-    axis.ticks.y=element_blank()) +
-  xlab("") +
-  #labs(title = "")
-  labs(title=bquote(paste("Comparing the mean ", alpha, "posterior distributions in the \n first, second, and third times through the batting order")))
+# plot 3 panel histogram avg TTO1, TTO2, TTO3
+p2 = plot_3hist_bsn2(fit)
 p2
+ggsave(paste0("./plot_3hist2_",OUTPUT_FILE,".png"), p2)
 
 
+
+### plot trajectory of Juan Soto running avg. estimator AND current avg. woba
+# plot((D %>% filter(BAT_ID=="sotoj001") %>% 
+#         filter(row_number() >= 200) %>% 
+#         select(WOBA_AVG_BAT_19))$WOBA_AVG_BAT_19)
+# plot((D %>% filter(BAT_ID=="sotoj001") %>% filter(row_number() >= 200) %>% select(BQ))$BQ)
+# ###plot((D %>% filter(BAT_ID=="sotoj001") %>% select(BQ))$BQ)
+
+### plot correlation b/t PQ,BQ and batter_idx
+# D %>% group_by(BATTER_IDX) %>% 
+#   summarise(wf =mean(WOBA_FINAL_PIT_19), wr = mean(PQ)) %>% 
+#   ggplot(aes(x=BATTER_IDX, y=wf)) + geom_point()
+# D %>% filter(DATE == "2019-05-01") %>% group_by(BATTER_IDX) %>% 
+#   summarise(wf = mean(WOBA_FINAL_BAT_19), wr = mean(BQ)) %>% 
+#   ggplot(aes(x=BATTER_IDX, y=wr)) + geom_point()
+# D %>% group_by(BATTER_IDX) %>% 
+#   summarise(wf = mean(WOBA_FINAL_BAT_19), wr = mean(BQ)) %>% 
+#   ggplot(aes(x=BATTER_IDX, y=wf)) + geom_point()
+
+
+
+
+# ###
+# w_bat = (D %>% group_by(BAT_ID) %>% summarise(w = unique(WOBA_FINAL_BAT_19)))$w
+# w_bat1 = w_bat[w_bat !=0]
+# hist(w_bat1, breaks=40)
+# mean(w_bat1)
+# sd(w_bat1)
+# 
+# w_pit = (D %>% group_by(PIT_ID) %>% summarise(w = unique(WOBA_FINAL_PIT_19)))$w
+# w_pit1 = w_pit[w_pit !=0]
+# hist(w_pit1, breaks=40)
+# mean(w_pit1)
+# sd(w_pit1)
 
 
 

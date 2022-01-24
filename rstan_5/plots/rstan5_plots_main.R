@@ -224,3 +224,72 @@ plot_3hist_ubi1 <- function(fit) {
   p1
 }
 
+
+plot_3hist_bsn2 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- as_tibble(transform_back(draws))
+  tto1 = draws[paste0("alpha[",1:9,"]")]
+  tto2 = draws[paste0("alpha[",10:18,"]")]
+  tto3 = draws[paste0("alpha[",19:27,"]")]
+  tto1_means = tto1 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto2_means = tto2 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto3_means = tto3 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto1_means$tto = "1"
+  tto2_means$tto = "2"
+  tto3_means$tto = "3"
+  tto_means = bind_rows(tto1_means,tto2_means,tto3_means)
+  # labs <- c("first TTO",
+  #           "second TTO",
+  #           "third TTO")
+  labs <- c(bquote(paste("1st TTO: mean posterior dist. of {", alpha[k], ": k=1,...,9}"  )), 
+            bquote(paste("2nd TTO: mean posterior dist. of {", alpha[k], ": k=10,...,18}"  )), 
+            bquote(paste("3rd TTO: mean posterior dist. of {", alpha[k], ": k=19,...,27}"  )) )
+  p2 = tto_means %>% 
+    ggplot(aes(tto_means, fill = tto)) + 
+    geom_density(alpha = 0.2) +
+    scale_fill_discrete(labels=labs, name="") +
+    theme(#axis.title.y=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks.y=element_blank()) +
+    xlab("") +
+    labs(title = "Posterior dists. of pitcher performance averaged \n over each TTO, after adjustments")
+    #labs(title=bquote(paste("Average ", alpha,  " posterior dists. in each TTO")))
+  p2
+}
+
+plot_3hist_ubi2 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- as_tibble(transform_back(draws))
+  betas = draws[paste0("beta[",1:9,"]")]
+  gamma1 = as_tibble(do.call(cbind, rep(draws[paste0("gamma[",1,"]")], 9) ))
+  gamma2 = as_tibble(do.call(cbind, rep(draws[paste0("gamma[",2,"]")], 9) ))
+  gamma3 = as_tibble(do.call(cbind, rep(draws[paste0("gamma[",3,"]")], 9) ))
+  tto1 = as_tibble(betas + gamma1)
+  tto2 = as_tibble(betas + gamma2)
+  tto3 = as_tibble(betas + gamma3)
+  tto1_means = tto1 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto2_means = tto2 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto3_means = tto3 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto1_means$tto = "1"
+  tto2_means$tto = "2"
+  tto3_means$tto = "3"
+  tto_means = bind_rows(tto1_means,tto2_means,tto3_means)
+  # labs <- c("first TTO",
+  #           "second TTO",
+  #           "third TTO")
+  labs <- c(bquote(paste("1st TTO: mean posterior dist. of {", beta[k]+gamma[1], ": k=1,...,9}"  )), 
+            bquote(paste("2nd TTO: mean posterior dist. of {", beta[k]+gamma[2], ": k=10,...,18}"  )), 
+            bquote(paste("3rd TTO: mean posterior dist. of {", beta[k]+gamma[3], ": k=19,...,27}"  )) )
+  p2 = tto_means %>% 
+    ggplot(aes(tto_means, fill = tto)) + 
+    geom_density(alpha = 0.2) +
+    scale_fill_discrete(labels=labs, name="") +
+    theme(#axis.title.y=element_blank(),
+      axis.text.y=element_blank(),
+      axis.ticks.y=element_blank()) +
+    xlab("") +
+    labs(title = "Posterior dists. of pitcher performance averaged \n over each TTO, after adjustments")
+    #labs(title=bquote(paste("Average ", alpha,  " posterior dists. in each TTO")))
+  p2
+}
+
