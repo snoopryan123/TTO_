@@ -70,7 +70,7 @@ yrs = 2010:2019
                        breaks = BREAKS,
                        labels =  XLABS[BREAKS+1]) +
     scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"), 
-                       limits = c(-.05, .07),
+                       limits = c(-.03, .05),
                        breaks = seq(-.1, .1, .02)
     ) 
   p

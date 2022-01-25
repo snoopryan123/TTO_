@@ -58,7 +58,7 @@ yrs = 2010:2019
                        breaks = c(1,5,9,10,14,18,19,23,27)) +
     labs(title = TeX("Posterior distribution of $\\alpha$")) + 
     scale_y_continuous(name=TeX("$\\alpha_k$"), 
-                       limits = c(-.05, .07),
+                       limits = c(-.055, .07),
                        breaks = seq(-.1, .1, .02)
     ) 
   p

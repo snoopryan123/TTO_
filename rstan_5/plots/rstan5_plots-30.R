@@ -53,7 +53,7 @@ yrs = 2010:2019
   
   # PRODUCTION PLOT
   theme_update(plot.title = element_text(hjust = 0.5))
-  p = R %>% filter(yr>=2011) %>%
+  p0 = R %>% filter(yr>=2011) %>%
     ggplot(aes(x=bn, y=avg)) +
     facet_wrap(~ yr, ncol=3) +
     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
@@ -70,11 +70,11 @@ yrs = 2010:2019
                        breaks = BREAKS,
                        labels =  XLABS[BREAKS+1]) +
     scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"), 
-                       limits = c(-.05, .07),
+                       limits = c(-.03, .05),
                        breaks = seq(-.1, .1, .02)
     ) 
-  p
-  ggsave(paste0("./plot_9_yr_stack_",OUTPUT_FILE,".png"), p)
+  p0
+  ggsave(paste0("./plot_9_yr_stack_",OUTPUT_FILE,".png"), p0)
 }
 
 {
