@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {10..28}
+for i in {40..48}
 do
    ####echo "moving bsn $i"
    mv ./job_output/fit_rstan5-$i.R.rds    ../../Dropbox/HPCC/fit_rstan5-$i.R.rds  

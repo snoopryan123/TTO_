@@ -1,8 +1,8 @@
 library(tidyverse)
 
 #FIXME
-OUTPUT_FILE = "rstan5_plots-10.R"
-nums = c(10:18,1)
+OUTPUT_FILE = "rstan5_plots-20.R"
+nums = c(20:28,2)
 yrs = 2010:2019
 
 ### plot 9 year stack
