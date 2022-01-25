@@ -35,53 +35,55 @@ E0 <- read_csv(input_filename)
 }
 
 ##############################################################
-########### JUSTIFYING THE CHOICE OF SIGMA AND TAU ###########
+########### JUSTIFYING THE CHOICE OF nu AND TAU ###########
 ##############################################################
 
-### sigma === median of season-by-season player-specific s.d. in event woba
+### nu === median of season-by-season player-specific s.d. in event woba
 {
-  sig_by_yr_PIT = E00 %>% 
+  nu_by_yr_PIT = E00 %>% 
     group_by(YEAR,PIT_ID) %>%
     summarise(szn_woba_p = WOBA_FINAL_PIT_19[n()]) %>%
     group_by(PIT_ID) %>%
-    summarise(sig_p = sd(szn_woba_p)) %>%
-    filter(!is.na(sig_p) & sig_p != 0) %>%
-    summarise(sig = median(sig_p))
-  sig_p = median(sig_by_yr_PIT$sig, na.rm = TRUE)
-  sig_p
+    summarise(nu_p = sd(szn_woba_p)) %>%
+    filter(!is.na(nu_p) & nu_p != 0) %>%
+    summarise(nu = median(nu_p))
+  nu_p = median(nu_by_yr_PIT$nu, na.rm = TRUE)
+  nu_p
   
-  sig_by_yr_BAT = E00 %>% 
+  nu_by_yr_BAT = E00 %>% 
     group_by(YEAR,BAT_ID) %>%
     summarise(szn_woba_b = WOBA_FINAL_BAT_19[n()]) %>%
     group_by(BAT_ID) %>%
-    summarise(sig_b = sd(szn_woba_b)) %>%
-    filter(!is.na(sig_b) & sig_b != 0) %>%
-    summarise(sig = median(sig_b))
-  sig_b = median(sig_by_yr_BAT$sig, na.rm = TRUE)
-  sig_b
+    summarise(nu_b = sd(szn_woba_b)) %>%
+    filter(!is.na(nu_b) & nu_b != 0) %>%
+    summarise(nu = median(nu_b))
+  nu_b = median(nu_by_yr_BAT$nu, na.rm = TRUE)
+  nu_b
   
-  mean(c(sig_b,sig_p))
-  print(paste("sigma is ", round(mean(c(sig_b,sig_p)),2)) ) # .05
+  mean(c(nu_b,nu_p))
+  print(paste("nu is ", round(mean(c(nu_b,nu_p)),2)) ) # .05
 }
 
 ### tau === median of event-by-event player-specific s.d. in event woba
 {
   tau_by_yr_PIT = E00 %>% 
-  group_by(YEAR,PIT_ID) %>%
-  summarise(tau_p = sd(EVENT_WOBA_19)) %>%
-  filter(!is.na(tau_p) & tau_p != 0) %>%
-  group_by(YEAR) %>%
-  summarise(tau = median(tau_p))
-  tau_p = median(tau_by_yr_PIT$tau, na.rm = TRUE)
+    group_by(YEAR,PIT_ID) %>%
+    summarise(tau_p = sd(EVENT_WOBA_19)) %>%
+    filter(!is.na(tau_p) & tau_p != 0) %>%
+    ungroup() %>% #group_by(YEAR) %>%
+    summarise(tau = median(tau_p))
+  #tau_p = median(tau_by_yr_PIT$tau, na.rm = TRUE)
+  tau_p = tau_by_yr_PIT$tau
   tau_p
   
   tau_by_yr_BAT = E00 %>% 
     group_by(YEAR,BAT_ID) %>%
     summarise(tau_b = sd(EVENT_WOBA_19)) %>%
     filter(!is.na(tau_b) & tau_b != 0) %>%
-    group_by(YEAR) %>%
+    ungroup() %>% #group_by(YEAR) %>%
     summarise(tau = median(tau_b))
-  tau_b = median(tau_by_yr_BAT$tau, na.rm = TRUE)
+  #tau_b = median(tau_by_yr_BAT$tau, na.rm = TRUE)
+  tau_b = tau_by_yr_BAT$tau
   tau_b
   
   mean(c(tau_b,tau_p))
@@ -92,10 +94,10 @@ E0 <- read_csv(input_filename)
 ########### PITCHER QUALITY FUNCTION ###########
 ################################################
 
-SIG = 0.1 #0.05 #0.1
+nu = 0.1 #0.05 #0.1
 TAU = 0.5
 
-get_PQ <- function(E00, sigma=SIG, tau=TAU) {
+get_PQ <- function(E00, nu=nu, tau=TAU) {
 
   ########### theta_bar_0 for pitchers ########### 
   {
@@ -136,8 +138,8 @@ get_PQ <- function(E00, sigma=SIG, tau=TAU) {
     filter(YEAR >= 2010) %>%
     group_by(YEAR, PIT_ID) %>% 
     mutate(
-      top = (1/tau^2)*WOBA_AVG_PIT_19*(NUM_WOBA_APP_PIT-1) + (1/sigma^2)*theta_bar_0_pit,
-      bottom = (NUM_WOBA_APP_PIT-1)/(tau^2) + (1/sigma^2),
+      top = (1/tau^2)*WOBA_AVG_PIT_19*(NUM_WOBA_APP_PIT-1) + (1/nu^2)*theta_bar_0_pit,
+      bottom = (NUM_WOBA_APP_PIT-1)/(tau^2) + (1/nu^2),
       PQ = top/bottom # running avg. estimator
     ) %>%
     ungroup()
@@ -155,15 +157,15 @@ get_PQ <- function(E00, sigma=SIG, tau=TAU) {
   # View(ex1)
   
   return(R)
-}     ##sigma=0.125
+}     ##nu=0.125
 
 ####################################################
 ########### GET PITCHER & BATTER QUALITY ###########
 ####################################################
 
-get_PQBQ <- function(full=TRUE, sigma=SIG, tau=TAU) {
+get_PQBQ <- function(full=TRUE, nu=nu, tau=TAU) {
   # get Pitcher Quality
-  E1a = get_PQ(E00, sigma=sigma, tau=tau)
+  E1a = get_PQ(E00, nu=nu, tau=tau)
   
   # get Batter Quality by re-using the Pitcher Quality function
   E0b = E00 %>% select(row_idx,YEAR,GAME_ID,DATE,
@@ -176,7 +178,7 @@ get_PQBQ <- function(full=TRUE, sigma=SIG, tau=TAU) {
     WOBA_AVG_PIT_19 = WOBA_AVG_BAT_19,
     NUM_WOBA_APP_PIT = NUM_WOBA_APP_BAT
   )
-  E1b = get_PQ(E00b, sigma=sigma, tau=tau) %>%
+  E1b = get_PQ(E00b, nu=nu, tau=tau) %>%
     rename(BQ = PQ,
            theta_bar_0_bat = theta_bar_0_pit,
            BAT_ID = PIT_ID,
@@ -189,8 +191,8 @@ get_PQBQ <- function(full=TRUE, sigma=SIG, tau=TAU) {
   if (full) return(X1) else return(X1 %>% select(PQ,BQ))
 }
 
-X1 = get_PQBQ(full=TRUE, sigma=0.05, tau=TAU) 
-pb2 = get_PQBQ(full=FALSE, sigma=0.1, tau=TAU) %>% rename(PQ2=PQ, BQ2=BQ)
+X1 = get_PQBQ(full=TRUE, nu=0.05, tau=TAU) 
+pb2 = get_PQBQ(full=FALSE, nu=0.1, tau=TAU) %>% rename(PQ2=PQ, BQ2=BQ)
 
 X1a = bind_cols(X1, pb2)
 

@@ -32,6 +32,10 @@ p2 = plot_3hist_bsn2(fit)
 p2
 ggsave(paste0("./plot_3hist2_",OUTPUT_FILE,".png"), p2)
 
+# plot spline trajectory 
+p3 = plot_bsn_spline(fit)
+p3
+ggsave(paste0("./plot_spline_",OUTPUT_FILE,".png"), p)
 
 
 
