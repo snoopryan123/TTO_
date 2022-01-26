@@ -44,7 +44,8 @@ O <- as.matrix(ORDER_CT_dummies)
 y <- matrix(D$std_EVENT_WOBA_19, ncol=1)
 # 10 Fold CV folds
 set.seed(12345) # make sure to have the same folds each time!
-folds <- loo::kfold_split_random(K=10,N=nrow(y))
+kk = if (exists("IS_SIM")) { if (IS_SIM) 5 else 10 } else 10
+folds <- loo::kfold_split_random(K=kk,N=nrow(y))
 
 ############################################
 ########### BATTER_SEQ_NUM MODEL ###########
