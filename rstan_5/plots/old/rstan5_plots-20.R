@@ -1,8 +1,8 @@
 library(tidyverse)
 
 #FIXME
-OUTPUT_FILE = "rstan5_plots-10.R"
-nums = c(10:18,1)
+OUTPUT_FILE = "rstan5_plots-20.R"
+nums = c(20:28,2)
 yrs = 2010:2019
 
 ### plot 8 year stack
@@ -52,7 +52,6 @@ yrs = 2010:2019
     geom_vline(aes(xintercept = 9.5), size=1.2) +
     geom_vline(aes(xintercept = 18.5), size=1.2) +
     theme(legend.position="none") +
-    theme(panel.spacing = unit(1, "lines")) +
     scale_x_continuous(name=TeX("Batter sequence number $k$"), 
                        limits = c(0,28),
                        breaks = c(1,5,9,10,14,18,19,23,27)) +
@@ -61,7 +60,7 @@ yrs = 2010:2019
     #                    #limits = c(-.055, .07),
     #                    breaks = seq(-.1, .1, .02)
     labs(title = TeX("Trend in wOBA over the course of a game")) + 
-    scale_y_continuous(name=TeX("95% credible interval for $\\alpha_k$"), 
+    scale_y_continuous(name=TeX("Posterior distribution of $\\alpha_k$"), 
                        #limits = c(-.055, .07),
                        breaks = seq(-.1, .1, .02)
     ) 
@@ -105,10 +104,8 @@ yrs = 2010:2019
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
-    theme(panel.spacing = unit(1, "lines")) +
-    ylab("posterior density") +
     xlab("change in wOBA") +
-    labs(title="Comparing the TTO penalties to the difference between the second and first batters")
+    labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
   p1
   ggsave(paste0("./plot_8_yr_stack_hist_",OUTPUT_FILE,".png"), p1)
 }

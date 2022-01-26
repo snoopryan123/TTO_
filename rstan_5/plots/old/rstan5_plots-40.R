@@ -1,8 +1,8 @@
 library(tidyverse)
 
 #FIXME
-OUTPUT_FILE = "rstan5_plots-10.R"
-nums = c(10:18,1)
+OUTPUT_FILE = "rstan5_plots-40.R"
+nums = c(40:48,5)
 yrs = 2010:2019
 
 ### plot 8 year stack
@@ -16,16 +16,22 @@ yrs = 2010:2019
     
     # compute mean and 2.5%, 97.5% quantiles of posterior samples
     p = 27 #dim(BATTER_SEQ_dummies)[2]
-    bsn <- paste0("alpha[",1:p,"]")
+    bidx <- paste0("beta[",1:9,"]")
+    oc <- paste0("gamma[",1:3,"]")
     lower <- numeric(p)
     avg <- numeric(p)
     upper <- numeric(p)
-    for (i in 1:length(bsn)) {
-      b = bsn[i]
-      x = transform_back(draws[[bsn[i]]])
-      lower[i] = quantile(x,.025)
-      avg[i] = mean(x)
-      upper[i] = quantile(x,.975)
+    for (i in 1:length(oc)) {
+      o = oc[i]
+      x0 = transform_back(draws[[o]])
+      for (j in 1:length(bidx)) {
+        b = bidx[j]
+        xb = transform_back(draws[[b]])
+        x = x0 + xb
+        lower[(i-1)*length(bidx) + j] = quantile(x,.025)
+        avg[(i-1)*length(bidx) + j] = mean(x)
+        upper[(i-1)*length(bidx) + j] = quantile(x,.975)
+      }
     }
     
     # plot
@@ -40,8 +46,13 @@ yrs = 2010:2019
     R = bind_rows(R,as_tibble(A4))
   }
   
+  
+  XLABS = c("", paste0("(",1,",",1:9,")"), paste0("(",2,",",1:9,")"), paste0("(",3,",",1:9,")"))
+  BREAKS = seq(1,28,by=4)#c(1,6,11,16,21,26)#c(0,5,10,15,20,25)
+  
   # PRODUCTION PLOT
-  p = R %>% filter(yr>=2012) %>%
+  theme_update(plot.title = element_text(hjust = 0.5))
+  p0 = R %>% filter(yr>=2012) %>%
     ggplot(aes(x=bn, y=avg)) +
     facet_wrap(~ yr, ncol=2) +
     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
@@ -51,22 +62,18 @@ yrs = 2010:2019
     # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
     geom_vline(aes(xintercept = 9.5), size=1.2) +
     geom_vline(aes(xintercept = 18.5), size=1.2) +
-    theme(legend.position="none") +
-    theme(panel.spacing = unit(1, "lines")) +
-    scale_x_continuous(name=TeX("Batter sequence number $k$"), 
-                       limits = c(0,28),
-                       breaks = c(1,5,9,10,14,18,19,23,27)) +
-    # labs(title = TeX("Posterior distribution of $\\alpha$")) + 
-    # scale_y_continuous(name=TeX("$\\alpha_k$"), 
-    #                    #limits = c(-.055, .07),
-    #                    breaks = seq(-.1, .1, .02)
     labs(title = TeX("Trend in wOBA over the course of a game")) + 
-    scale_y_continuous(name=TeX("95% credible interval for $\\alpha_k$"), 
-                       #limits = c(-.055, .07),
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("(order Count $l$, unique batter index $m$)"), 
+                       limits = c(0,28),
+                       breaks = BREAKS,
+                       labels =  XLABS[BREAKS+1]) +
+    scale_y_continuous(name=TeX("Posterior distribution of $\\beta_{m} + \\gamma_{l}$"), 
+                       limits = c(-.03, .05),
                        breaks = seq(-.1, .1, .02)
     ) 
-  p
-  ggsave(paste0("./plot_8_yr_stack_",OUTPUT_FILE,".png"), p)
+  p0
+  ggsave(paste0("./plot_8_yr_stack_",OUTPUT_FILE,".png"), p0)
 }
 
 {
@@ -76,12 +83,12 @@ yrs = 2010:2019
     fit <- readRDS(paste0("../job_output/fit_rstan5-",nums[iii],".R.rds"))
     draws <- as_tibble(as.matrix(fit))
     draws <- transform_back(draws)
-    d1 = draws[["alpha[1]"]]
-    d2 = draws[["alpha[2]"]]
-    d9 = draws[["alpha[9]"]]
-    d10 = draws[["alpha[10]"]]
-    d18 = draws[["alpha[18]"]]
-    d19 = draws[["alpha[19]"]]
+    d1 = draws[["beta[1]"]] + draws[["gamma[1]"]]
+    d2 = draws[["beta[2]"]] + draws[["gamma[1]"]]
+    d9 = draws[["beta[9]"]] + draws[["gamma[1]"]]
+    d10 = draws[["beta[1]"]] + draws[["gamma[2]"]]
+    d18 = draws[["beta[9]"]] + draws[["gamma[2]"]]
+    d19 = draws[["beta[1]"]] + draws[["gamma[3]"]]
     diff1 = as_tibble(d2 - d1)
     diff2 = as_tibble(d10 - d9)
     diff3 = as_tibble(d19 - d18)
@@ -93,9 +100,9 @@ yrs = 2010:2019
     R1 = bind_rows(R1,as_tibble(diffs))
   }
   
-  # labs <- c(bquote(paste("posterior dist. of ", alpha[2] - alpha[1])), 
-  #           bquote(paste("posterior dist. of ", alpha[10] - alpha[9])),
-  #           bquote(paste("posterior dist. of ", alpha[19] - alpha[18])))
+  # labs <- c(bquote(paste("posterior dist. of ", (beta[2] + gamma[1]) - (beta[1] + gamma[1]))), 
+  #           bquote(paste("posterior dist. of ", (beta[1] + gamma[2]) - (beta[9] + gamma[1]))),
+  #           bquote(paste("posterior dist. of ", (beta[1] + gamma[3]) - (beta[9] + gamma[2]))))
   p1 = R1 %>% filter(yr >= 2012) %>%
     ggplot(aes(value, fill = name)) + 
     facet_wrap(~ yr, ncol=2) +
@@ -105,10 +112,8 @@ yrs = 2010:2019
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
-    theme(panel.spacing = unit(1, "lines")) +
-    ylab("posterior density") +
     xlab("change in wOBA") +
-    labs(title="Comparing the TTO penalties to the difference between the second and first batters")
+    labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
   p1
   ggsave(paste0("./plot_8_yr_stack_hist_",OUTPUT_FILE,".png"), p1)
 }

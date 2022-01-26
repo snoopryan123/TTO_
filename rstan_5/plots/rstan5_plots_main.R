@@ -13,31 +13,31 @@ if(!interactive()) pdf(NULL)
 
 ### HERE get `D` from rstan_5x.R
 
-# NO INTERCEPT and INCLUDE FIRST COLUMN
-change_factor_names <- function(s) {
-  s <- str_remove(s, "factor")
-  s <- str_remove_all(s, "\\(")
-  s <- str_remove_all(s, "\\)")
-  s
-}
-# categorical dummies for BATTER_SEQ_NUM
-BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
-names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
-# categorical dummies for BATTER_IDX
-BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_IDX) + 0) 
-names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
-# categorical dummies for ORDER_CT
-ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
-names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
-# Observed data matrices 
-S <- as.matrix(BATTER_SEQ_dummies)
-U <- as.matrix(BATTER_IDX_dummies)
-O <- as.matrix(ORDER_CT_dummies)
-### X is loaded in another file
-y <- matrix(D$std_EVENT_WOBA_19, ncol=1)
-# 10 Fold CV folds
-set.seed(12345) # make sure to have the same folds each time!
-folds <- loo::kfold_split_random(K=10,N=nrow(y))
+# # NO INTERCEPT and INCLUDE FIRST COLUMN
+# change_factor_names <- function(s) {
+#   s <- str_remove(s, "factor")
+#   s <- str_remove_all(s, "\\(")
+#   s <- str_remove_all(s, "\\)")
+#   s
+# }
+# # categorical dummies for BATTER_SEQ_NUM
+# BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
+# names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
+# # categorical dummies for BATTER_IDX
+# BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_IDX) + 0) 
+# names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
+# # categorical dummies for ORDER_CT
+# ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
+# names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
+# # Observed data matrices 
+# S <- as.matrix(BATTER_SEQ_dummies)
+# U <- as.matrix(BATTER_IDX_dummies)
+# O <- as.matrix(ORDER_CT_dummies)
+# ### X is loaded in another file
+# y <- matrix(D$std_EVENT_WOBA_19, ncol=1)
+# # 10 Fold CV folds
+# set.seed(12345) # make sure to have the same folds each time!
+# folds <- loo::kfold_split_random(K=10,N=nrow(y))
 
 ######################################
 ########### PLOT FUNCTIONS ###########
@@ -90,8 +90,8 @@ plot_bsn0 <- function(fit) {
     scale_x_continuous(name=TeX("Batter sequence number $k$"), 
                        limits = c(0,28),
                        breaks = c(1,5,9,10,14,18,19,23,27)) +
-    labs(title = TeX("Posterior distribution of $\\alpha$")) + 
-    scale_y_continuous(name=TeX("$\\alpha_k$"), 
+    labs(title = TeX("Trend in wOBA over the course of a game")) + 
+    scale_y_continuous(name=TeX("Posterior distribution of $\\alpha_k$"), 
                        limits = c(-.05, .06),
                        breaks = seq(-.1, .1, .005)
     ) 
@@ -143,17 +143,77 @@ plot_ubi0 <- function(fit) {
     # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
     geom_vline(aes(xintercept = 9.5), size=1.2) +
     geom_vline(aes(xintercept = 18.5), size=1.2) +
-    labs(title = TeX("Posterior distribution of $\\beta +\\gamma$")) + 
+    labs(title = TeX("Trend in wOBA over the course of a game")) + 
     theme(legend.position="none") +
-    scale_x_continuous(name=TeX("(order Count $l$, unique batter index $k$)"), 
+    scale_x_continuous(name=TeX("(order Count $l$, unique batter index $m$)"), 
                        limits = c(0,28),
                        breaks = BREAKS,
                        labels =  XLABS[BREAKS+1]) +
-    scale_y_continuous(name=TeX("$\\beta_{k} + \\gamma_{l}$"), 
+    scale_y_continuous(name=TeX("Posterior distribution of  $\\beta_{m} + \\gamma_{l}$"), 
                        limits = c(-.03, .04),
                        breaks = seq(-.1, .1, .005)
     ) 
   production_plot
+}
+
+getDf_bsn0 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  
+  # compute mean and 2.5%, 97.5% quantiles of posterior samples
+  p = 27 #dim(BATTER_SEQ_dummies)[2]
+  bsn <- paste0("alpha[",1:p,"]")
+  lower <- numeric(p)
+  avg <- numeric(p)
+  upper <- numeric(p)
+  for (i in 1:length(bsn)) {
+    b = bsn[i]
+    x = transform_back(draws[[bsn[i]]])
+    lower[i] = quantile(x,.025)
+    avg[i] = mean(x)
+    upper[i] = quantile(x,.975)
+  }
+  
+  # plot
+  A4 = data.frame(
+    lower = lower,
+    avg = avg,
+    upper= upper,
+    bn = 1:p
+  )
+  A4
+}
+
+getDf_ubi0 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  
+  # compute mean and 2.5%, 97.5% quantiles of posterior samples
+  p = 27 #dim(BATTER_SEQ_dummies)[2]
+  bidx <- paste0("beta[",1:9,"]")
+  oc <- paste0("gamma[",1:3,"]")
+  lower <- numeric(p)
+  avg <- numeric(p)
+  upper <- numeric(p)
+  for (i in 1:length(oc)) {
+    o = oc[i]
+    x0 = transform_back(draws[[o]])
+    for (j in 1:length(bidx)) {
+      b = bidx[j]
+      xb = transform_back(draws[[b]])
+      x = x0 + xb
+      lower[(i-1)*length(bidx) + j] = quantile(x,.025)
+      avg[(i-1)*length(bidx) + j] = mean(x)
+      upper[(i-1)*length(bidx) + j] = quantile(x,.975)
+    }
+  }
+  
+  # plot
+  A4 = data.frame(
+    lower = lower,
+    avg = avg,
+    upper= upper,
+    bn = 1:p
+  )
+  A4
 }
 
 
@@ -219,6 +279,44 @@ plot_3hist_ubi1 <- function(fit) {
     xlab("change in wOBA") +
     labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
   p1
+}
+
+getDf_3hist_bsn1 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- transform_back(draws)
+  d1 = draws[["alpha[1]"]]
+  d2 = draws[["alpha[2]"]]
+  d9 = draws[["alpha[9]"]]
+  d10 = draws[["alpha[10]"]]
+  d18 = draws[["alpha[18]"]]
+  d19 = draws[["alpha[19]"]]
+  diff1 = as_tibble(d2 - d1)
+  diff2 = as_tibble(d10 - d9)
+  diff3 = as_tibble(d19 - d18)
+  diff1$name = "diff1"
+  diff2$name = "diff2"
+  diff3$name = "diff3"
+  diffs = bind_rows(diff1,diff2,diff3)
+  diffs
+}
+
+getDf_3hist_ubi1 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- transform_back(draws)
+  d1 = draws[["beta[1]"]] + draws[["gamma[1]"]]
+  d2 = draws[["beta[2]"]] + draws[["gamma[1]"]]
+  d9 = draws[["beta[9]"]] + draws[["gamma[1]"]]
+  d10 = draws[["beta[1]"]] + draws[["gamma[2]"]]
+  d18 = draws[["beta[9]"]] + draws[["gamma[2]"]]
+  d19 = draws[["beta[1]"]] + draws[["gamma[3]"]]
+  diff1 = as_tibble(d2 - d1)
+  diff2 = as_tibble(d10 - d9)
+  diff3 = as_tibble(d19 - d18)
+  diff1$name = "diff1"
+  diff2$name = "diff2"
+  diff3$name = "diff3"
+  diffs = bind_rows(diff1,diff2,diff3)
+  diffs
 }
 
 
@@ -290,6 +388,43 @@ plot_3hist_ubi2 <- function(fit) {
   p2
 }
 
+getDf_3hist_bsn2 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- as_tibble(transform_back(draws))
+  tto1 = draws[paste0("alpha[",1:9,"]")]
+  tto2 = draws[paste0("alpha[",10:18,"]")]
+  tto3 = draws[paste0("alpha[",19:27,"]")]
+  tto1_means = tto1 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto2_means = tto2 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto3_means = tto3 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto1_means$tto = "1"
+  tto2_means$tto = "2"
+  tto3_means$tto = "3"
+  tto_means = bind_rows(tto1_means,tto2_means,tto3_means)
+  tto_means
+}
+
+getDf_3hist_ubi2 <- function(fit) {
+  draws <- as_tibble(as.matrix(fit))
+  draws <- as_tibble(transform_back(draws))
+  betas = draws[paste0("beta[",1:9,"]")]
+  gamma1 = as_tibble(do.call(cbind, rep(draws[paste0("gamma[",1,"]")], 9) ))
+  gamma2 = as_tibble(do.call(cbind, rep(draws[paste0("gamma[",2,"]")], 9) ))
+  gamma3 = as_tibble(do.call(cbind, rep(draws[paste0("gamma[",3,"]")], 9) ))
+  tto1 = as_tibble(betas + gamma1)
+  tto2 = as_tibble(betas + gamma2)
+  tto3 = as_tibble(betas + gamma3)
+  tto1_means = tto1 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto2_means = tto2 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto3_means = tto3 %>% mutate(tto_means = rowMeans(.)) %>% select(tto_means)
+  tto1_means$tto = "1"
+  tto2_means$tto = "2"
+  tto3_means$tto = "3"
+  tto_means = bind_rows(tto1_means,tto2_means,tto3_means)
+  tto_means
+}
+
+
 plot_bsn_spline <- function(fit) {
   draws <- as_tibble(as.matrix(fit))
   p = dim(B)[2]
@@ -349,9 +484,4 @@ plot_bsn_spline <- function(fit) {
   production_plot
 }
 
-plot_bsn_10yrs <- function(fit) {
-  draws <- as_tibble(as.matrix(fit))
-  
-  
-}
 
