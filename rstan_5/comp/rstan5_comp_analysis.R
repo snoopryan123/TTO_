@@ -1,13 +1,24 @@
 
-source("rstan3_comp_getData.R")
+library(tidyverse)
 library(latex2exp)
 
-test_tib_bsn = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=numeric(0))
-test_tib_ubi = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=numeric(0))
+# load data
+input_file = "../../data/TTO_dataset_510.csv"  
+D <- read_csv(input_file) #; D <- D %>% drop_na() 
+D <- D %>% filter(YEAR == 2019) 
+X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19,  
+                            HAND_MATCH, BAT_HOME_IND)) 
+X2 <- as.matrix(D %>% select(std_BQ, std_PQ,  
+                            HAND_MATCH, BAT_HOME_IND))
+IS_SIM=FALSE
+source("../rstan5_main.R")
 
-for (fold_num in 1:10) {
-  print(fold_num)
-  
+test_tib_bsn = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=numeric(0))
+test_tib_bsn2 = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=numeric(0))
+test_tib_ubi = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=numeric(0))
+test_tib_ubi2 = tibble(y=numeric(0),pplower=numeric(0),ppmean=numeric(0),ppupper=numeric(0))
+
+get_bsn_df <- function(X, fold_num, ind=0) {
   # testing data matrices
   test_rows = which(folds == fold_num)
   X_test = X[test_rows,]
@@ -18,7 +29,7 @@ for (fold_num in 1:10) {
   n = nrow(y_test)
   
   ### BSN model fit
-  fitB <- readRDS(paste0("./job_output/fit_rstan3_comp_bsn-",fold_num,".R.rds")) 
+  fitB <- readRDS(paste0("./job_output/fit_rstan5_comp-", ind+fold_num,".R.rds")) #FIXME
   #plot_bsn0(fitB)
   drawsB <- as_tibble(as.matrix(fitB))
   alpha_draws = drawsB[,str_detect(colnames(drawsB), "^alpha")]
@@ -33,26 +44,51 @@ for (fold_num in 1:10) {
   ppmean = apply(post_pred, 1, function(x) mean(x))
   ppupper = apply(post_pred, 1, function(x) quantile(x,.975))
   df_bsn = bind_cols(y_test, pplower=pplower, ppmean=ppmean, ppupper=ppupper)
-  test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
+  df_bsn
+}
+
+get_ubi_df <- function(X, fold_num, ind=20) {
+  # testing data matrices
+  test_rows = which(folds == fold_num)
+  X_test = X[test_rows,]
+  S_test = S[test_rows,]
+  U_test = U[test_rows,]
+  O_test = O[test_rows,]
+  y_test = tibble(y=y[test_rows,])
+  n = nrow(y_test)
   
   ### UBI model fit
-  fitU <- readRDS(paste0("./job_output/fit_rstan3_comp_ubi-",fold_num,".R.rds"))
+  fitU <- readRDS(paste0("./job_output/fit_rstan5_comp-", ind+fold_num,".R.rds")) #FIXME
   #plot_ubi0(fitU)
   drawsU <- as_tibble(as.matrix(fitU))
   beta_draws = drawsU[,str_detect(colnames(drawsU), "^beta")]
   gamma_draws = drawsU[,str_detect(colnames(drawsU), "^gamma")]
-  delta_draws = drawsU[,str_detect(colnames(drawsU), "^delta")]
+  eta_drawsU = drawsU[,str_detect(colnames(drawsU), "^eta")]
   sigma_drawsU = drawsU[,str_detect(colnames(drawsU), "^sigma")]$sigma
-  post_pred_meansU = U_test%*%t(beta_draws) + O_test%*%t(gamma_draws) + X_test%*%t(delta_draws)
+  post_pred_meansU = U_test%*%t(beta_draws) + O_test%*%t(gamma_draws) + X_test%*%t(eta_drawsU)
   epsilon0U = matrix(sapply(sigma_drawsU, function(s) { rnorm(1,0,sd=s) }), nrow=1)
   epsilonU = do.call(rbind, replicate(n, epsilon0U, simplify=FALSE))
   post_predU = post_pred_meansU + epsilonU
-
+  
   pplowerU = apply(post_predU, 1, function(x) quantile(x,.025))
   ppmeanU = apply(post_predU, 1, function(x) mean(x))
   ppupperU = apply(post_predU, 1, function(x) quantile(x,.975))
   df_ubi = bind_cols(y_test, pplower=pplowerU, ppmean=ppmeanU, ppupper=ppupperU)
+  df_ubi
+}
+
+for (fold_num in 1:10) {
+  print(fold_num)
+  
+  df_bsn = get_bsn_df(X, fold_num, ind=0)
+  df_bsn2 = get_bsn_df(X2, fold_num, ind=10)
+  df_ubi = get_ubi_df(X, fold_num, ind=20)
+  df_ubi2 = get_ubi_df(X2, fold_num, ind=30)
+  
+  test_tib_bsn = bind_rows(test_tib_bsn, df_bsn)
+  test_tib_bsn2 = bind_rows(test_tib_bsn, df_bsn2)
   test_tib_ubi = bind_rows(test_tib_ubi, df_ubi)
+  test_tib_ubi2 = bind_rows(test_tib_ubi, df_ubi2)
 }
 
 ########################################
@@ -68,6 +104,8 @@ mae <- function(d) {
 }
 mae(test_tib_bsn)
 mae(test_tib_ubi)
+mae(test_tib_bsn2)
+mae(test_tib_ubi2)
 
 # rmse of posterior predictive mean of y
 rmse <- function(d) {
@@ -75,6 +113,8 @@ rmse <- function(d) {
 }
 rmse(test_tib_bsn)
 rmse(test_tib_ubi)
+rmse(test_tib_bsn2)
+rmse(test_tib_ubi2)
 
 # coverage of posterior predictive intervals of y
 covg <- function(d) {
@@ -82,13 +122,35 @@ covg <- function(d) {
 }
 covg(test_tib_bsn)
 covg(test_tib_ubi)
+covg(test_tib_bsn2)
+covg(test_tib_ubi2)
+
+# lengths of posterior predictive intervals of y
+lengths_bsn = as_tibble(test_tib_bsn$ppupper - test_tib_bsn$pplower)
+lengths_bsn$model = "model (A)"
+lengths_ubi = as_tibble(test_tib_ubi$ppupper - test_tib_ubi$pplower)
+lengths_ubi$model = "model (B)"
+lengths_bsn2 = as_tibble(test_tib_bsn2$ppupper - test_tib_bsn2$pplower)
+lengths_bsn2$model = "model (C)"
+lengths_ubi2 = as_tibble(test_tib_ubi2$ppupper - test_tib_ubi2$pplower)
+lengths_ubi2$model = "model (D)"
+lengths_df = bind_rows(lengths_bsn,lengths_ubi,lengths_bsn2,lengths_ubi2)
+lppi = lengths_df %>% 
+  ggplot(aes(x=value,fill=model)) +
+  #facet_wrap(~model) +
+  geom_density(alpha=0.2) +
+  xlim(c(1.75,2.05)) +
+  xlab("length") +
+  labs(title="distribution of posterior predictive interval lengths")
+lppi
 
 # ratio of lengths of posterior predictive intervals of y
-lengths_bsn = test_tib_bsn$ppupper - test_tib_bsn$pplower
-lengths_ubi = test_tib_ubi$ppupper - test_tib_ubi$pplower
 length_ratios = lengths_ubi/lengths_bsn
+length_ratios2 = lengths_ubi2/lengths_bsn2
 mean(length_ratios)
 sd(length_ratios)
+mean(length_ratios2)
+sd(length_ratios2)
 lp = as_tibble(length_ratios) %>% ggplot(aes(x=value)) + 
   geom_histogram(binwidth=.001) + 
   geom_vline(xintercept = mean(length_ratios), color="firebrick") +
