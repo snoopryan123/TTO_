@@ -9,9 +9,19 @@ source("../rstan5_main.R")
 ########### GENERATE DATA ###########
 #####################################
 
-# helpful constants
+# find TTO sizes
 mu_y = mean(D$EVENT_WOBA_19)
 sd_y = sd(D$EVENT_WOBA_19)
+D %>% filter(ORDER_CT <= 3) %>%
+  group_by(ORDER_CT) %>% 
+  summarise(avg_event_std_wOBA_19 = mean(std_EVENT_WOBA_19),
+            avg_event_wOBA_19 =  mean(EVENT_WOBA_19))
+
+(c(.340, .350, .359) - mu_y)/(2*sd_y)
+diff( (c(.340, .350, .359) - mu_y)/(2*sd_y) )
+
+
+# helpful constants
 N = dim(X)[1]
 P = dim(X)[2]
 p_s = dim(S)[2] 
