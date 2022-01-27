@@ -12,6 +12,7 @@ source("rstan5_sim1_bsn_main.R")
 
 
 rmse_vec = numeric(25)
+mae_vec = numeric(25)
 covg_vec = numeric(25)
 beta_covered = matrix(nrow=25, ncol=14)
 beta_lengths = matrix(nrow=25, ncol=14)
@@ -61,6 +62,8 @@ for (i in 1:25) {
   # rmse of test data
   rmse = sqrt(sum((ppmean - y_test)^2)/n_test)
   rmse_vec[i] = rmse
+  mae = sum(abs(ppmean - y_test))/n_test 
+  mae_vec[i] = mae
   # coverage of test data
   covered = pplower <= y_test & y_test <= ppupper
   covg = sum(covered)/length(covered)
@@ -144,6 +147,8 @@ for (i in 1:25) {
 
 print("average rmse")
 print(mean(rmse_vec))
+print("average mae")
+print(mean(mae_vec))
 print("average coverage of y")
 print(mean(covg_vec))
 print("average proportion of parameters that are covered")
