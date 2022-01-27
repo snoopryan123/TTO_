@@ -19,10 +19,10 @@ BB = 27
 
 ### GENERATE PARAMETERS
 # all pitchers have the same constant effects
-b = -.015 #-.007
+b = -.0325 #-.007
 m = 0.0005 #.001
-t_2 = 0.02 #.0191 #.01
-t_3 = 0.02 #.0172 #.02
+t_2 = 0.04 #.0191 #.01
+t_3 = 0.04 #.0172 #.02
 t_4 = 0 #.03
 k = 1:B
 alpha = b + m*k + t_2*(k>=10) + t_3*(k>=19) + t_4*(k>=28) # plot(1:27, alpha[1:27])

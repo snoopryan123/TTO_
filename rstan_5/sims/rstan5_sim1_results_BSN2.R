@@ -26,7 +26,7 @@ d23_lower = matrix(nrow=25,ncol=1)
 d23_upper = matrix(nrow=25,ncol=1)
 ###train_idxs = which(folds != 1); test_idxs = which(folds == 1)
 test_idxs = folds == 1
-for (i in 20:25) {
+for (i in 1:25) {
   ii = 30 + i
   print(ii)
   
@@ -134,7 +134,10 @@ print("proportion of alpha_10 - alpha_9 posterior intervals which are entirely p
 print(sum(d12_lower > 0)/length(d12_lower))
 print("proportion of alpha_19 - alpha_18 posterior intervals which are entirely positive")
 print(sum(d23_lower > 0)/length(d23_lower))
-
+print("(mean,sd) of d12_lower")
+c(mean(d12_lower), sd(d12_lower))
+print("(mean,sd) of d23_lower")
+c(mean(d23_lower), sd(d23_lower))
 
 
 
