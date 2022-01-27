@@ -95,9 +95,6 @@ for (fold_num in 1:10) {
 ########### MODEL COMPARISON ###########
 ########################################
 
-# sd of woba
-sd(D$EVENT_WOBA_19)
-
 # rmse of posterior predictive mean of y
 rmse <- function(d) {
   sqrt(sum((d$y - d$ppmean)^2)/nrow(d))
@@ -134,22 +131,61 @@ length_ratiosBA = lengths_ubi/lengths_bsn
 length_ratiosCA = lengths_bsn2/lengths_bsn
 length_ratiosDA = lengths_ubi2/lengths_bsn
 
+mean(length_ratiosBA[,1])
+mean(length_ratiosCA[,1])
+mean(length_ratiosDA[,1])
+sd(length_ratiosBA[,1])
+sd(length_ratiosCA[,1])
+sd(length_ratiosDA[,1])
 
-length_ratios2 = lengths_ubi2/lengths_bsn2
-mean(length_ratios)
-sd(length_ratios)
-mean(length_ratios2)
-sd(length_ratios2)
-lp = as_tibble(length_ratios) %>% ggplot(aes(x=value)) + 
-  geom_histogram(binwidth=.001) + 
-  geom_vline(xintercept = mean(length_ratios), color="firebrick") +
-  geom_vline(xintercept = 1, color="dodgerblue2") +
-  xlim(c(0.9,1.2)) + 
-  xlab("Ratio of UBI length to BSN length") +
-  annotate(x=1,y=+Inf,label="1",vjust=2,geom="label",color="dodgerblue2") +
-  annotate(x=mean(length_ratios),y=2900,label="Mean ratio of lengths",vjust=2,geom="label",color="firebrick")
-lp
-#ggsave("job_output/plot_ppLengthRatio.png", lp)
+########################################
+########### SIGMA COMPARISON ###########
+########################################
+
+fitA <- readRDS(paste0("./job_output/fit_rstan5-1.R.rds"))
+fitB <- readRDS(paste0("./job_output/fit_rstan5-4.R.rds"))
+fitC <- readRDS(paste0("./job_output/fit_rstan5-2.R.rds"))
+fitD <- readRDS(paste0("./job_output/fit_rstan5-5.R.rds"))
+#plot_bsn0(fitA)
+### draws
+sigmaA <- as_tibble(as.matrix(fitA))$sigma
+sigmaB <- as_tibble(as.matrix(fitB))$sigma
+sigmaC <- as_tibble(as.matrix(fitC))$sigma
+sigmaD <- as_tibble(as.matrix(fitD))$sigma
+### sigma
+mean(sigmaA)
+mean(sigmaB)
+mean(sigmaC)
+mean(sigmaD)
+sd(sigmaA)
+sd(sigmaB)
+sd(sigmaC)
+sd(sigmaD)
+
+
+
+
+
+
+
+
+
+
+# length_ratios2 = lengths_ubi2/lengths_bsn2
+# mean(length_ratios)
+# sd(length_ratios)
+# mean(length_ratios2)
+# sd(length_ratios2)
+# lp = as_tibble(length_ratios) %>% ggplot(aes(x=value)) + 
+#   geom_histogram(binwidth=.001) + 
+#   geom_vline(xintercept = mean(length_ratios), color="firebrick") +
+#   geom_vline(xintercept = 1, color="dodgerblue2") +
+#   xlim(c(0.9,1.2)) + 
+#   xlab("Ratio of UBI length to BSN length") +
+#   annotate(x=1,y=+Inf,label="1",vjust=2,geom="label",color="dodgerblue2") +
+#   annotate(x=mean(length_ratios),y=2900,label="Mean ratio of lengths",vjust=2,geom="label",color="firebrick")
+# lp
+# #ggsave("job_output/plot_ppLengthRatio.png", lp)
 
 
 # # lengths of posterior predictive intervals of y
@@ -170,3 +206,5 @@ lp
 #   xlab("length") +
 #   labs(title="distribution of posterior predictive interval lengths")
 # lppi
+
+

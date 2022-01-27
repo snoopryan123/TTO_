@@ -9,18 +9,6 @@ source("../rstan5_main.R")
 ########### GENERATE DATA ###########
 #####################################
 
-# find TTO sizes
-mu_y = mean(D$EVENT_WOBA_19)
-sd_y = sd(D$EVENT_WOBA_19)
-D %>% filter(ORDER_CT <= 3) %>%
-  group_by(ORDER_CT) %>% 
-  summarise(avg_event_std_wOBA_19 = mean(std_EVENT_WOBA_19),
-            avg_event_wOBA_19 =  mean(EVENT_WOBA_19))
-
-(c(.340, .350, .359) - mu_y)/(2*sd_y)
-diff( (c(.340, .350, .359) - mu_y)/(2*sd_y) )
-
-
 # helpful constants
 N = dim(X)[1]
 P = dim(X)[2]
@@ -31,10 +19,10 @@ BB = 27
 
 ### GENERATE PARAMETERS
 # all pitchers have the same constant effects
-b = -.007
-m = .001
-t_2 = .0191 #.01
-t_3 = .0172 #.02
+b = -.015 #-.007
+m = 0.0005 #.001
+t_2 = 0.02 #.0191 #.01
+t_3 = 0.02 #.0172 #.02
 t_4 = 0 #.03
 k = 1:B
 alpha = b + m*k + t_2*(k>=10) + t_3*(k>=19) + t_4*(k>=28) # plot(1:27, alpha[1:27])
@@ -48,6 +36,40 @@ m1_tto = (rep(beta[1:9],4) + c(rep(gamma[1],9), rep(gamma[2],9), rep(gamma[3],9)
 alpha
 m1_tto
 sum(m1_tto-alpha)
+
+
+###############################
+########### EXPLORE ###########
+###############################
+
+# generated y example
+set.seed(1) #FIXME 
+epsilon = rnorm(N, mean=0, sd=sigma)
+y = S%*%alpha + X%*%eta + epsilon 
+### KNOW mean(y_obs) = 0 and sd(y_obs) = 0.5
+### WANT mean(y) =~ 0    and sd(y) =~ 0.5
+mean(y)
+sd(y)
+
+
+
+
+# # observed y
+# y_obs = D$std_EVENT_WOBA_19 ##D$EVENT_WOBA_19
+# mean(y_obs)
+# sd(y_obs)
+
+
+# # find TTO sizes
+# mu_y = mean(D$EVENT_WOBA_19)
+# sd_y = sd(D$EVENT_WOBA_19)
+# D %>% filter(ORDER_CT <= 3) %>%
+#   group_by(ORDER_CT) %>% 
+#   summarise(avg_event_std_wOBA_19 = mean(std_EVENT_WOBA_19),
+#             avg_event_wOBA_19 =  mean(EVENT_WOBA_19))
+# 
+# (c(.340, .350, .359) - mu_y)/(2*sd_y)
+# diff( (c(.340, .350, .359) - mu_y)/(2*sd_y) )
 
 
 #################################################
@@ -140,7 +162,6 @@ plot_beta_plus_gamma_post <- function(beta_post, gamma_post) {
 }
 
 # plot posterior distribution of eta
-
 plot_eta_post <- function(eta_post) {
   ETA.NAMES = c(
     TeX("$\\eta_{batWoba}$"), TeX("$\\eta_{pitWoba}$"), 
@@ -164,30 +185,6 @@ plot_eta_post <- function(eta_post) {
   eta_plot
 }
 
-# plot posterior distribution of delta
-
-plot_delta_post <- function(delta_post) {
-  ETA.NAMES = c(
-    TeX("$\\delta_{batWoba}$"), TeX("$\\delta_{pitWoba}$"), 
-    TeX("$\\delta_{hand}$"), TeX("$\\delta_{home}$")
-  )
-  #ETA.NAMES = paste0("eta",1:length(eta))
-  eta_df = data.frame(delta_post)
-  names(eta_df) = ETA.NAMES
-  eta_mean_df = as_tibble(t(as.matrix(eta)))
-  names(eta_mean_df) = ETA.NAMES
-  eta_plot = ggplot() + 
-    geom_histogram(data=gather(eta_df), aes(value), bins = 20, fill = "grey") + 
-    geom_vline(data=gather(eta_mean_df), aes(xintercept=value), color="firebrick") + 
-    facet_wrap(~key, scales = 'free_x', labeller = label_parsed) +  #label_parsed
-    theme(legend.position="none") +
-    labs(title=TeX("Posterior distribution of $\\delta$")) +
-    theme(panel.spacing.x = unit(6, "mm")) +
-    xlab(TeX("$\\delta$")) +
-    ylab(TeX("density")) + 
-    scale_y_discrete(breaks=NULL)
-  eta_plot
-}
 
 
 
