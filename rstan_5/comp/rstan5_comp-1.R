@@ -7,7 +7,7 @@ D <- read_csv(input_file) #; D <- D %>% drop_na()
 D <- D %>% filter(YEAR == 2019) 
 X <- as.matrix(D %>% select(std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19, #FIXME 
                             HAND_MATCH, BAT_HOME_IND)) 
-source("rstan5_main.R")
+source("../rstan5_main.R")
 
 fold_num = 1 #FIXME
 OUTPUT_FILE = paste0("rstan5_comp-",0 + fold_num,".R")
