@@ -133,10 +133,11 @@ print(sum(d12_lower > 0)/length(d12_lower))
 print("proportion of alpha_19 - alpha_18 posterior intervals which are entirely positive")
 print(sum(d23_lower > 0)/length(d23_lower))
 print("(mean,sd) of d12_lower")
-c(mean(d12_lower), sd(d12_lower))
+print(c(mean(d12_lower), sd(d12_lower)))
 print("(mean,sd) of d23_lower")
-c(mean(d23_lower), sd(d23_lower))
-
+print(c(mean(d23_lower), sd(d23_lower)))
+print("b,m,t_2,t_3")
+print(c(b,m,t_2,t_3))
 
 
 
