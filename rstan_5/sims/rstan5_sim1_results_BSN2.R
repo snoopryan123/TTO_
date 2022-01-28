@@ -114,7 +114,7 @@ for (i in 1:25) {
 # # sigma_covered = paste0("job_output/rstan5_sim1-results_A_","sigma_covered",".R.rds")
 
 
-
+print("BSN2 sim results")
 print("average rmse")
 print(mean(rmse_vec))
 print("average mae")

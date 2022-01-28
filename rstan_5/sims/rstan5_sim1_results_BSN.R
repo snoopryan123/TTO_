@@ -112,7 +112,7 @@ for (i in 1:25) {
 # # eta_covered = paste0("job_output/rstan5_sim1-results_A_","eta_covered",".R.rds")
 # # sigma_covered = paste0("job_output/rstan5_sim1-results_A_","sigma_covered",".R.rds")
 
-
+print("BSN sim results")
 print("average rmse")
 print(mean(rmse_vec))
 print("average mae")
