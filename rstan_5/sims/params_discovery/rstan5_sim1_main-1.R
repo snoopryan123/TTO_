@@ -3,7 +3,7 @@
 ###############
 
 IS_SIM = TRUE
-source("../rstan5_main.R")
+source("../../rstan5_main.R")
 
 #####################################
 ########### GENERATE DATA ###########
@@ -19,7 +19,7 @@ BB = 27
 
 ### GENERATE PARAMETERS
 # all pitchers have the same constant effects
-b = -.0345 #-.007
+b = -.02 #-.007
 m = .001 #0.0005 #.001
 t_2 = 0.035 #.0191 #.01
 t_3 = 0.035 #.0172 #.02
