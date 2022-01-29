@@ -141,7 +141,7 @@ print(c(mean(d23_lower), sd(d23_lower)))
 print("b,m,t_2,t_3")
 print(c(b,m,t_2,t_3))
 print("mean_y, sd_y")
-print(c(mean(y), sd(y)))
+print(c(mean(y_generated), sd(y_generated)))
 
 
 

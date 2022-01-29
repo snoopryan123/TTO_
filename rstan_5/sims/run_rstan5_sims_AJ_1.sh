@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -N rstan5_sims_AJ
 #$ -j y
-#$ -m e -M ryguy123@sas.upenn.edu 
+##$ -m e -M ryguy123@sas.upenn.edu 
 
 ## this command is to ask for multiple cores for running RStan files: [4]
 #$ -pe openmp 1

@@ -45,11 +45,11 @@ sum(m1_tto-alpha)
 # generated y example
 set.seed(1) #FIXME 
 epsilon = rnorm(N, mean=0, sd=sigma)
-y = S%*%alpha + X%*%eta + epsilon 
+y_generated = S%*%alpha + X%*%eta + epsilon 
 ### KNOW mean(y_obs) = 0 and sd(y_obs) = 0.5
 ### WANT mean(y) =~ 0    and sd(y) =~ 0.5
-mean(y)
-sd(y)
+mean(y_generated)
+sd(y_generated)
 
 
 
