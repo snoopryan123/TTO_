@@ -372,19 +372,30 @@ plot_3hist_ubi2 <- function(fit) {
   # labs <- c("first TTO",
   #           "second TTO",
   #           "third TTO")
-  labs <- c(bquote(paste("1st TTO: mean posterior dist. of {", beta[k]+gamma[1], ": k=1,...,9}"  )), 
-            bquote(paste("2nd TTO: mean posterior dist. of {", beta[k]+gamma[2], ": k=10,...,18}"  )), 
-            bquote(paste("3rd TTO: mean posterior dist. of {", beta[k]+gamma[3], ": k=19,...,27}"  )) )
+  # labs <- c(bquote(paste("1st TTO: mean posterior dist. of {", beta[k]+gamma[1], ": k=1,...,9}"  )), 
+  #           bquote(paste("2nd TTO: mean posterior dist. of {", beta[k]+gamma[2], ": k=10,...,18}"  )), 
+  #           bquote(paste("3rd TTO: mean posterior dist. of {", beta[k]+gamma[3], ": k=19,...,27}"  )) )
+  # p2 = tto_means %>% 
+  #   ggplot(aes(tto_means, fill = tto)) + 
+  #   geom_density(alpha = 0.2) +
+  #   scale_fill_discrete(labels=labs, name="") +
+  #   theme(#axis.title.y=element_blank(),
+  #     axis.text.y=element_blank(),
+  #     axis.ticks.y=element_blank()) +
+  #   xlab("change in wOBA") +
+  #   labs(title = "Posterior dists. of pitcher performance averaged over each TTO, after adjustments")
+  #labs(title=bquote(paste("Average ", alpha,  " posterior dists. in each TTO")))
   p2 = tto_means %>% 
-    ggplot(aes(tto_means, fill = tto)) + 
-    geom_density(alpha = 0.2) +
+    ggplot(aes(tto_means)) + 
+    geom_histogram(data=subset(tto_means,tto == '1'),fill = "red", alpha = 0.3) +
+    geom_histogram(data=subset(tto_means,tto == '2'),fill = "green", alpha = 0.3) +
+    geom_histogram(data=subset(tto_means,tto == '3'),fill = "blue", alpha = 0.3) +
     scale_fill_discrete(labels=labs, name="") +
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
     xlab("change in wOBA") +
-    labs(title = "Posterior dists. of pitcher performance \n averaged over each TTO, after adjustments")
-  #labs(title=bquote(paste("Average ", alpha,  " posterior dists. in each TTO")))
+    labs(title = "Pitcher performance averaged over each TTO, after adjustments")
   p2
 }
 

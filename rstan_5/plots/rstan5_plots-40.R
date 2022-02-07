@@ -5,6 +5,27 @@ OUTPUT_FILE = "rstan5_plots-40.R"
 nums = c(40:48,5)
 yrs = 2010:2019
 
+### load data
+input_file = "../../data/TTO_dataset_510.csv"  
+D <- read_csv(input_file)
+#D <- D %>% drop_na() 
+D <- D %>% filter(YEAR == 2019) 
+#### X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND)) 
+source("rstan5_plots_main.R")
+
+### plot 2019 series
+
+fit <- readRDS(paste0("../job_output/fit_rstan5-",5,".R.rds"))
+pp = plot_ubi0(fit)
+pp
+ggsave(paste0("./plot_trend_",OUTPUT_FILE,".png"), pp)
+
+### plot 2019 avg. over each TTO
+fit <- readRDS(paste0("../job_output/fit_rstan5-",5,".R.rds"))
+pppp=plot_3hist_ubi2(fit)
+pppp
+ggsave(paste0("./plot_3hist2_",OUTPUT_FILE,".png"), pppp,scale=1)
+
 ### plot 8 year stack
 
 {
@@ -73,7 +94,7 @@ yrs = 2010:2019
                        breaks = seq(-.1, .1, .02)
     ) 
   p0
-  ggsave(paste0("./plot_8_yr_stack_",OUTPUT_FILE,".png"), p0)
+  ggsave(paste0("./plot_8_yr_stack_",OUTPUT_FILE,".png"), p0, scale=1.5)
 }
 
 {
@@ -103,19 +124,33 @@ yrs = 2010:2019
   # labs <- c(bquote(paste("posterior dist. of ", (beta[2] + gamma[1]) - (beta[1] + gamma[1]))), 
   #           bquote(paste("posterior dist. of ", (beta[1] + gamma[2]) - (beta[9] + gamma[1]))),
   #           bquote(paste("posterior dist. of ", (beta[1] + gamma[3]) - (beta[9] + gamma[2]))))
+  # p1 = R1 %>% filter(yr >= 2012) %>%
+  #   ggplot(aes(value, fill = name)) + 
+  #   facet_wrap(~ yr, ncol=2) +
+  #   geom_density(alpha = 0.2) +
+  #   #scale_fill_discrete(labels=labs, name = "") +
+  #   theme(legend.position = "none") +
+  #   theme(#axis.title.y=element_blank(),
+  #     axis.text.y=element_blank(),
+  #     axis.ticks.y=element_blank()) +
+  #   xlab("change in wOBA") +
+  #   labs(title="Comparing the TTO penalties to the difference between the second and first batters")
   p1 = R1 %>% filter(yr >= 2012) %>%
-    ggplot(aes(value, fill = name)) + 
+    ggplot(aes(value)) + 
     facet_wrap(~ yr, ncol=2) +
-    geom_density(alpha = 0.2) +
+    geom_histogram(data=subset(R1,name == 'diff1'),fill = "red", alpha = 0.3) +
+    geom_histogram(data=subset(R1,name == 'diff2'),fill = "green", alpha = 0.3) +
+    geom_histogram(data=subset(R1,name == 'diff3'),fill = "blue", alpha = 0.3) +
+    #geom_density(alpha = 0.2) +
     #scale_fill_discrete(labels=labs, name = "") +
     theme(legend.position = "none") +
     theme(#axis.title.y=element_blank(),
       axis.text.y=element_blank(),
       axis.ticks.y=element_blank()) +
     xlab("change in wOBA") +
-    labs(title="Comparing the TTO penalties to the \n difference between the second and first batters")
+    labs(title="Comparing the TTO penalties to the difference between the second and first batters")
   p1
-  ggsave(paste0("./plot_8_yr_stack_hist_",OUTPUT_FILE,".png"), p1)
+  ggsave(paste0("./plot_8_yr_stack_hist_",OUTPUT_FILE,".png"), p1, scale=1.5)
 }
 
 
