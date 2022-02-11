@@ -36,10 +36,25 @@ source("rstan5_plots_main.R")
   #           bquote(paste("posterior dist. of ", alpha[10] - alpha[9])),
   #           bquote(paste("posterior dist. of ", alpha[19] - alpha[18])))
   labs <- ""
-  ph = dh %>% 
-    ggplot() + 
+  # ph = dh %>% 
+  #   ggplot() + 
+  #   facet_wrap(~ model, ncol=2) +
+  #   geom_density(aes(value, fill = name), alpha = 0.2) +
+  #   #scale_fill_discrete(labels=labs, name = "") +
+  #   theme(legend.position = "none") +
+  #   theme(#axis.title.y=element_blank(),
+  #     axis.text.y=element_blank(),
+  #     axis.ticks.y=element_blank()) +
+  #   theme(panel.spacing = unit(2, "lines")) +
+  #   ylab("posterior density") +
+  #   xlab("change in wOBA") +
+  #   labs(title="Comparing the TTO penalties to the difference between the second and first batters")
+  ph = dh %>% ggplot(aes(value)) + 
     facet_wrap(~ model, ncol=2) +
-    geom_density(aes(value, fill = name), alpha = 0.2) +
+    ##geom_density(aes(fill = name), alpha = 0.2) +
+    geom_histogram(data=subset(dh,name == 'diff1'),fill = "red", alpha = 0.3) +
+    geom_histogram(data=subset(dh,name == 'diff2'),fill = "green", alpha = 0.3) +
+    geom_histogram(data=subset(dh,name == 'diff3'),fill = "blue", alpha = 0.3) +
     #scale_fill_discrete(labels=labs, name = "") +
     theme(legend.position = "none") +
     theme(#axis.title.y=element_blank(),
@@ -50,7 +65,7 @@ source("rstan5_plots_main.R")
     xlab("change in wOBA") +
     labs(title="Comparing the TTO penalties to the difference between the second and first batters")
   ph
-  ggsave(paste0("./plot_4_3hists_",OUTPUT_FILE,".png"), ph)
+  ggsave(paste0("./plot_4_3hists_",OUTPUT_FILE,".png"), ph, scale=1)
 }
 
 # for each of the 4 models,  plot 3 panel histogram avg TTO1, TTO2, TTO3

@@ -1,5 +1,6 @@
 rstan5-x
 	dataset = TTO_dataset_510.csv
+	CONTINUOUS GAUSSIAN MODEL
 
 5-1	BSN model (*a), 2019 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
 5-2	BSN model (*c), 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)

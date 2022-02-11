@@ -17,6 +17,12 @@ D <- read_csv("data/2019_exploratory_mlb_data.csv")
 D <- D %>% group_by(PIT_ID,GAME_ID) %>% mutate(num_games = n()) %>% ungroup()
 D <- D %>% filter(num_games > 10)
 
+### event woba histogram
+D %>% #filter(EVENT_WOBA_19 >0) %>% 
+  ggplot() + 
+  geom_histogram(aes(x=EVENT_WOBA_19, y=..density..),
+                 bins=100,colour = "black",fill="white") 
+
 # 2019 ONLY
 # pitcher
 by_pit = D %>% group_by(PIT_ID) %>%
