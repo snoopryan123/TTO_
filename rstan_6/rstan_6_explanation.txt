@@ -1,0 +1,66 @@
+rstan6-x
+	dataset = TTO_dataset_610.csv
+	LOGISTIC REGRESSION OBP MODEL
+
+
+
+
+5-1	BSN model (*a), 2019 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-2	BSN model (*c), 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-4	UBI model (*b), 2019 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-5	UBI model (*d), 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+
+5-3	BSN model (*c), 2019 only, tau = 0.5, sigma = 0.1, running avg estimator (std_BQ2, std_PQ2)
+5-6	UBI model (*d), 2019 only, tau = 0.5, sigma = 0.1, running avg estimator (std_BQ2, std_PQ2)
+
+5-7	BSN model (*a), 2019 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19), 
+	cubic spline with discontinuities at end of each TTO
+5-8	BSN model (*c), 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ), 
+	cubic spline with discontinuities at end of each TTO
+
+5-10	BSN model (*a), 2010 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-11	BSN model (*a), 2011 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-12	BSN model (*a), 2012 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-13	BSN model (*a), 2013 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-14	BSN model (*a), 2014 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-15	BSN model (*a), 2015 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-16	BSN model (*a), 2016 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-17	BSN model (*a), 2017 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-18	BSN model (*a), 2018 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+
+5-20	BSN model (*c), 2010 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-21	BSN model (*c), 2011 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-22	BSN model (*c), 2012 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-23	BSN model (*c), 2013 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-24	BSN model (*c), 2014 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-25	BSN model (*c), 2015 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-26	BSN model (*c), 2016 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-27	BSN model (*c), 2017 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-28	BSN model (*c), 2018 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+
+5-30	UBI model (*b), 2010 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-31	UBI model (*b), 2011 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-32	UBI model (*b), 2012 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-33	UBI model (*b), 2013 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-34	UBI model (*b), 2014 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-35	UBI model (*b), 2015 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-36	UBI model (*b), 2016 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-37	UBI model (*b), 2017 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+5-38	UBI model (*b), 2018 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
+
+5-40	UBI model (*d), 2010 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-41	UBI model (*d), 2011 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-42	UBI model (*d), 2012 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-43	UBI model (*d), 2013 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-44	UBI model (*d), 2014 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-45	UBI model (*d), 2015 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-46	UBI model (*d), 2016 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-47	UBI model (*d), 2017 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+5-48	UBI model (*d), 2018 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
+
+
+
+
+
+
+
