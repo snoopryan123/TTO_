@@ -20,9 +20,9 @@ parameters {
 // }
 model {
   // // std. normal priors
-  // to_vector(beta) ~ normal(0,1);
-  // to_vector(gamma) ~ normal(0,1);
-  // to_vector(eta) ~ normal(0,1);
+  to_vector(beta) ~ normal(0,1);
+  to_vector(gamma) ~ normal(0,1);
+  to_vector(eta) ~ normal(0,1);
   
   // likelihood
   y ~ bernoulli_logit(U*beta + O*gamma + X*eta); //, sigma
