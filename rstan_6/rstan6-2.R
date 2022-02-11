@@ -17,7 +17,7 @@ fit = fit_model_ubi(NA)
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
 ### plot
-# fit <- readRDS("./job_output/fit_rstan5-1.R.rds") 
+# fit <- readRDS("./job_output/fit_rstan6-2.R.rds") 
 p = plot_ubi0(fit)
 p
 ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
