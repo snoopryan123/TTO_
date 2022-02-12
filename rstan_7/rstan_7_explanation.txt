@@ -1,0 +1,9 @@
+rstan7-x
+	dataset = TTO_dataset_510.csv
+	multinomial-logistic wOBA MODEL
+
+7-1	BSN, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (logit(BQ), logit(PQ))
+7-2	UBI, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (logit(BQ), logit(PQ))
+
+
+
