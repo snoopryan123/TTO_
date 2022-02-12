@@ -9,7 +9,7 @@ library(latex2exp)
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
-cores = 1#strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
@@ -72,7 +72,7 @@ fit_model_bsn <- function(fold_num=NA) {
   # Train the models
   seed = 12345
   set.seed(seed)
-  NUM_ITERS_IN_CHAIN = 10#1500 #FIXME #10 
+  NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
   fit <- sampling(model_bsn,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
@@ -102,7 +102,7 @@ fit_model_ubi <- function(fold_num=NA) {
     n=nrow(X_train),p_x=ncol(X_train),p_u=ncol(U_train),p_o=ncol(O_train),K=num_categories
   )
   # Train the models
-  NUM_ITERS_IN_CHAIN = 10#1500
+  NUM_ITERS_IN_CHAIN = 1500
   seed = 12345
   set.seed(seed)
   fit <- sampling(model_ubi,

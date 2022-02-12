@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan6_AJ.R
+#$ -N rstan7_AJ.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -12,4 +12,4 @@
 ## MORE RAM
 ####$ -l m_mem_free=10G
 
-Rscript --vanilla rstan6-$SGE_TASK_ID.R
+Rscript --vanilla rstan7-$SGE_TASK_ID.R
