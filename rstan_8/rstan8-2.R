@@ -8,10 +8,10 @@ D <- read_csv(input_file)
 #FIXME 
 D <- D %>% filter(YEAR == 2019) 
 X <- as.matrix(D %>% select(BQ, PQ, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan7-2.R"
+OUTPUT_FILE = "rstan8-2.R"
 
 ### rstan
-source("rstan7_main.R")
+source("rstan8_main.R")
 fit = fit_model_ubi(NA) 
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
@@ -20,4 +20,5 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 p = plot_ubi0(fit)
 p
 ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
+
 
