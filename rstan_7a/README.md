@@ -1,0 +1,1 @@
+# ordinal logistic regression" model wOBA y_{ij} as an ordinal variable

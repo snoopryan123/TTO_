@@ -8,10 +8,11 @@ data {
   int<lower=1, upper=K> y[n]; // outcome vector
 }
 parameters {
-  // real<lower=0> sigma;        // sd of normal likelihood
+  real<lower=0> sigma;        // sd of normal likelihood
   vector[p_s] alpha;          // batter sequence number parameters 
   vector[p_x] eta;            // adjustment parameters
   ordered[K - 1] c;           // cutpoints for ordered logistic regression
+  vector[n] epsilon;          // noise
 }
 // transformed parameters {
 //   vector[n] linpred;
@@ -22,9 +23,11 @@ model {
   to_vector(alpha) ~ normal(0,1);
   to_vector(eta) ~ normal(0,1);
   
+  // noise
+  to_vector(epsilon) ~ normal(0, sigma);
+  
   // likelihood
-  y ~ ordered_logistic(S*alpha + X*eta, c);
-  //y ~ bernoulli_logit(S*alpha + X*eta); //, sigma
+  y ~ ordered_logistic(S*alpha + X*eta + epsilon, c);
 }
 
 
