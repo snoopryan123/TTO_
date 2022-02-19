@@ -13,6 +13,7 @@ cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
+NUM_ITS = 10000 #FIXME #1500 #3000 #10
 
 #####################################
 ########### OBSERVED DATA ###########
@@ -72,7 +73,7 @@ fit_model_bsn <- function(fold_num=NA) {
   # Train the models
   seed = 12345
   set.seed(seed)
-  NUM_ITERS_IN_CHAIN = 3000 #FIXME #10 
+  NUM_ITERS_IN_CHAIN = NUM_ITS 
   fit <- sampling(model_bsn,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
@@ -102,7 +103,7 @@ fit_model_ubi <- function(fold_num=NA) {
     n=nrow(X_train),p_x=ncol(X_train),p_u=ncol(U_train),p_o=ncol(O_train),K=num_categories
   )
   # Train the models
-  NUM_ITERS_IN_CHAIN = 3000
+  NUM_ITERS_IN_CHAIN = NUM_ITS
   seed = 12345
   set.seed(seed)
   fit <- sampling(model_ubi,
