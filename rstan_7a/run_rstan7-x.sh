@@ -12,6 +12,6 @@
 #$ -pe openmp 1
 
 ## MORE RAM
-#$ -l m_mem_free=10G
+#$ -l m_mem_free=20G
 
 Rscript --vanilla rstan7-1.R
