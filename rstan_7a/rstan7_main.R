@@ -76,6 +76,7 @@ fit_model_bsn <- function(fold_num=NA) {
   NUM_ITERS_IN_CHAIN = NUM_ITS 
   fit <- sampling(model_bsn,
                   data = data_train,
+                  pars=c("epsilon"), include=FALSE,
                   iter = NUM_ITERS_IN_CHAIN,
                   chains = cores, #1 #cores, 
                   cores = cores, # HPCC
@@ -108,6 +109,7 @@ fit_model_ubi <- function(fold_num=NA) {
   set.seed(seed)
   fit <- sampling(model_ubi,
                   data = data_train,
+                  pars=c("epsilon"), include=FALSE,
                   iter = NUM_ITERS_IN_CHAIN,
                   chains = cores, #1 #cores, 
                   cores = cores, # HPCC
