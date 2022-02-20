@@ -121,10 +121,12 @@ fit_model_ubi <- function(fold_num=NA) {
 ########### PLOT FUNCTIONS ###########
 ######################################
 
+category_strings <- c("out","BB","HBP","1B","2B","3B","HR")
+
 plot_bsn0 <- function(fit) {
   draws <- as_tibble(as.matrix(fit))
   A = tibble()
-  for (k in 1:num_categories) {
+  for (k in 2:num_categories) {
     # compute mean and 2.5%, 97.5% quantiles of posterior samples
     p = 27 #dim(BATTER_SEQ_dummies)[2]
     bsn <- paste0("alpha[",1:p,",",k,"]")
@@ -143,7 +145,7 @@ plot_bsn0 <- function(fit) {
       avg = avg,
       upper= upper,
       bn = 1:p,
-      k=paste0("wOBA_19 = ", categories[k])
+      k=paste0("wOBA_19 = ", categories[k]," (",category_strings[k],")")
     )
     A = bind_rows(A,A4)
   }
@@ -173,7 +175,7 @@ plot_bsn0 <- function(fit) {
 plot_ubi0 <- function(fit) {
   draws <- as_tibble(as.matrix(fit))
   A = tibble()
-  for (k in 1:num_categories) {
+  for (k in 2:num_categories) {
     # compute mean and 2.5%, 97.5% quantiles of posterior samples
     p = 27 #dim(BATTER_SEQ_dummies)[2]
     bidx <- paste0("beta[",1:9,",",k,"]")
