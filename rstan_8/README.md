@@ -1,1 +1,0 @@
-# Multi-logit regression model wOBA y_{ij} as a categorical variable

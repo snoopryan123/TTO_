@@ -1,9 +1,0 @@
-rstan8-x
-	dataset = TTO_dataset_510.csv
-	Multinomial logistic regression: treat wOBA as categorical data
-
-8-1	BSN, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (BQ,PQ)
-8-2	UBI, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (BQ,PQ)
-
-
-
