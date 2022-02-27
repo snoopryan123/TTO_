@@ -110,7 +110,7 @@ fit_model_ubi <- function(fold_num=NA) {
   fit <- sampling(model_ubi,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
-                  pars=c("linpred","alpha_raw","eta_raw"), include=FALSE,
+                  pars=c("linpred","beta_raw","gamma_raw","eta_raw"), include=FALSE,
                   chains = cores, #1 #cores, 
                   cores = cores, # HPCC
                   seed = seed)

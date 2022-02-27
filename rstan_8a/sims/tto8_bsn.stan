@@ -7,18 +7,26 @@ data {
   matrix[n,p_x] X;            // adjustments matrix
   int<lower=1, upper=K> y[n]; // outcome vector
 }
+transformed data {
+  vector[p_s] zeros_alpha = rep_vector(0, p_s);
+  vector[p_x] zeros_eta = rep_vector(0, p_x);
+}
 parameters {
-  matrix[p_s,K] alpha;          // batter sequence number parameters 
-  matrix[p_x,K] eta;            // adjustment parameters
+  matrix[p_s,K-1] alpha_raw;          // batter sequence number parameters 
+  matrix[p_x,K-1] eta_raw;            // adjustment parameters
 }
 transformed parameters {
+  matrix[p_s,K] alpha;
+  matrix[p_x,K] eta;
   matrix[n, K] linpred;
-  linpred = S*alpha + X*eta;
+  alpha = append_col(zeros_alpha, alpha_raw); // category 1 (out) (col 1) is base category
+  eta = append_col(zeros_eta, eta_raw); // category 1 (out) (col 1) is base category
+  linpred = S*alpha + X*eta; 
 }
 model {
   // // std. normal priors
-  to_vector(alpha) ~ normal(0,1);
-  to_vector(eta) ~ normal(0,1);
+  to_vector(alpha_raw) ~ normal(0,1);
+  to_vector(eta_raw) ~ normal(0,1);
   
   for (i in 1:n) {
     // likelihood

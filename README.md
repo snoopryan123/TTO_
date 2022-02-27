@@ -4,6 +4,12 @@ including dataset creation and fully bayesian regression
 
 ./data_wrangling/   - scrape and clean Retrosheet data
 ./data/             - dataset to put into rstan
-./rstan_5/          - bayesian models in rstan
-./rstan_5/sims      - simulations
-./rstan_5/comp      - model comparison on observed data (10 fold CV)
+
+Good:
+rstan_6 logistic regression for OBP
+rstan_8a multinomial logistic regression for wOBA
+
+
+Bad:
+rstan_5 normal linear regression for wOBA
+rstan_7a ordinal logistic regression for wOBA

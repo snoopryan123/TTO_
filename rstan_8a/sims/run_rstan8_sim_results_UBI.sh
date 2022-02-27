@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan7-x.R
+#$ -N rstan8_sim_results_UBI.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -14,4 +14,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript --vanilla rstan7-1.R
+Rscript --vanilla rstan8_sim_results_UBI.R
