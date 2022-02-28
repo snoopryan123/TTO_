@@ -1,5 +1,6 @@
 library(tidyverse)
 output_folder = './job_output/'
+IS_COMP = TRUE
 
 ### load data
 input_file = "../../data/TTO_dataset_510.csv"  

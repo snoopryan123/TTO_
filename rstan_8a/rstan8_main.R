@@ -9,11 +9,17 @@ library(latex2exp)
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
-cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
-options(mc.cores = cores) ### for HPCC
-# options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
-NUM_ITS = 5000 #FIXME #10 #1500 #5000
+##### uncomment these if working on my computer #####
+cores = 1
+options(mc.cores = parallel::detectCores()) 
+NUM_ITS = 10
+#####################################################
+####### uncomment these if working on HPCC ##########
+# cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+# options(mc.cores = cores) ### for HPCC
+# NUM_ITS = 3500 #1500 #5000
+#####################################################
 
 #####################################
 ########### OBSERVED DATA ###########
@@ -56,8 +62,12 @@ folds <- loo::kfold_split_random(K=kk,N=nrow(y))
 ########### BATTER_SEQ_NUM MODEL ###########
 ############################################
 
-file_bsn = 'tto8_bsn.stan'
+file_bsn = "tto8_bsn.stan"
+CHANGE_DIR = if (exists("IS_SIM")) { if (IS_SIM) { TRUE } } else if (exists("IS_COMP")) { if (IS_COMP) { TRUE } } 
+og_dir = getwd()
+if (CHANGE_DIR) { setwd("..") }
 model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
+if (CHANGE_DIR) { setwd(og_dir) }
 
 fit_model_bsn <- function(fold_num=NA) {
   # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
@@ -88,8 +98,12 @@ fit_model_bsn <- function(fold_num=NA) {
 ########### UNIQUE_BAT_IDX MODEL ###########
 ############################################
 
-file_ubi = 'tto8_ubi.stan'
+file_ubi = "tto8_ubi.stan"
+CHANGE_DIR = if (exists("IS_SIM")) { if (IS_SIM) { TRUE } } else if (exists("IS_COMP")) { if (IS_COMP) { TRUE } } 
+og_dir = getwd()
+if (CHANGE_DIR) { setwd("..") }
 model_ubi <- stan_model(file = file_ubi, model_name = file_ubi)
+if (CHANGE_DIR) { setwd(og_dir) }
 
 fit_model_ubi <- function(fold_num=NA) {
   # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
