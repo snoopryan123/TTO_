@@ -9,11 +9,11 @@ library(latex2exp)
 theme_set(theme_bw())
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
-cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
-options(mc.cores = cores) ### for HPCC
-# options(mc.cores = parallel::detectCores()) # use this on my computer
+cores = 1#strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+# options(mc.cores = cores) ### for HPCC
+#### options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
-NUM_ITS = 5000 #FIXME #10 #1500 #5000
+NUM_ITS = 10#5000 #FIXME #10 #1500 #5000
 
 #####################################
 ########### OBSERVED DATA ###########
@@ -29,18 +29,22 @@ change_factor_names <- function(s) {
   s
 }
 # categorical dummies for BATTER_SEQ_NUM
-BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
+BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0) %>% select(-1) 
 names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
 # categorical dummies for BATTER_IDX
-BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_IDX) + 0) 
+BATTER_IDX_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_IDX) + 0) %>% select(-1) 
 names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
 # categorical dummies for ORDER_CT
-ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
+ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) %>% select(-1) 
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 # Observed data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
 U <- as.matrix(BATTER_IDX_dummies)
 O <- as.matrix(ORDER_CT_dummies)
+# intercept as first column of S,U
+incpt = matrix(1,nrow=nrow(S))
+S = cbind(incpt,S) # relative to first batter
+U = cbind(incpt,U) # relative to first batter in first TTO
 ### X is loaded in another file
 y_og <- D$EVENT_WOBA_19
 categories = sort(unique(y_og))
@@ -129,10 +133,10 @@ plot_bsn0 <- function(fit) {
   for (k in 2:num_categories) {
     # compute mean and 2.5%, 97.5% quantiles of posterior samples
     p = 27 #dim(BATTER_SEQ_dummies)[2]
-    bsn <- paste0("alpha[",1:p,",",k,"]")
-    lower <- numeric(p)
-    avg <- numeric(p)
-    upper <- numeric(p)
+    bsn <- paste0("alpha[",2:p,",",k,"]")
+    lower <- numeric(p-1)
+    avg <- numeric(p-1)
+    upper <- numeric(p-1)
     for (i in 1:length(bsn)) {
       b = bsn[i]
       x = draws[[bsn[i]]]
@@ -144,8 +148,8 @@ plot_bsn0 <- function(fit) {
       lower = lower,
       avg = avg,
       upper= upper,
-      bn = 1:p,
-      k=paste0("wOBA_19 = ", categories[k]," (",category_strings[k],")")
+      bn = 2:p,
+      k=category_strings[k]
     )
     A = bind_rows(A,A4)
   }
@@ -178,7 +182,7 @@ plot_ubi0 <- function(fit) {
   for (k in 2:num_categories) {
     # compute mean and 2.5%, 97.5% quantiles of posterior samples
     p = 27 #dim(BATTER_SEQ_dummies)[2]
-    bidx <- paste0("beta[",1:9,",",k,"]")
+    bidx <- paste0("beta[",2:9,",",k,"]")
     oc <- paste0("gamma[",1:3,",",k,"]")
     lower <- numeric(p)
     avg <- numeric(p)
@@ -233,6 +237,7 @@ plot_ubi0 <- function(fit) {
     ) 
   production_plot
 }
+
 
 
 
