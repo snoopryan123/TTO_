@@ -11,14 +11,14 @@ theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
 rstan_options(auto_write = TRUE)
 ##### uncomment these if working on my computer #####
-cores = 1
-options(mc.cores = parallel::detectCores()) 
-NUM_ITS = 10
+# cores = 1
+# options(mc.cores = parallel::detectCores()) 
+# NUM_ITS = 10
 #####################################################
 ####### uncomment these if working on HPCC ##########
-# cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
-# options(mc.cores = cores) ### for HPCC
-# NUM_ITS = 3500 #1500 #5000
+cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+options(mc.cores = cores) ### for HPCC
+NUM_ITS = 2500 #1500 #5000
 #####################################################
 
 #####################################
@@ -63,7 +63,7 @@ folds <- loo::kfold_split_random(K=kk,N=nrow(y))
 ############################################
 
 file_bsn = "tto8_bsn.stan"
-CHANGE_DIR = if (exists("IS_SIM")) { if (IS_SIM) { TRUE } } else if (exists("IS_COMP")) { if (IS_COMP) { TRUE } } 
+CHANGE_DIR = if (exists("IS_SIM")) { IS_SIM } else if (exists("IS_COMP")) { IS_COMP } else { FALSE }
 og_dir = getwd()
 if (CHANGE_DIR) { setwd("..") }
 model_bsn <- stan_model(file = file_bsn, model_name = file_bsn)
@@ -99,7 +99,6 @@ fit_model_bsn <- function(fold_num=NA) {
 ############################################
 
 file_ubi = "tto8_ubi.stan"
-CHANGE_DIR = if (exists("IS_SIM")) { if (IS_SIM) { TRUE } } else if (exists("IS_COMP")) { if (IS_COMP) { TRUE } } 
 og_dir = getwd()
 if (CHANGE_DIR) { setwd("..") }
 model_ubi <- stan_model(file = file_ubi, model_name = file_ubi)

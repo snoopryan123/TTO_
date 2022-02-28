@@ -40,6 +40,10 @@ model {
     y[i] ~ categorical_logit(linpred[i]');
   }
 }
+generated quantities {
+   simplex[K] probs[n];
+   for (i in 1:n) probs[i] = softmax(linpred[i]');
+}
 
 
 

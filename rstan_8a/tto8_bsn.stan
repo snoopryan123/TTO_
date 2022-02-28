@@ -20,7 +20,7 @@ transformed parameters {
   matrix[p_x,K] eta;
   matrix[n, K] linpred;
   alpha = append_col(zeros_alpha, alpha_raw); // category 1 (out) (col 1) is base category
-  eta = append_col(zeros_eta, eta_raw); // category 1 (out) (col 1) is base category
+  eta = append_col(zeros_eta, eta_raw);       // category 1 (out) (col 1) is base category
   linpred = S*alpha + X*eta; 
 }
 model {
@@ -33,6 +33,9 @@ model {
     y[i] ~ categorical_logit(linpred[i]');
   }
 }
-
+generated quantities {
+   simplex[K] probs[n];
+   for (i in 1:n) probs[i] = softmax(linpred[i]');
+}
 
 
