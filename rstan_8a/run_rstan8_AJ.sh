@@ -10,6 +10,6 @@
 #$ -t 1-2
 #$ -o job_output/$JOB_NAME-$JOB_ID-$TASK_ID.log
 ## MORE RAM
-#$ -l m_mem_free=30G
+#$ -l m_mem_free=10G
 
 Rscript --vanilla rstan8-$SGE_TASK_ID.R
