@@ -26,67 +26,57 @@ ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
 
 
 
+###########################
+### CROSS ENTROPY LOSS ####
+###########################
+
+# bsn_fit_to_posterior_probs <- function(S_test,X_test,fit) {
+#   draws=as.matrix(fit)
+#   alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+#   eta_draws = draws[,str_detect(colnames(draws), "^eta")]
+#   
+#   linpreds = list()
+#   for (k in 1:7) {
+#     print(k)
+#     alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+#     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
+#     linpred_k = S_test%*%t(alpha_draws_k) + X_test%*%t(eta_draws_k)
+#     linpreds[[length(linpreds)+1]] = linpred_k
+#   }
+#   linpreds = lapply(linpreds, exp)
+#   ## linpreds[[1]][1:10,1:10]
+#   sum_linpreds = Reduce("+", linpreds)
+#   normalize <- function(A) { A / sum_linpreds} 
+#   probs = lapply(linpreds, normalize)
+#   ## probs[[1]][1,1]+probs[[2]][1,1]+probs[[3]][1,1]+probs[[4]][1,1]+probs[[5]][1,1]+probs[[6]][1,1]+probs[[7]][1,1]
+#   ## probs[[7]][1:1000]
+#   probs
+# }
+# 
+# cross_entropy_loss_posterior <- function(probs,y_test) {
+#   cross_entropy_losses = list()
+#   for (i in 1:length(y_test)) {
+#     entropy_i = as.matrix( probs[[y_test[i]]][i,] )
+#     cross_entropy_losses[[length(cross_entropy_losses) + 1]] = entropy_i
+#   }
+#   cross_entropy_loss_M = t(do.call(cbind, cross_entropy_losses))
+#   ## cross_entropy_loss_M[1:10,1:10]
+#   cross_entropy_loss_M = -log(cross_entropy_loss_M)
+#   cross_entropy_losses = rowMeans(cross_entropy_loss_M)
+#   mean(cross_entropy_losses)
+# }
+# 
+# ### test data matrices
+# X_test = X[1:5000,]
+# S_test = S[1:5000,]
+# y_test = y[1:5000,]
+# ### posterior probabilities for each outcome
+# probs = bsn_fit_to_posterior_probs(S_test,X_test,fit)
+# # probs[[1]][1:1000]
 # ### cross entropy loss
-# draws=as.matrix(fit)
-# alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
-# eta_draws = draws[,str_detect(colnames(draws), "^eta")]
-# alpha_draws_1 = alpha_draws[,endsWith(colnames(alpha_draws), "1]")]
-# alpha_draws_2 = alpha_draws[,endsWith(colnames(alpha_draws), "2]")]
-# alpha_draws_3 = alpha_draws[,endsWith(colnames(alpha_draws), "3]")]
-# alpha_draws_4 = alpha_draws[,endsWith(colnames(alpha_draws), "4]")]
-# alpha_draws_5 = alpha_draws[,endsWith(colnames(alpha_draws), "5]")]
-# alpha_draws_6 = alpha_draws[,endsWith(colnames(alpha_draws), "6]")]
-# alpha_draws_7 = alpha_draws[,endsWith(colnames(alpha_draws), "7]")]
-# eta_draws_1 = eta_draws[,endsWith(colnames(eta_draws), "1]")]
-# eta_draws_2 = eta_draws[,endsWith(colnames(eta_draws), "2]")]
-# eta_draws_3 = eta_draws[,endsWith(colnames(eta_draws), "3]")]
-# eta_draws_4 = eta_draws[,endsWith(colnames(eta_draws), "4]")]
-# eta_draws_5 = eta_draws[,endsWith(colnames(eta_draws), "5]")]
-# eta_draws_6 = eta_draws[,endsWith(colnames(eta_draws), "6]")]
-# eta_draws_7 = eta_draws[,endsWith(colnames(eta_draws), "7]")]
-# raw_p1 = exp( S %*% t(alpha_draws_1) + X %*% t(eta_draws_1))
-# raw_p2 = exp( S %*% t(alpha_draws_2) + X %*% t(eta_draws_2))
-# raw_p3 = exp( S %*% t(alpha_draws_3) + X %*% t(eta_draws_3))
-# raw_p4 = exp( S %*% t(alpha_draws_4) + X %*% t(eta_draws_4))
-# raw_p5 = exp( S %*% t(alpha_draws_5) + X %*% t(eta_draws_5))
-# raw_p6 = exp( S %*% t(alpha_draws_6) + X %*% t(eta_draws_6))
-# raw_p7 = exp( S %*% t(alpha_draws_7) + X %*% t(eta_draws_7))
-# raw_summed_p = raw_p1+raw_p2+raw_p3+raw_p4+raw_p5+raw_p6+raw_p7
-# p1 = 1 / raw_summed_p
-# p2 = raw_p2 * p1
-# p3 = raw_p3 * p1
-# p4 = raw_p4 * p1
-# p5 = raw_p5 * p1
-# p6 = raw_p6 * p1
-# p7 = raw_p7 * p1
-# # aaa=p1+p2+p3+p4+p5+p6+p7; aaa[1:10,1:10]
-# p1[1:10,1:10]
-# 
-# # posterior predictive intervals on the probabilities
-# pplower1 = apply(p1, 1, function(x) quantile(x,.025))
-# pplower2 = apply(p2, 1, function(x) quantile(x,.025))
-# pplower3 = apply(p3, 1, function(x) quantile(x,.025))
-# pplower4 = apply(p4, 1, function(x) quantile(x,.025))
-# pplower5 = apply(p5, 1, function(x) quantile(x,.025))
-# pplower6 = apply(p6, 1, function(x) quantile(x,.025))
-# pplower7 = apply(p7, 1, function(x) quantile(x,.025))
-# ppmean1 = apply(p1, 1, function(x) mean(x))
-# ppmean2 = apply(p2, 1, function(x) mean(x))
-# ppmean3 = apply(p3, 1, function(x) mean(x))
-# ppmean4 = apply(p4, 1, function(x) mean(x))
-# ppmean5 = apply(p5, 1, function(x) mean(x))
-# ppmean6 = apply(p6, 1, function(x) mean(x))
-# ppmean7 = apply(p7, 1, function(x) mean(x))
-# ppmeans = cbind(ppmean1,ppmean2,ppmean3,ppmean4,ppmean5,ppmean6,ppmean7)
-# ppupper1 = apply(p1, 1, function(x) quantile(x,.975))
-# ppupper2 = apply(p2, 1, function(x) quantile(x,.975))
-# ppupper3 = apply(p3, 1, function(x) quantile(x,.975))
-# ppupper4 = apply(p4, 1, function(x) quantile(x,.975))
-# ppupper5 = apply(p5, 1, function(x) quantile(x,.975))
-# ppupper6 = apply(p6, 1, function(x) quantile(x,.975))
-# ppupper7 = apply(p7, 1, function(x) quantile(x,.975))
-# 
-# y_test
-# y_test_class_matrix = modelr::model_matrix(~ factor(y_test) + 0,data=as.data.frame(y_test)) 
-# cross_entropy_loss_bsn[i] = sum( -1 * y_test_class_matrix * log(ppmeans) ) / length(y_test)
+# cel = cross_entropy_loss_posterior(probs,y_test)
+# cel
+# ### empirical proportions of each outcome
+# # as_tibble(y_test) %>% group_by(value) %>% summarise(count=n()) %>% ungroup() %>% mutate(prop = count/sum(count))
+# # c(mean(probs[[1]]),mean(probs[[2]]), mean(probs[[3]]), mean(probs[[4]]), mean(probs[[5]]), mean(probs[[6]]), mean(probs[[7]]))
 
