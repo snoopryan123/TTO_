@@ -23,10 +23,10 @@ K = 7 # num_categories
 ### GENERATE PARAMETERS
 # all pitchers have the same constant effects
 bms = tibble(
-  #b = c(-.441,-1.85,-0.461,-1.06,-1.47,-0.246),
-  #m = c(0.00292,0.0740,0.00606,0.0135,0.0554,-0.00864),
-  b = c(-.4,-1.9,-0.5,-1,-1.5,-0.25),
-  m = c(0.003,0.07,0.006,0.01,0.06,-0.01),
+  # b = c(-.4,-1.9,-0.5,-1,-1.5,-0.25),
+  # m = c(0.003,0.07,0.006,0.01,0.06,-0.01),
+  b = c(-.4,-1.6,-.4,-1,-1.3,-.26),
+  m = c(-0.005,.007,.003,.007,.01,.007),
   k = 2:7
 )
 etas = tibble(
@@ -36,22 +36,32 @@ etas = tibble(
   eta4 = c(0.061, 0.046, 0.031, 0.044, 0.05, 0.023)
 )
   
-t_2 = 1
-t_3 = 3.5
+intcpt = -.2
+t_2 = .2 #0
+t_3 = .35 #0
 t_4 = 0 
 
 BMS = cbind("b"=bms$b,"m"=bms$m)
 xx = t(as.matrix(1:B))
 mm = as.matrix(bms$m)
-alpha = as.matrix(bms$b) %*% t(as.matrix(rep(1,B))) +
+alpha = intcpt +
+        as.matrix(bms$b) %*% t(as.matrix(rep(1,B))) +
         mm %*% xx +
         as.matrix(rep(t_2,K-1)) %*% (xx>=10) + 
         as.matrix(rep(t_3,K-1)) %*% (xx>=19) + 
         as.matrix(rep(t_4,K-1)) %*% (xx>=28) 
-# plot(1:27,alpha[6,1:27])
+pas=as_tibble(reshape2::melt(t(alpha))) %>% 
+  rename(bn=Var1,k=Var2)%>% 
+  mutate(k=as.character(k+1)) %>%
+  ggplot(aes(x=bn,y=value)) + 
+  facet_wrap(~k) +
+  geom_point() + geom_line() #aes(col=k)
+pas
+# ggsave("param_expl_plot_simmed_alpha_line.png",pas)
 eta = as.matrix(etas)
 # UBI simulated params
-beta = as.matrix(bms$b) %*% t(as.matrix(rep(1,p_u))) +
+beta = intcpt +
+      as.matrix(bms$b) %*% t(as.matrix(rep(1,p_u))) +
        mm %*% t(as.matrix((1:p_u)))
 gamma = cbind(
   as.matrix(rep(0,K-1)),
@@ -59,13 +69,14 @@ gamma = cbind(
   as.matrix(rep(t_2,K-1)) + as.matrix(rep(t_3,K-1)) + 18*mm,
   as.matrix(rep(t_2,K-1)) + as.matrix(rep(t_3,K-1)) + as.matrix(rep(t_4,K-1)) + 27*mm
 )
+### FINAL SIMMED PARAMS
 alpha = rbind( t(as.matrix(rep(0,B))), alpha)
 beta = rbind( t(as.matrix(rep(0,p_u))), beta)
 gamma = rbind( t(as.matrix(rep(0,p_o))), gamma)
 eta = rbind( t(as.matrix(rep(0,p_x))), eta)
 
 ### check
-# m1_tto = do.call(cbind, replicate(4, beta[,1:9], simplify=FALSE)) + 
+# m1_tto = do.call(cbind, replicate(4, beta[,1:9], simplify=FALSE)) +
 #          cbind(
 #            do.call(cbind, replicate(9, gamma[,1], simplify=FALSE)),
 #            do.call(cbind, replicate(9, gamma[,2], simplify=FALSE)),
@@ -73,6 +84,10 @@ eta = rbind( t(as.matrix(rep(0,p_x))), eta)
 #            do.call(cbind, replicate(9, gamma[,4], simplify=FALSE))
 #          )
 # sum(m1_tto-alpha)
+
+
+
+
 
 #################################################
 ########### plotting helper functions ###########

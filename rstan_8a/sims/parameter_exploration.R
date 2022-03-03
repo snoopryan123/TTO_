@@ -1,5 +1,6 @@
 library(tidyverse)
 output_folder = './job_output/'
+IS_SIM = TRUE
 
 ### load data
 input_file = "../../data/TTO_dataset_510.csv"  
@@ -21,14 +22,14 @@ p1
 p2 = plot_ubi0(fit2)
 p2
 
-#############################
-### PARAMETER EXPLORATION ###
-#############################
+#################################
+### PARAMETER EXPLORATION BSN ###
+#################################
 
 draws1 <- as_tibble(as.matrix(fit1))
 cm1 = colMeans(draws1)
 
-M=9#27
+M=27#9
 alphas = tibble()
 for (k in 2:7) {
   ak = tibble(alpha = cm1[paste0("alpha[",1:M,",",k,"]")], bn=1:M, k=k)
@@ -41,6 +42,7 @@ pa = alphas %>% ggplot(aes(x=bn,y=alpha)) +
   stat_smooth(method = "lm", formula = y ~ x, size = 1, se=FALSE) + #+ I(x^2) + I(x^3)
   geom_point() 
 pa
+# ggsave("param_expl_plot_true_alpha_line.png", pa)
 
 alpha_consts = tibble()
 for (kk in 2:7) {
@@ -49,6 +51,10 @@ for (kk in 2:7) {
   alpha_consts = bind_rows(alpha_consts, temp)
 }
 alpha_consts
+# alphas %>% 
+#   mutate(k=as.character(k)) %>%
+#   ggplot(aes(col=k,x=bn,y=alpha)) + 
+#   geom_point() + geom_line()
 
 ### ETA
 etas = tibble()
@@ -56,6 +62,10 @@ for (k in 2:7) {
   etak = tibble(eta = cm1[paste0("eta[",1:4,",",k,"]")], k=k)
   etas = bind_rows(etas, etak)
 }
+
+#################################
+### PARAMETER EXPLORATION UBI ###
+#################################
 
 # #####################################
 # draws <- as_tibble(as.matrix(fit2))
