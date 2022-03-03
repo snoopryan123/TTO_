@@ -37,8 +37,8 @@ etas = tibble(
 )
   
 intcpt = -.2
-t_2 = .2 #0
-t_3 = .35 #0
+t_2 = 1 #.2
+t_3 = 2 #.35
 t_4 = 0 
 
 BMS = cbind("b"=bms$b,"m"=bms$m)

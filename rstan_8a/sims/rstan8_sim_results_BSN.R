@@ -23,8 +23,6 @@ cel_vec = numeric(NSIM)
 prop_all_params_covered = numeric(NSIM)
 ### proportion of TTO parameters that are covered
 prop_tto_params_covered = numeric(NSIM)
-## average length of credible intervals for all params
-avg_length_ci_all_params = numeric(NSIM)
 ## average length of credible intervals for TTO params
 avg_length_ci_tto_params = numeric(NSIM)
 ## for each category, proportion of simulations in which a 2TTO effect is detected
@@ -75,9 +73,6 @@ for (i in 1:NSIM) {
   tto_params = paste0("alpha",1:27)
   prop_tto_params_covered[i] = mean((pp_df %>% filter(k!=1) %>% filter(var %in% tto_params))$covered)
   
-  ## average length of credible intervals for all params
-  avg_length_ci_all_params[i] = mean((pp_df %>% filter(k!=1))$pplength)
-  
   ## average length of credible intervals for TTO params
   avg_length_ci_tto_params[i] = mean((pp_df %>% filter(k!=1) %>% filter(var %in% tto_params))$pplength)
 
@@ -106,8 +101,6 @@ print("average proportion of all parameters that are covered")
 print(mean(prop_all_params_covered))
 print("average proportion of TTO parameters that are covered")
 print(mean(prop_tto_params_covered))
-print("avg. average length of credible intervals for all params")
-print(mean(avg_length_ci_all_params))
 print("avg. average length of credible intervals for TTO params")
 print(mean(avg_length_ci_tto_params))
 print("avg. for each category, proportion of simulations in which a 2TTO effect is detected")
