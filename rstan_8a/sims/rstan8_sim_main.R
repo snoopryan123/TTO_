@@ -56,7 +56,7 @@ pas=as_tibble(reshape2::melt(t(alpha))) %>%
   ggplot(aes(x=bn,y=value)) + 
   facet_wrap(~k) +
   geom_point() + geom_line() #aes(col=k)
-pas
+# pas
 # ggsave("param_expl_plot_simmed_alpha_line.png",pas)
 eta = as.matrix(etas)
 # UBI simulated params
