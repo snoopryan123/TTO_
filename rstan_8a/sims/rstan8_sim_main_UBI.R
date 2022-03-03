@@ -80,7 +80,7 @@ probs = ubi_fit_to_posterior_probs(U_test,O_test,X_test,fit)
 # probs[[1]][1:1000]
 ### cross entropy loss
 cel = cross_entropy_loss_posterior(probs,y_test)
-cel
+print(cel)
 ### empirical proportions of each outcome
 # as_tibble(y_test) %>% group_by(value) %>% summarise(count=n()) %>% ungroup() %>% mutate(prop = count/sum(count))
 # c(mean(probs[[1]]),mean(probs[[2]]), mean(probs[[3]]), mean(probs[[4]]), mean(probs[[5]]), mean(probs[[6]]), mean(probs[[7]]))
