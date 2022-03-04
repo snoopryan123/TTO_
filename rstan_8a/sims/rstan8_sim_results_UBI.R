@@ -129,6 +129,40 @@ ubi_tto_post_means_and_ci <- function(beta_plus_gamma_draws) {
                                    pplength = ppupper - pplower)
 }
 
+ubi_detect_avg_tto_effect <- function(fit) {
+  draws=as.matrix(fit)
+  gamma_draws = draws[,str_detect(colnames(draws), "^gamma")]
+  tto12_avg_effect_detected = numeric(6)
+  tto23_avg_effect_detected = numeric(6)
+  for (k in 2:7) {
+    # print(k)
+    gamma_draws_k = gamma_draws[,endsWith(colnames(gamma_draws), paste0(k,"]"))][,1:3]
+    g21 = gamma_draws_k[,2] - gamma_draws_k[,1]
+    g32 = gamma_draws_k[,3] - gamma_draws_k[,2]
+    g21lower = quantile(g21,.025)
+    g32lower = quantile(g32,.025)
+    tto12_avg_effect_detected[k-1] = g21lower > 0
+    tto23_avg_effect_detected[k-1] = g32lower > 0
+  }
+  list(tto12_avg_effect_detected=tto12_avg_effect_detected,
+       tto23_avg_effect_detected=tto23_avg_effect_detected)
+}
+
+ubi_detect_BL_tto_effect <- function(beta_plus_gamma_draws) {
+  tto12_BL_effect_detected = numeric(6)
+  tto23_BL_effect_detected = numeric(6)
+  for (k in 2:7) {
+    # print(k)
+    bgk = beta_plus_gamma_draws[[k-1]]
+    bgk21lower = quantile(bgk[,10] - bgk[,9],.025)
+    bgk32lower = quantile(bgk[,19] - bgk[,18],.025)
+    tto12_BL_effect_detected[k-1] = bgk21lower > 0
+    tto23_BL_effect_detected[k-1] = bgk32lower > 0
+  }
+  list(tto12_BL_effect_detected=tto12_BL_effect_detected,
+       tto23_BL_effect_detected=tto23_BL_effect_detected)
+}
+
 
 ###############
 ### metrics ###
@@ -139,16 +173,26 @@ NSIM = 25 #FIXME #25
 ## cross entropy loss 
 cel_vec = numeric(NSIM)
 ## coverage ??
-### proportion of all parameters that are covered
-prop_all_params_covered = numeric(NSIM)
 ### proportion of TTO parameters that are covered
 prop_tto_params_covered = numeric(NSIM)
+### which params are covered
+np = p_u+p_o+p_x
+covered_params = matrix(nrow=NSIM,ncol=6*np)
+colnames(covered_params) = paste0(
+  rep(c(paste0("beta",1:p_u),paste0("gamma",1:p_o),paste0("eta",1:p_x)),6),
+  paste0("_k",c(rep(2,np),rep(3,np),rep(4,np),rep(5,np),rep(6,np),rep(7,np)))
+)
+  
 ## average length of credible intervals for TTO params
 avg_length_ci_tto_params = numeric(NSIM)
-## for each category, proportion of simulations in which a 2TTO effect is detected
-tto2_detected = matrix(nrow=NSIM,ncol=6)
-## for each category, proportion of simulations in which a 3TTO effect is detected
-tto3_detected = matrix(nrow=NSIM,ncol=6)
+## for each category, proportion of simulations in which a 2TTO avg. effect is detected
+tto2_avg_detected = matrix(nrow=NSIM,ncol=6)
+## for each category, proportion of simulations in which a 3TTO avg. effect is detected
+tto3_avg_detected = matrix(nrow=NSIM,ncol=6)
+## for each category, proportion of simulations in which a 2TTO batter-learning effect is detected
+tto2_BL_detected = matrix(nrow=NSIM,ncol=6)
+## for each category, proportion of simulations in which a 3TTO batter-learning effect is detected
+tto3_BL_detected = matrix(nrow=NSIM,ncol=6)
 
 ##########################
 ### loop over all sims ###
@@ -187,8 +231,9 @@ for (i in 1:NSIM) {
   all_params = ubi_get_all_params(fit)
   pp_df = ubi_post_means_and_ci(all_params)
   
-  ### proportion of all parameters that are covered
-  prop_all_params_covered[i] = mean((pp_df %>% filter(k!=1))$covered )
+  ### which params are covered
+  covered_params[i,] =  unname(
+    (pp_df %>% filter(k!=1) %>% select(k,var,covered) %>% arrange(k))$covered)
   
   ### proportion of TTO parameters that are covered
   beta_plus_gamma_draws = ubi_beta_plus_gamma_draws(fit)
@@ -198,18 +243,15 @@ for (i in 1:NSIM) {
   ## average length of credible intervals for TTO params
   avg_length_ci_tto_params[i] = mean(bg_df$pplength)
   
-  ## for each category, was a 2TTO & 3TTO effect detected
-  xxx = bg_df %>% filter(k!=1) %>% filter(var %in% c("bg9","bg10","bg18","bg19")) 
-  xxx1 = xxx[seq(1,nrow(xxx),by=2),]
-  names(xxx1) = paste0(names(xxx1),"1")
-  xxx2 = xxx[seq(2,nrow(xxx),by=2),]
-  names(xxx2) = paste0(names(xxx2),"2")
-  xxxx=as_tibble(cbind(xxx1,xxx2))
-  xxxx = xxxx %>% mutate(tto_effect_ = pplower2 - ppupper1, tto_detected = tto_effect_ > 0)
-  xxxx2 = xxxx[seq(1,nrow(xxxx),by=2),]
-  xxxx3 = xxxx[seq(2,nrow(xxxx),by=2),]
-  tto2_detected[i,] = xxxx2$tto_detected
-  tto3_detected[i,] = xxxx3$tto_detected
+  ## for each category, was a 2TTO & 3TTO avg. effect detected
+  detect_tto_avg_effect = ubi_detect_avg_tto_effect(fit)
+  tto2_avg_detected[i,] = detect_tto_avg_effect[[1]]
+  tto3_avg_detected[i,] = detect_tto_avg_effect[[2]]
+  
+  ## for each category, was a 2TTO & 3TTO batter-learning effect detected
+  detect_tto_BL_effect = ubi_detect_BL_tto_effect(beta_plus_gamma_draws)
+  tto2_BL_detected[i,] = detect_tto_BL_effect[[1]]
+  tto3_BL_detected[i,] = detect_tto_BL_effect[[2]]
 }
 
 ######################
@@ -218,16 +260,21 @@ for (i in 1:NSIM) {
 
 print("average cross entropy loss")
 print(mean(cel_vec))
+print("average proportion of TTO parameters (beta_k + gamma_l) that are covered")
+print(mean(prop_tto_params_covered))
+print("avg. average length of credible intervals for TTO params (beta_k + gamma_l)")
+print(mean(avg_length_ci_tto_params))
+print("for each category, avg. proportion of simulations in which a 2TTO avg. effect is detected")
+print(colMeans(tto2_avg_detected))
+print("for each category, avg. proportion of simulations in which a 3TTO avg. effect is detected")
+print(colMeans(tto3_avg_detected))
+print("for each category, avg.proportion of simulations in which a 2TTO batter-learning effect is detected")
+print(colMeans(tto2_BL_detected))
+print("for each category, avg. proportion of simulations in which a 3TTO batter-learning effect is detected")
+print(colMeans(tto3_BL_detected))
 ## coverage ??
 print("average proportion of all parameters that are covered")
-print(mean(prop_all_params_covered))
-print("average proportion of TTO parameters that are covered")
-print(mean(prop_tto_params_covered))
-print("avg. average length of credible intervals for TTO params")
-print(mean(avg_length_ci_tto_params))
-print("avg. for each category, proportion of simulations in which a 2TTO effect is detected")
-print(colMeans(tto2_detected))
-print("for each category, proportion of simulations in which a 3TTO effect is detected")
-print(colMeans(tto3_detected))
-
+mean(covered_params)
+print("average proportion that each parameter is covered")
+print(colMeans(covered_params))
 
