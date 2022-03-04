@@ -9,6 +9,65 @@ logit <- function(p) { log(p/(1-p)) }
 X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND)) 
 source("rstan8_sim_main.R")
 
+#########################
+### HELPER FUNCTIONS ####
+#########################
+
+bsn_fit_to_posterior_probs <- function(S_test,X_test,fit) {
+  draws=as.matrix(fit)
+  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+  eta_draws = draws[,str_detect(colnames(draws), "^eta")]
+  
+  linpreds = list()
+  for (k in 1:7) {
+    print(k)
+    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
+    linpred_k = S_test%*%t(alpha_draws_k) + X_test%*%t(eta_draws_k)
+    linpreds[[length(linpreds)+1]] = linpred_k
+  }
+  linpreds = lapply(linpreds, exp)
+  ## linpreds[[1]][1:10,1:10]
+  sum_linpreds = Reduce("+", linpreds)
+  normalize <- function(A) { A / sum_linpreds}
+  probs = lapply(linpreds, normalize)
+  ## probs[[1]][1,1]+probs[[2]][1,1]+probs[[3]][1,1]+probs[[4]][1,1]+probs[[5]][1,1]+probs[[6]][1,1]+probs[[7]][1,1]
+  ## probs[[1]][1:1000]
+  ## dim(probs[[7]])
+  probs
+}
+
+cross_entropy_loss_posterior <- function(probs,y_test) {
+  cross_entropy_losses = list()
+  for (i in 1:length(y_test)) {
+    entropy_i = as.matrix( probs[[y_test[i]]][i,] )
+    cross_entropy_losses[[length(cross_entropy_losses) + 1]] = entropy_i
+  }
+  cross_entropy_loss_M = t(do.call(cbind, cross_entropy_losses))
+  ## cross_entropy_loss_M[1:10,1:10]
+  cross_entropy_loss_M = -log(cross_entropy_loss_M)
+  cross_entropy_losses = rowMeans(cross_entropy_loss_M)
+  mean(cross_entropy_losses)
+}
+
+bsn_post_means_and_ci <- function(all_params) {
+  params_true = cbind(alpha,eta)
+  pp_df = tibble()
+  for (k in 1:7) {
+    all_params_k = all_params[[k]]
+    pplower_k = apply(all_params_k, 2, function(x) quantile(x,.025))
+    ppmeans_k = colMeans(all_params_k)
+    ppupper_k = apply(all_params_k, 2, function(x) quantile(x,.975))
+    p_true_k = params_true[k,]
+    p_names = c(paste0("alpha",1:36),paste0("eta",1:4))
+    pp_df_k = tibble(k=k,pplower=pplower_k,ppmean=ppmeans_k,ppupper=ppupper_k,
+                     var=p_names,param_true = p_true_k)
+    pp_df = bind_rows(pp_df, pp_df_k)
+  }
+  pp_df %>% arrange(-k) %>% mutate(covered = pplower <= param_true & param_true <= ppupper,
+                                   pplength = ppupper - pplower)
+}
+
 ###############
 ### metrics ###
 ###############
@@ -106,65 +165,6 @@ print("avg. for each category, proportion of simulations in which a 2TTO effect 
 print(colMeans(tto2_detected))
 print("for each category, proportion of simulations in which a 3TTO effect is detected")
 print(colMeans(tto3_detected))
-
-#########################
-### HELPER FUNCTIONS ####
-#########################
-
-bsn_fit_to_posterior_probs <- function(S_test,X_test,fit) {
-  draws=as.matrix(fit)
-  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
-  eta_draws = draws[,str_detect(colnames(draws), "^eta")]
-  
-  linpreds = list()
-  for (k in 1:7) {
-    print(k)
-    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
-    eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = S_test%*%t(alpha_draws_k) + X_test%*%t(eta_draws_k)
-    linpreds[[length(linpreds)+1]] = linpred_k
-  }
-  linpreds = lapply(linpreds, exp)
-  ## linpreds[[1]][1:10,1:10]
-  sum_linpreds = Reduce("+", linpreds)
-  normalize <- function(A) { A / sum_linpreds}
-  probs = lapply(linpreds, normalize)
-  ## probs[[1]][1,1]+probs[[2]][1,1]+probs[[3]][1,1]+probs[[4]][1,1]+probs[[5]][1,1]+probs[[6]][1,1]+probs[[7]][1,1]
-  ## probs[[1]][1:1000]
-  ## dim(probs[[7]])
-  probs
-}
-
-cross_entropy_loss_posterior <- function(probs,y_test) {
-  cross_entropy_losses = list()
-  for (i in 1:length(y_test)) {
-    entropy_i = as.matrix( probs[[y_test[i]]][i,] )
-    cross_entropy_losses[[length(cross_entropy_losses) + 1]] = entropy_i
-  }
-  cross_entropy_loss_M = t(do.call(cbind, cross_entropy_losses))
-  ## cross_entropy_loss_M[1:10,1:10]
-  cross_entropy_loss_M = -log(cross_entropy_loss_M)
-  cross_entropy_losses = rowMeans(cross_entropy_loss_M)
-  mean(cross_entropy_losses)
-}
-
-bsn_post_means_and_ci <- function(all_params) {
-  params_true = cbind(alpha,eta)
-  pp_df = tibble()
-  for (k in 1:7) {
-    all_params_k = all_params[[k]]
-    pplower_k = apply(all_params_k, 2, function(x) quantile(x,.025))
-    ppmeans_k = colMeans(all_params_k)
-    ppupper_k = apply(all_params_k, 2, function(x) quantile(x,.975))
-    p_true_k = params_true[k,]
-    p_names = c(paste0("alpha",1:36),paste0("eta",1:4))
-    pp_df_k = tibble(k=k,pplower=pplower_k,ppmean=ppmeans_k,ppupper=ppupper_k,
-                     var=p_names,param_true = p_true_k)
-    pp_df = bind_rows(pp_df, pp_df_k)
-  }
-  pp_df %>% arrange(-k) %>% mutate(covered = pplower <= param_true & param_true <= ppupper,
-                                   pplength = ppupper - pplower)
-}
 
 
 
