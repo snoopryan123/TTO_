@@ -182,7 +182,6 @@ colnames(covered_params) = paste0(
   rep(c(paste0("beta",1:p_u),paste0("gamma",1:p_o),paste0("eta",1:p_x)),6),
   paste0("_k",c(rep(2,np),rep(3,np),rep(4,np),rep(5,np),rep(6,np),rep(7,np)))
 )
-  
 ## average length of credible intervals for TTO params
 avg_length_ci_tto_params = numeric(NSIM)
 ## for each category, proportion of simulations in which a 2TTO avg. effect is detected
@@ -262,7 +261,7 @@ print("average cross entropy loss")
 print(mean(cel_vec))
 print("average proportion of TTO parameters (beta_k + gamma_l) that are covered")
 print(mean(prop_tto_params_covered))
-print("avg. average length of credible intervals for TTO params (beta_k + gamma_l)")
+print("avg. average length of credible intervals for TTO params (beta_m + gamma_l)")
 print(mean(avg_length_ci_tto_params))
 print("for each category, avg. proportion of simulations in which a 2TTO avg. effect is detected")
 print(colMeans(tto2_avg_detected))
