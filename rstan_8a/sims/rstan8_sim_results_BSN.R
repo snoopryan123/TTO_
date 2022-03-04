@@ -2,7 +2,6 @@ library(tidyverse)
 output_folder = './job_output/'
 
 ### load data
-OUTPUT_FILE = paste0("rstan8_sim-",s,".R")
 input_file = "../../data/TTO_dataset_510.csv"  
 D <- read_csv(input_file) #%>% drop_na() 
 D <- D %>% filter(YEAR == 2019) %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1 )
