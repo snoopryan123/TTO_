@@ -50,6 +50,21 @@ cross_entropy_loss_posterior <- function(probs,y_test) {
   mean(cross_entropy_losses)
 }
 
+bsn_get_all_params <- function(fit) {
+  draws=as.matrix(fit)
+  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+  eta_draws = draws[,str_detect(colnames(draws), "^eta")]
+  all_params = list()
+  for (k in 1:7) {
+    # print(k)
+    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
+    all_params_k = cbind(alpha_draws_k, eta_draws_k)
+    all_params[[length(all_params)+1]] = all_params_k
+  }
+  all_params
+}
+
 bsn_post_means_and_ci <- function(all_params) {
   params_true = cbind(alpha,eta)
   pp_df = tibble()
@@ -122,6 +137,7 @@ for (i in 1:NSIM) {
   # c(mean(probs[[1]]),mean(probs[[2]]), mean(probs[[3]]), mean(probs[[4]]), mean(probs[[5]]), mean(probs[[6]]), mean(probs[[7]]))
   
   ### posterior means & CI's for all parameters
+  all_params = bsn_get_all_params(fit)
   pp_df = bsn_post_means_and_ci(all_params)
   
   ### proportion of all parameters that are covered
