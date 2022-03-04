@@ -14,7 +14,7 @@ source("rstan8_sim_main.R")
 ### metrics ###
 ###############
 
-NSIM = 3 #FIXME #25
+NSIM = 25 #FIXME #25
 
 ## cross entropy loss 
 cel_vec = numeric(NSIM)
