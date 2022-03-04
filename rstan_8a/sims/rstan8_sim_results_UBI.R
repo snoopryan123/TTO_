@@ -231,32 +231,3 @@ print("for each category, proportion of simulations in which a 3TTO effect is de
 print(colMeans(tto3_detected))
 
 
-
-
-
-
-###########################
-### CROSS ENTROPY LOSS ####
-###########################
-
-
-
-
-### test data matrices
-test_rows = which(folds == 1)
-X_test = X[test_rows,]
-U_test = U[test_rows,]
-O_test = O[test_rows,]
-y_test = y[test_rows,]
-### posterior probabilities for each outcome
-probs = ubi_fit_to_posterior_probs(U_test,O_test,X_test,fit)
-# probs[[1]][1:1000]
-### cross entropy loss
-cel = cross_entropy_loss_posterior(probs,y_test)
-print(cel)
-### empirical proportions of each outcome
-# as_tibble(y_test) %>% group_by(value) %>% summarise(count=n()) %>% ungroup() %>% mutate(prop = count/sum(count))
-# c(mean(probs[[1]]),mean(probs[[2]]), mean(probs[[3]]), mean(probs[[4]]), mean(probs[[5]]), mean(probs[[6]]), mean(probs[[7]]))
-
-
-
