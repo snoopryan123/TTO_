@@ -74,7 +74,7 @@ bsn_post_means_and_ci <- function(all_params) {
     ppmeans_k = colMeans(all_params_k)
     ppupper_k = apply(all_params_k, 2, function(x) quantile(x,.975))
     p_true_k = params_true[k,]
-    p_names = c(paste0("alpha",1:36),paste0("eta",1:4))
+    p_names = c(paste0("alpha",1:p_s),paste0("eta",1:p_x))
     pp_df_k = tibble(k=k,pplower=pplower_k,ppmean=ppmeans_k,ppupper=ppupper_k,
                      var=p_names,param_true = p_true_k)
     pp_df = bind_rows(pp_df, pp_df_k)
@@ -108,7 +108,6 @@ tto3_detected = matrix(nrow=NSIM,ncol=6)
 ##########################
 
 test_rows = which(folds == 1)
-UBI = FALSE
 for (i in 1:NSIM) {
   ii = i + 0
   print(paste0("i = ",ii))
