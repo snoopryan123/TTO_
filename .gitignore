@@ -4,4 +4,5 @@ data_wrangling/.Rhistory
 *.RData
 *.Rhistory
 *.log
-
+*.RDataTmp 
+*.DS_Store

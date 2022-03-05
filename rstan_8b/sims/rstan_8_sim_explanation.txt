@@ -1,0 +1,6 @@
+rstan8_sim-x
+	dataset = TTO_dataset_510.csv
+
+8-1:25		SIMULATION: BSN model, 2019 only, running avg estimator (logit_BQ, logit_PQ) (tau = 0.5, sigma = 0.05)
+8-51:75		SIMULATION: UBI model, 2019 only, running avg estimator (logit_BQ, logit_PQ) (tau = 0.5, sigma = 0.05)
+
