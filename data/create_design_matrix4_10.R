@@ -24,8 +24,8 @@ D1b <- D1a %>% filter(!PIT_IS_BAT)
 D2 <- D1b %>% select(row_idx,YEAR,DATE,GAME_ID,INNING, #BAT_NAME,PIT_NAME,
                      PIT_ID, BAT_ID, WOBA_APP, EVENT_WOBA_19, #OUTS_CT, BASE_STATE
                      HAND_MATCH, BAT_HOME_IND, 
-                     BATTER_SEQ_NUM,
-                     ORDER_CT) %>%
+                     PITCH_COUNT_CUMU,
+                     BATTER_SEQ_NUM,ORDER_CT) %>%
               mutate(across(HAND_MATCH, as.integer)) #%>% 
               #mutate(across(IN_DIV, as.integer)) %>% 
               #mutate(across(IN_LEAGUE, as.integer))

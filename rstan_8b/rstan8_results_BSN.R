@@ -202,11 +202,33 @@ plot_xWOBA_over_time_spline <- function(df) {
   pxw
 }
 
+plot_prob_trend_by_k <- function(dfk) {
+  pxwk = dfk %>%
+    ggplot(aes(x=bn, y=pmean)) +
+    facet_wrap(~k) +
+    geom_errorbar(aes(ymin = plower, ymax = pupper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = "Trend in the Probability of Each Outcome over the Course of a Game") + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("Batter Sequence Number $m$"), 
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(name="Probability", 
+                       # limits = c(.2, .4),
+                       breaks = seq(-1, 1, .05)
+    ) 
+  pxwk
+}
 
 plot_hists_by_category <- function(df, xTitle) {
   df %>% ggplot() +
     facet_wrap(~k) +
-    geom_histogram(aes(x=v, y=..density..)) +
+    geom_histogram(aes(x=v, y=..density..), color="white",fill="dodgerblue2",bins=50) +
     geom_vline(xintercept = 0) +
     theme(panel.spacing = unit(2, "lines")) +
     theme(axis.text.y = element_blank(),
@@ -214,6 +236,23 @@ plot_hists_by_category <- function(df, xTitle) {
     xlab(xTitle)
 }
 
+get_prob_trend_df <- function(fit) {
+  S1 = diag(36)
+  X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
+  probs1 = bsn_fit_to_posterior_probs(S1,X1,fit)
+  # probs1[[1]][1:10,1:10]
+  pp1_df = tibble()
+  for (k in 1:7) {
+    probs1_k = t(probs1[[k]])
+    plower_k = apply(probs1_k, 2, function(x) quantile(x,.025))
+    pmeans_k = colMeans(probs1_k)
+    pupper_k = apply(probs1_k, 2, function(x) quantile(x,.975))
+    # p_names = c(paste0("alpha",1:(dim(S)[2])),paste0("eta",1:(dim(X)[2])))
+    pp1_df_k = tibble(k=k,plower=plower_k,pmean=pmeans_k,pupper=pupper_k,bn=1:36)
+    pp1_df = bind_rows(pp1_df, pp1_df_k)
+  }
+  pp1_df %>% arrange(-k)
+}
 
 ###############
 ### RESULTS ###
@@ -247,12 +286,12 @@ p12t = "magnitude of mean 2TTO effect"
 #p12t = TeX("$\\frac{1}{9} \\sum_{m=10}^{18} \\alpha_m - \\frac{1}{9} \\sum_{m=1}^{9} \\alpha_m$")
 p12 = plot_hists_by_category(a12_df, p12t)
 p12
-# ggsave("plots/plot_mean2TTOeffect.png", p12)
+# ggsave("plots_bsn/plot_mean2TTOeffect.png", p12)
 
 p23t = "magnitude of mean 3TTO effect"
 p23 = plot_hists_by_category(a23_df, p23t)
 p23
-# ggsave("plots/plot_mean3TTOeffect.png", p23)
+# ggsave("plots_bsn/plot_mean3TTOeffect.png", p23)
 
 ## for each category, was a 2TTO & 3TTO BL effect detected
 bgbted = bsn_get_BL_tto_effect_dfs(fit)
@@ -264,19 +303,19 @@ b23_df$k = factor(b23_df$k, labels = category_strings[2:7])
 pb12t = "magnitude of batter learning 2TTO effect"
 pb12 = plot_hists_by_category(b12_df, pb12t)
 pb12
-# ggsave("plots/plot_BL_2TTOeffect.png", pb12)
+# ggsave("plots_bsn/plot_BL_2TTOeffect.png", pb12)
 
 pb23t = "magnitude of batter learning 3TTO effect"
 pb23 = plot_hists_by_category(b23_df, pb23t)
 pb23
-# ggsave("plots/plot_BL_3TTOeffect.png", pb23)
+# ggsave("plots_bsn/plot_BL_3TTOeffect.png", pb23)
 
 ### plot trend in expected wOBA over the course of a game
 xw = bsn_xWoba_post()
 A = get_tto_means_and_ci(xw)
 pxw = plot_xWOBA_over_time(A)
 pxw
-# ggsave("plots/plot_xwoba19.png", pxw)
+# ggsave("plots_bsn/plot_xwoba19.png", pxw)
 
 ### plot trend in expected wOBA **SPLINE** over the course of a game
 # repeating a knot 4 times means the spline itself is discontinuous at that knot
@@ -288,6 +327,26 @@ spline_A = as_tibble(data.frame(lower=fitted(spline_lower),avg=fitted(spline_avg
                                 upper=fitted(spline_upper),bn=1:27))
 pxws = plot_xWOBA_over_time_spline(spline_A)
 pxws
-# ggsave("plots/plot_xwoba19_spline.png", pxws)
+# ggsave("plots_bsn/plot_xwoba19_spline.png", pxws)
 
+
+
+### plot trend over the course of a game for each outcome, on probability scale (spline ???)
+prob_trend_df = get_prob_trend_df(fit)
+prob_trend_df1 = prob_trend_df %>% filter(k!=1 & bn<=27)
+prob_trend_df1$k = factor(prob_trend_df1$k, labels = category_strings[2:7])
+
+plot_prob_trend_by_k(prob_trend_df1)
+
+plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("BB","2B","HR")))
+
+plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("1B")))
+
+plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("HBP","3B")))
+
+
+
+#########################
+### PITCH COUNT ####
+#########################
 
