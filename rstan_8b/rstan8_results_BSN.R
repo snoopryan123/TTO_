@@ -1,9 +1,9 @@
 library(tidyverse)
 library(grid)
 library(splines)
-theme_set(theme_bw())
-theme_update(text = element_text(size=18))
-theme_update(plot.title = element_text(hjust = 0.5))
+# theme_set(theme_bw())
+# theme_update(text = element_text(size=18))
+# theme_update(plot.title = element_text(hjust = 0.5))
 output_folder = './job_output/'
 
 ### load data
@@ -346,7 +346,5 @@ plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("HBP","3B")))
 
 
 
-#########################
-### PITCH COUNT ####
-#########################
+
 
