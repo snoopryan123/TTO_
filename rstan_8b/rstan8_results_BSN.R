@@ -267,9 +267,9 @@ probs = bsn_fit_to_posterior_probs(S,X,fit)
 # probs[[1]][1:1000]
 
 ### posterior means & CI's for all parameters
-all_params = bsn_get_all_params(fit)
-pp_df = bsn_post_means_and_ci(all_params)
-probs_df = bsn_get_probs_means_and_ci(probs)
+# all_params = bsn_get_all_params(fit)
+# pp_df = bsn_post_means_and_ci(all_params)
+# probs_df = bsn_get_probs_means_and_ci(probs)
 
 ###############
 ### PLOTS ###
@@ -319,7 +319,7 @@ pxw
 
 ### plot trend in expected wOBA **SPLINE** over the course of a game
 # repeating a knot 4 times means the spline itself is discontinuous at that knot
-knots = c(9,9,9,9,18,18,18,18)
+knots = c(9.5,9.5,9.5,9.5,  18.5,18.5,18.5,18.5)
 spline_lower <- lm(lower ~ bs(1:27, knots = knots), data = A )
 spline_avg <- lm(avg ~ bs(1:27, knots = knots), data = A )
 spline_upper <- lm(upper ~ bs(1:27, knots = knots), data = A )

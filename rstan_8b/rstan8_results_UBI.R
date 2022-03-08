@@ -106,6 +106,189 @@ ubi_beta_plus_gamma_draws <- function(fit) {
   beta_plus_gamma_draws
 }
 
+
+
+ubi_get_avg_tto_effect_dfs <- function(tto_draws) {
+  a12_df = tibble()
+  a23_df = tibble()
+  for (k in 2:7) {
+    #print(k)
+    tto_draws_k = tto_draws[[k-1]]
+    a_tto1 = rowMeans(tto_draws_k[,1:9])
+    a_tto2 = rowMeans(tto_draws_k[,10:18])
+    a_tto3 = rowMeans(tto_draws_k[,19:27])
+    a12 = a_tto2 - a_tto1
+    a23 = a_tto3 - a_tto2
+    q12 = quantile(a12, c(.025,.975))
+    q23 = quantile(a23, c(.025,.975))
+    a12_df_k = tibble(v=a12, k=k) %>% filter(q12[1] <= v & v <= q12[2])
+    a23_df_k = tibble(v=a23, k=k) %>% filter(q23[1] <= v & v <= q23[2])
+    a12_df = bind_rows(a12_df, a12_df_k)
+    a23_df = bind_rows(a23_df, a23_df_k)
+  }
+  list(a12_df, a23_df)
+}
+
+ubi_get_BL_tto_effect_dfs <- function(tto_draws) {
+  a12_df = tibble()
+  a23_df = tibble()
+  for (k in 2:7) {
+    #print(k)
+    tto_draws_k = tto_draws[[k-1]]
+    a_tto12 = tto_draws_k[,10] - tto_draws_k[,9]
+    a_tto23 = tto_draws_k[,19] - tto_draws_k[,18]
+    q12 = quantile(a_tto12,c(.025,.975))
+    q23 = quantile(a_tto23,c(.025,.975))
+    a12_df_k = tibble(v=a_tto12, k=k) %>% filter(q12[1] <= v & v <= q12[2])
+    a23_df_k = tibble(v=a_tto23, k=k) %>% filter(q23[1] <= v & v <= q23[2])
+    a12_df = bind_rows(a12_df, a12_df_k)
+    a23_df = bind_rows(a23_df, a23_df_k)
+  }
+  list(a12_df, a23_df)
+}
+
+
+ubi_xWoba_post <- function() {
+  U1_ = diag(9)
+  U1 = cbind(rbind(U1_,U1_,U1_,U1_), matrix(0, nrow=36, ncol = p_u-9))
+  O1 = matrix(0, nrow=36, ncol=p_o)
+  for (i in 1:9) {O1[i,1] = 1}
+  for (i in 10:18) {O1[i,2] = 1}
+  for (i in 19:27) {O1[i,3] = 1}
+  for (i in 28:36) {O1[i,4] = 1}
+  X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
+  probs1 = ubi_fit_to_posterior_probs(U1,O1,X1,fit)
+  # probs1[[1]][1:10,1:10]
+  xw = matrix(0, ncol = dim(probs1[[1]])[1], nrow = dim(probs1[[1]])[2])
+  for (k in 1:7) {
+    xw = xw + t(probs1[[k]]) * categories[k]
+  }
+  xw
+}
+
+get_tto_means_and_ci <- function(xw) {
+  # compute mean and 2.5%, 97.5% quantiles of posterior samples
+  p = dim(xw)[2] #27 
+  lower <- numeric(p)
+  avg <- numeric(p)
+  upper <- numeric(p)
+  for (i in 1:p) {
+    x = xw[,i]
+    lower[i] = quantile(x,.025)
+    avg[i] = mean(x)
+    upper[i] = quantile(x,.975)
+  }
+  A = (data.frame(lower = lower,avg = avg,upper= upper,bn = 1:p))[1:27,]
+  A
+}
+
+plot_xWOBA_over_time <- function(df) {
+  pxw = df %>% 
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = "Trend in Expected wOBA over the Course of a Game") + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("Batter Sequence Number $m$"), 
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(name="Expected wOBA", 
+                       # limits = c(.2, .4),
+                       breaks = seq(-1, 1, .05)
+    ) 
+  pxw
+}
+
+plot_xWOBA_over_time_spline <- function(df) {
+  pxw = df %>% 
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = "Trend in Expected wOBA over the Course of a Game: Spline") + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("Batter Sequence Number $m$"), 
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(name="Expected wOBA", 
+                       # limits = c(.2, .4),
+                       breaks = seq(-1, 1, .05)
+    ) 
+  pxw
+}
+
+
+
+plot_prob_trend_by_k <- function(dfk) {
+  pxwk = dfk %>%
+    ggplot(aes(x=bn, y=pmean)) +
+    facet_wrap(~k) +
+    geom_errorbar(aes(ymin = plower, ymax = pupper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = "Trend in the Probability of Each Outcome over the Course of a Game") + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("Batter Sequence Number $m$"), 
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(name="Probability", 
+                       # limits = c(.2, .4),
+                       breaks = seq(-1, 1, .05)
+    ) 
+  pxwk
+}
+
+plot_hists_by_category <- function(df, xTitle) {
+  df %>% ggplot() +
+    facet_wrap(~k) +
+    geom_histogram(aes(x=v, y=..density..), color="white",fill="dodgerblue2",bins=50) +
+    geom_vline(xintercept = 0) +
+    theme(panel.spacing = unit(2, "lines")) +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank()) +
+    xlab(xTitle)
+}
+
+get_prob_trend_df <- function() {
+  U1_ = diag(9)
+  U1 = cbind(rbind(U1_,U1_,U1_,U1_), matrix(0, nrow=36, ncol = p_u-9))
+  O1 = matrix(0, nrow=36, ncol=p_o)
+  for (i in 1:9) {O1[i,1] = 1}
+  for (i in 10:18) {O1[i,2] = 1}
+  for (i in 19:27) {O1[i,3] = 1}
+  for (i in 28:36) {O1[i,4] = 1}
+  X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
+  probs1 = ubi_fit_to_posterior_probs(U1,O1,X1,fit)
+  # probs1[[1]][1:10,1:10]
+  pp1_df = tibble()
+  for (k in 1:7) {
+    probs1_k = t(probs1[[k]])
+    plower_k = apply(probs1_k, 2, function(x) quantile(x,.025))
+    pmeans_k = colMeans(probs1_k)
+    pupper_k = apply(probs1_k, 2, function(x) quantile(x,.975))
+    # p_names = c(paste0("alpha",1:(dim(S)[2])),paste0("eta",1:(dim(X)[2])))
+    pp1_df_k = tibble(k=k,plower=plower_k,pmean=pmeans_k,pupper=pupper_k,bn=1:36)
+    pp1_df = bind_rows(pp1_df, pp1_df_k)
+  }
+  pp1_df %>% arrange(-k)
+}
+
+
+
+
 ubi_tto_post_means_and_ci <- function(beta_plus_gamma_draws) {
   b_true = cbind(beta[2:7,1:9],beta[2:7,1:9],beta[2:7,1:9])
   g_true = cbind(matrix(gamma[2:7,1], nrow(gamma)-1, 9),
@@ -167,116 +350,107 @@ ubi_detect_BL_tto_effect <- function(beta_plus_gamma_draws) {
 # p
 # ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
 
+
+
+
 ###############
-### metrics ###
+### RESULTS ###
 ###############
 
-NSIM = 25 #FIXME #25
+# posterior samples & y vector
+fit <- readRDS("job_output/fit_rstan8-2.R.rds")
+draws <- as.matrix(fit)
+beta_draws = draws[,str_detect(colnames(draws), "^beta")]
+gamma_draws = draws[,str_detect(colnames(draws), "^gamma")]
+p_u = dim(beta_draws)[2]/7
+p_o = dim(gamma_draws)[2]/7
 
-## cross entropy loss 
-cel_vec = numeric(NSIM)
-## coverage ??
-### proportion of TTO parameters that are covered
-prop_tto_params_covered = numeric(NSIM)
-### which params are covered
-np = p_u+p_o+p_x
-covered_params = matrix(nrow=NSIM,ncol=6*np)
-colnames(covered_params) = paste0(
-  rep(c(paste0("beta",1:p_u),paste0("gamma",1:p_o),paste0("eta",1:p_x)),6),
-  paste0("_k",c(rep(2,np),rep(3,np),rep(4,np),rep(5,np),rep(6,np),rep(7,np)))
-)
-## average length of credible intervals for TTO params
-avg_length_ci_tto_params = numeric(NSIM)
-## for each category, proportion of simulations in which a 2TTO avg. effect is detected
-tto2_avg_detected = matrix(nrow=NSIM,ncol=6)
-## for each category, proportion of simulations in which a 3TTO avg. effect is detected
-tto3_avg_detected = matrix(nrow=NSIM,ncol=6)
-## for each category, proportion of simulations in which a 2TTO batter-learning effect is detected
-tto2_BL_detected = matrix(nrow=NSIM,ncol=6)
-## for each category, proportion of simulations in which a 3TTO batter-learning effect is detected
-tto3_BL_detected = matrix(nrow=NSIM,ncol=6)
 
-##########################
-### loop over all sims ###
-##########################
+### posterior probabilities for each outcome
+# probs = ubi_fit_to_posterior_probs(U,O,X,fit)
+# probs[[1]][1:1000]
 
-test_rows = which(folds == 1)
-for (i in 1:NSIM) {
-  ii = i + 50
-  print(paste0("i = ",ii))
-  
-  # posterior samples & y vector
-  fit <- readRDS(paste0("job_output/fit_rstan8_sim-",ii,".R.rds"))
-  draws <- as.matrix(fit)
-  y <- readRDS(paste0("job_output/y_rstan8_sim-",ii,".R.rds"))
-  
-  ### test data matrices
-  X_test = X[test_rows,]
-  U_test = U[test_rows,]
-  O_test = O[test_rows,]
-  y_test = y[test_rows,]
-  n_test = nrow(X_test)
-  
-  ### posterior probabilities for each outcome
-  probs = ubi_fit_to_posterior_probs(U_test,O_test,X_test,fit)
-  # probs[[1]][1:1000]
-  
-  ### cross entropy loss
-  cel = cross_entropy_loss_posterior(probs,y_test)
-  cel_vec[i] = cel
-  
-  ### empirical proportions of each outcome
-  # as_tibble(y_test) %>% group_by(value) %>% summarise(count=n()) %>% ungroup() %>% mutate(prop = count/sum(count))
-  # c(mean(probs[[1]]),mean(probs[[2]]), mean(probs[[3]]), mean(probs[[4]]), mean(probs[[5]]), mean(probs[[6]]), mean(probs[[7]]))
-  
-  ### posterior means & CI's for all parameters
-  all_params = ubi_get_all_params(fit)
-  pp_df = ubi_post_means_and_ci(all_params)
-  
-  ### which params are covered
-  covered_params[i,] =  unname(
-    (pp_df %>% filter(k!=1) %>% select(k,var,covered) %>% arrange(k))$covered)
-  
-  ### proportion of TTO parameters that are covered
-  beta_plus_gamma_draws = ubi_beta_plus_gamma_draws(fit)
-  bg_df = ubi_tto_post_means_and_ci(beta_plus_gamma_draws)
-  prop_tto_params_covered[i] = mean(bg_df$covered)
-  
-  ## average length of credible intervals for TTO params
-  avg_length_ci_tto_params[i] = mean(bg_df$pplength)
-  
-  ## for each category, was a 2TTO & 3TTO avg. effect detected
-  detect_tto_avg_effect = ubi_detect_avg_tto_effect(fit)
-  tto2_avg_detected[i,] = detect_tto_avg_effect[[1]]
-  tto3_avg_detected[i,] = detect_tto_avg_effect[[2]]
-  
-  ## for each category, was a 2TTO & 3TTO batter-learning effect detected
-  detect_tto_BL_effect = ubi_detect_BL_tto_effect(beta_plus_gamma_draws)
-  tto2_BL_detected[i,] = detect_tto_BL_effect[[1]]
-  tto3_BL_detected[i,] = detect_tto_BL_effect[[2]]
-}
+### posterior means & CI's for all parameters
+# all_params = ubi_get_all_params(fit)
+# pp_df = ubi_post_means_and_ci(all_params)
+# probs_df = bsn_get_probs_means_and_ci(probs)
 
-######################
-### FINAL METRICS ####
-######################
+###############
+### PLOTS ###
+###############
 
-print("average cross entropy loss")
-print(mean(cel_vec))
-print("average proportion of TTO parameters (beta_k + gamma_l) that are covered")
-print(mean(prop_tto_params_covered))
-print("avg. average length of credible intervals for TTO params (beta_m + gamma_l)")
-print(mean(avg_length_ci_tto_params))
-print("for each category, avg. proportion of simulations in which a 2TTO avg. effect is detected")
-print(colMeans(tto2_avg_detected))
-print("for each category, avg. proportion of simulations in which a 3TTO avg. effect is detected")
-print(colMeans(tto3_avg_detected))
-print("for each category, avg.proportion of simulations in which a 2TTO batter-learning effect is detected")
-print(colMeans(tto2_BL_detected))
-print("for each category, avg. proportion of simulations in which a 3TTO batter-learning effect is detected")
-print(colMeans(tto3_BL_detected))
-## coverage ??
-print("average proportion of all parameters that are covered")
-mean(covered_params)
-print("average proportion that each parameter is covered")
-print(colMeans(covered_params))
+### 1-27 TTO draws
+tto_draws = ubi_beta_plus_gamma_draws(fit)
+
+## for each category, was a 2TTO & 3TTO avg. effect detected
+ugated = ubi_get_avg_tto_effect_dfs(tto_draws)
+t12_df = ugated[[1]]
+t23_df = ugated[[2]]
+t12_df$k = factor(t12_df$k, labels = category_strings[2:7])
+t23_df$k = factor(t23_df$k, labels = category_strings[2:7])
+
+t12t = "magnitude of mean 2TTO effect"
+#p12t = TeX("$\\frac{1}{9} \\sum_{m=10}^{18} \\alpha_m - \\frac{1}{9} \\sum_{m=1}^{9} \\alpha_m$")
+t12 = plot_hists_by_category(t12_df, t12t)
+t12
+# ggsave("plots_ubi/plot_mean2TTOeffect.png", t12)
+
+t23t = "magnitude of mean 3TTO effect"
+t23 = plot_hists_by_category(t23_df, t23t)
+t23
+# ggsave("plots_ubi/plot_mean3TTOeffect.png", t23)
+
+## for each category, was a 2TTO & 3TTO BL effect detected
+ugbted = ubi_get_BL_tto_effect_dfs(tto_draws)
+b12_df = ugbted[[1]]
+b23_df = ugbted[[2]]
+b12_df$k = factor(b12_df$k, labels = category_strings[2:7])
+b23_df$k = factor(b23_df$k, labels = category_strings[2:7])
+
+tpb12t = "magnitude of batter learning 2TTO effect"
+tpb12 = plot_hists_by_category(b12_df, tpb12t)
+tpb12
+# ggsave("plots_ubi/plot_BL_2TTOeffect.png", tpb12)
+
+tpb23t = "magnitude of batter learning 3TTO effect"
+tpb23 = plot_hists_by_category(b23_df, tpb23t)
+tpb23
+# ggsave("plots_ubi/plot_BL_3TTOeffect.png", tpb23)
+
+### plot trend in expected wOBA over the course of a game
+xw = ubi_xWoba_post()
+A = get_tto_means_and_ci(xw)
+pxw = plot_xWOBA_over_time(A)
+pxw
+# ggsave("plots_ubi/plot_xwoba19.png", pxw)
+
+### plot trend in expected wOBA **SPLINE** over the course of a game
+# repeating a knot 4 times means the spline itself is discontinuous at that knot
+knots = c(9.5,9.5,9.5,9.5,  18.5,18.5,18.5,18.5)
+spline_lower <- lm(lower ~ bs(1:27, knots = knots), data = A )
+spline_avg <- lm(avg ~ bs(1:27, knots = knots), data = A )
+spline_upper <- lm(upper ~ bs(1:27, knots = knots), data = A )
+spline_A = as_tibble(data.frame(lower=fitted(spline_lower),avg=fitted(spline_avg),
+                                upper=fitted(spline_upper),bn=1:27))
+pxws = plot_xWOBA_over_time_spline(spline_A)
+pxws
+# ggsave("plots_ubi/plot_xwoba19_spline.png", pxws)
+
+
+
+### plot trend over the course of a game for each outcome, on probability scale (spline ???)
+prob_trend_df = get_prob_trend_df()
+prob_trend_df1 = prob_trend_df %>% filter(k!=1 & bn<=27)
+prob_trend_df1$k = factor(prob_trend_df1$k, labels = category_strings[2:7])
+
+plot_prob_trend_by_k(prob_trend_df1)
+
+plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("BB","2B","HR")))
+
+plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("1B")))
+
+plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("HBP","3B")))
+
+
+
 
