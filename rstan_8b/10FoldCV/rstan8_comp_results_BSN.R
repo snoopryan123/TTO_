@@ -29,7 +29,7 @@ get_bsn_df <- function(X, fold_num, ind=0) {
   n = nrow(y_test)
   
   ### BSN model fit
-  fitB <- readRDS(paste0("./job_output/fit_rstan5_comp-", ind+fold_num,".R.rds")) #FIXME
+  fitB <- readRDS(paste0("./job_output/fit_rstan8_comp-", ind+fold_num,".R.rds")) #FIXME
   #plot_bsn0(fitB)
   drawsB <- as_tibble(as.matrix(fitB))
   alpha_draws = drawsB[,str_detect(colnames(drawsB), "^alpha")]
