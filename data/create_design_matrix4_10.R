@@ -13,18 +13,18 @@ D0 <- read_csv(input_filename)
 # only include starting pitchers and wOBA-appearances
 D1 <- D0 %>% filter(YEAR >= 2006, YEAR <= 2019,SP_IND == 1, WOBA_APP == 1)
 
-# MAKE SURE NO PITCHERS ARE BATTERS
 D1a <- D1 %>% group_by(GAME_ID) %>%
               mutate(PIT_IS_BAT = BAT_ID %in% PIT_ID) %>%
               ungroup()
-#View(Da %>% select(GAME_ID, BAT_ID, PIT_ID, PIT_IS_BAT))
-D1b <- D1a %>% filter(!PIT_IS_BAT)
+# #View(D1a %>% select(GAME_ID, BAT_ID, PIT_ID, PIT_IS_BAT))
+# # MAKE SURE NO PITCHERS ARE BATTERS
+# D1a <- D1a %>% filter(!PIT_IS_BAT)
 
 # select relevant columns, and view this
-D2 <- D1b %>% select(row_idx,YEAR,DATE,GAME_ID,INNING, #BAT_NAME,PIT_NAME,
+D2 <- D1a %>% select(row_idx,YEAR,DATE,GAME_ID,INNING, #BAT_NAME,PIT_NAME,
                      PIT_ID, BAT_ID, WOBA_APP, EVENT_WOBA_19, #OUTS_CT, BASE_STATE
                      HAND_MATCH, BAT_HOME_IND, 
-                     PITCH_COUNT_CUMU,
+                     PITCH_COUNT_CUMU, PIT_IS_BAT,
                      BATTER_SEQ_NUM,ORDER_CT) %>%
               mutate(across(HAND_MATCH, as.integer)) #%>% 
               #mutate(across(IN_DIV, as.integer)) %>% 
@@ -42,12 +42,12 @@ D3 <- D2 %>% group_by(GAME_ID, BAT_HOME_IND) %>%
 names(D3)[sapply(1:ncol(D3),fun <- function(i) {sum(is.na(D3[,i]))}) > 0]
 # only HAND_MATCH has NA
 # change HAND_MATCH NA to 0.5
-D6 <- D3 %>% mutate(HAND_MATCH = ifelse(is.na(HAND_MATCH), 0.5, HAND_MATCH))
+D4 <- D3 %>% mutate(HAND_MATCH = ifelse(is.na(HAND_MATCH), 0.5, HAND_MATCH))
 
 ###############################################################
   
 ### design matrix!
-X <- D6
+X <- D4
 write_csv(X, output_filename)
                   
 
