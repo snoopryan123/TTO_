@@ -184,14 +184,14 @@ get_tto_means_and_ci <- function(xw) {
   A
 }
 
-plot_xWOBA_over_time <- function(df) {
-  pxw = df %>% 
+plot_xWOBA_over_time <- function(A) {
+  pxw = A %>% 
     ggplot(aes(x=bn, y=avg)) +
     geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
     geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
-    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
-    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+    geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="dodgerblue2", size=0.5) +
+    geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="dodgerblue2", size=0.5) +
+    geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="dodgerblue2", size=0.5) +
     geom_vline(aes(xintercept = 9.5), size=1.2) +
     geom_vline(aes(xintercept = 18.5), size=1.2) +
     labs(title = "Trend in Expected wOBA over the Course of a Game") + 
@@ -206,10 +206,7 @@ plot_xWOBA_over_time <- function(df) {
   pxw
 }
 
-
-
-
-
+###########################################################################
 
 plot_xWOBA_over_time_spline <- function(df) {
   pxw = df %>% 
@@ -256,11 +253,11 @@ plot_prob_trend_by_k <- function(dfk) {
   pxwk
 }
 
-
 get_prob_trend_df <- function(fit) {
   S1 = diag(36)
+  SPL1 = S1 %*% bbb
   X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
-  probs1 = bsn_fit_to_posterior_probs(S1,X1,fit)
+  probs1 = spline_fit_to_posterior_probs(SPL1,X1,fit)
   # probs1[[1]][1:10,1:10]
   pp1_df = tibble()
   for (k in 1:7) {
@@ -342,35 +339,39 @@ pxw = plot_xWOBA_over_time(A)
 pxw
 # ggsave("plots_bsn/plot_xwoba19.png", pxw)
 
-### plot trend in expected wOBA **SPLINE** over the course of a game
-# repeating a knot 4 times means the spline itself is discontinuous at that knot
-# knots = c(9.5,9.5,9.5,9.5,  18.5,18.5,18.5,18.5)
-
-knots = c( rep(9,4),  rep(18,4) )
-
-spline_lower <- lm(lower ~ bs(1:27, knots = knots), data = A )
-spline_avg <- lm(avg ~ bs(1:27, knots = knots), data = A )
-spline_upper <- lm(upper ~ bs(1:27, knots = knots), data = A )
-spline_A = as_tibble(data.frame(lower=fitted(spline_lower),avg=fitted(spline_avg),
-                                upper=fitted(spline_upper),bn=1:27))
-pxws = plot_xWOBA_over_time_spline(spline_A)
-pxws
-# ggsave("plots_bsn/plot_xwoba19_spline.png", pxws)
 
 
 
-### plot trend over the course of a game for each outcome, on probability scale (spline ???)
-prob_trend_df = get_prob_trend_df(fit)
-prob_trend_df1 = prob_trend_df %>% filter(k!=1 & bn<=27)
-prob_trend_df1$k = factor(prob_trend_df1$k, labels = category_strings[2:7])
 
-plot_prob_trend_by_k(prob_trend_df1)
 
-plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("BB","2B","HR")))
+# ### plot trend in expected wOBA **SPLINE** over the course of a game
+# # repeating a knot 4 times means the spline itself is discontinuous at that knot
+# # knots = c(9.5,9.5,9.5,9.5,  18.5,18.5,18.5,18.5)
+# knots = c(rep(9.5,3), rep(18.5,3)); dd=2;
+# 
+# spline_lower <- lm(lower ~ bs(1:27, knots = knots, degree=dd), data = A )
+# spline_avg <- lm(avg ~ bs(1:27, knots = knots, degree=dd), data = A )
+# spline_upper <- lm(upper ~ bs(1:27, knots = knots, degree=dd), data = A )
+# spline_A = as_tibble(data.frame(lower=fitted(spline_lower),avg=fitted(spline_avg),
+#                                 upper=fitted(spline_upper),bn=1:27))
+# pxws = plot_xWOBA_over_time_spline(spline_A)
+# pxws
+# # ggsave("plots_bsn/plot_xwoba19_spline.png", pxws)
 
-plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("1B")))
 
-plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("HBP","3B")))
+
+# ### plot trend over the course of a game for each outcome, on probability scale (spline ???)
+# prob_trend_df = get_prob_trend_df(fit)
+# prob_trend_df1 = prob_trend_df %>% filter(k!=1 & bn<=27)
+# prob_trend_df1$k = factor(prob_trend_df1$k, labels = category_strings[2:7])
+# 
+# plot_prob_trend_by_k(prob_trend_df1)
+# 
+# plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("BB","2B","HR")))
+# 
+# plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("1B")))
+# 
+# plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("HBP","3B")))
 
 
 
