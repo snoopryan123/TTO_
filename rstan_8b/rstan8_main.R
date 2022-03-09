@@ -64,6 +64,7 @@ categories = sort(unique(y_og))
 num_categories = length(categories)
 y_to_category <- function(y_ij) { which(y_ij == categories)[1] }
 y <- matrix( sapply(y_og, y_to_category), ncol=1)
+category_strings <- c("out","BB","HBP","1B","2B","3B","HR")
 # 10 Fold CV folds
 set.seed(12345) # make sure to have the same folds each time!
 kk = if (exists("IS_SIM")) { if (IS_SIM) 5 else 10 } else 10
@@ -169,8 +170,6 @@ fit_model_ubi <- function(fold_num=NA) {
 ######################################
 ########### PLOT FUNCTIONS ###########
 ######################################
-
-category_strings <- c("out","BB","HBP","1B","2B","3B","HR")
 
 plot_bsn0 <- function(fit) {
   draws <- as_tibble(as.matrix(fit))
