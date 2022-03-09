@@ -1,9 +1,11 @@
 library(tidyverse)
 library(grid)
 library(splines)
-# theme_set(theme_bw())
-# theme_update(text = element_text(size=18))
-# theme_update(plot.title = element_text(hjust = 0.5))
+library(ggridges)
+library(latex2exp)
+theme_set(theme_bw())
+theme_update(text = element_text(size=18))
+theme_update(plot.title = element_text(hjust = 0.5))
 output_folder = './job_output/'
 
 ### load data
@@ -184,6 +186,20 @@ get_tto_means_and_ci <- function(xw) {
   A
 }
 
+get_tto_draws <- function(xw) {
+  xwt = reshape::melt(xw) %>% rename(bn=X2)
+  xwt = as_tibble(xwt) %>% filter(bn <= 27)
+  xwtR = tibble()
+  for (b in 1:27) {
+    xwtd = density( (xwt %>% filter(bn==b))$value)
+    xwtd_bn = tibble(value=xwtd$x, density=xwtd$y, bn=b)
+    xwtR = bind_rows(xwtR,xwtd_bn)
+  }
+  list(xwt, xwtR)
+}
+
+
+
 plot_xWOBA_over_time <- function(A) {
   pxw = A %>% 
     ggplot(aes(x=bn, y=avg)) +
@@ -205,6 +221,39 @@ plot_xWOBA_over_time <- function(A) {
     ) 
   pxw
 }
+
+plot_xWOBA_over_time_bayes <- function(A,AAA) {
+  line_size=1
+  PP = AAA %>% ggplot() + 
+    geom_hline(aes(yintercept = 9.5), size=1.2) +
+    geom_hline(aes(yintercept = 18.5), size=1.2) +
+    # geom_density_ridges(aes(x=value, y=bn, height = density, group = bn),
+    #                     stat = "identity", scale = 1, fill="dodgerblue2") +
+    geom_density_ridges_gradient(scale = 2, rel_min_height = 0.01, gradient_lwd = 1,
+                                 aes(x=value, y=bn, height = density, group = bn, fill = stat(x)), #fill="dodgerblue2"
+                                 stat = "identity", scale = 1, ) +
+    scale_fill_viridis_c(name = "Expected wOBA", option = "C") +
+    labs(title = 'Trend in Expected wOBA over the Course of a Game') +
+    # theme(legend.position="none") +
+    # theme(axis.title.y = element_blank()) +
+    geom_point(aes(x=avg, y=bn),data=A,color="darkorchid4", shape=21, size=2, fill="white") +
+    scale_y_continuous(name="Batter Sequence Number", #TeX("Batter Sequence Number $m$"), 
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_x_continuous(name="Expected wOBA", 
+                       # limits = c(.2, .4),
+                       breaks = seq(-1, 1, .05)) +
+    coord_flip()
+  PP
+  for (b in c(1:8, 10:17, 19:26)) {
+    # print(b)
+    PP = PP + geom_segment(aes_string(x=A$avg[b], y=A$bn[b],
+                                      xend=A$avg[b+1],yend=A$bn[b+1]),
+                           data=A,color="darkorchid4", size=line_size) 
+  }
+  PP
+}
+
 
 ###########################################################################
 
@@ -308,12 +357,12 @@ p12t = "magnitude of mean 2TTO effect"
 #p12t = TeX("$\\frac{1}{9} \\sum_{m=10}^{18} \\alpha_m - \\frac{1}{9} \\sum_{m=1}^{9} \\alpha_m$")
 p12 = plot_hists_by_category(a12_df, p12t)
 p12
-# ggsave("plots_bsn/plot_mean2TTOeffect.png", p12)
+# ggsave("plots_spline/plot_mean2TTOeffect.png", p12)
 
 p23t = "magnitude of mean 3TTO effect"
 p23 = plot_hists_by_category(a23_df, p23t)
 p23
-# ggsave("plots_bsn/plot_mean3TTOeffect.png", p23)
+# ggsave("plots_spline/plot_mean3TTOeffect.png", p23)
 
 ## for each category, was a 2TTO & 3TTO BL effect detected
 gbted = get_BL_tto_effect_dfs(bat_seq_draws)
@@ -325,23 +374,26 @@ b23_df$k = factor(b23_df$k, labels = category_strings[2:7])
 pb12t = "magnitude of batter learning 2TTO effect"
 pb12 = plot_hists_by_category(b12_df, pb12t)
 pb12
-# ggsave("plots_bsn/plot_BL_2TTOeffect.png", pb12)
+# ggsave("plots_spline/plot_BL_2TTOeffect.png", pb12)
 
 pb23t = "magnitude of batter learning 3TTO effect"
 pb23 = plot_hists_by_category(b23_df, pb23t)
 pb23
-# ggsave("plots_bsn/plot_BL_3TTOeffect.png", pb23)
+# ggsave("plots_spline/plot_BL_3TTOeffect.png", pb23)
 
 ### plot trend in expected wOBA over the course of a game
 xw = spline_xWoba_post()
 A = get_tto_means_and_ci(xw)
 pxw = plot_xWOBA_over_time(A)
 pxw
-# ggsave("plots_bsn/plot_xwoba19.png", pxw)
-
-
-
-
+# ggsave("plots_spline/plot_xwoba19.png", pxw)
+get_tto_draws_xw = get_tto_draws(xw) 
+# A$avg <- factor(A$avg, levels = A$avg) ## make A$avg an ordered factor
+AA = get_tto_draws_xw[[1]]
+AAA = get_tto_draws_xw[[2]]
+pxwb = plot_xWOBA_over_time_bayes(A,AAA)
+pxwb
+# ggsave("plots_spline/plot_xwoba19_bayes.png", pxwb)
 
 
 # ### plot trend in expected wOBA **SPLINE** over the course of a game
