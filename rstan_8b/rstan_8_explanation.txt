@@ -4,6 +4,7 @@ rstan8-x
 
 8-1	BSN, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (BQ,PQ)
 8-2	UBI, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (BQ,PQ)
+8-3	cubic spline with discontinuities at end of each TTO
 
 
 

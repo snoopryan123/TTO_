@@ -44,8 +44,17 @@ names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
 # categorical dummies for ORDER_CT
 ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
-# Observed data matrices 
+# BSN data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
+# SPLINE data matrices
+knots = c(rep(9.5,4), rep(18.5,4), rep(27.5,4))  
+aa = unique(D$BATTER_SEQ_NUM) 
+BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
+colnames(BB_) = paste0("B",1:ncol(BB_))
+BB = as_tibble(BB_)
+bbb = as.matrix(BB)
+SPL = S %*% bbb ### splined data matrix
+# UBI data matrices 
 U <- as.matrix(BATTER_IDX_dummies)
 O <- as.matrix(ORDER_CT_dummies)
 ### X is loaded in another file
@@ -77,6 +86,31 @@ fit_model_bsn <- function(fold_num=NA) {
   y_train = y[train_rows,]
   X_train = X[train_rows,]
   S_train = S[train_rows,]
+  data_train <- list(
+    y=y_train,S=S_train,X=X_train,
+    n=nrow(X_train),p_x=ncol(X_train),p_s=ncol(S_train),K=num_categories
+  )
+  # Train the models
+  seed = 12345
+  set.seed(seed)
+  NUM_ITERS_IN_CHAIN = NUM_ITS
+  fit <- sampling(model_bsn,
+                  data = data_train,
+                  iter = NUM_ITERS_IN_CHAIN,
+                  pars=c("linpred","alpha_raw","eta_raw"), include=FALSE,
+                  chains = cores, #1 #cores, 
+                  cores = cores, # HPCC
+                  seed = seed)
+  fit
+}
+
+fit_model_spline <- function(fold_num=NA) {
+  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
+  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
+  #train_rows = which(folds != fold_num)
+  y_train = y[train_rows,]
+  X_train = X[train_rows,]
+  S_train = SPL[train_rows,] ### this is where fit_model_spline differs from fit_model_bsn
   data_train <- list(
     y=y_train,S=S_train,X=X_train,
     n=nrow(X_train),p_x=ncol(X_train),p_s=ncol(S_train),K=num_categories
