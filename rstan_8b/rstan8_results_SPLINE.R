@@ -147,8 +147,11 @@ get_BL_tto_effect_dfs <- function(bat_seq_draws) {
 plot_hists_by_category <- function(df, xTitle) {
   df %>% ggplot() +
     facet_wrap(~k) +
-    geom_histogram(aes(x=v, y=..density..), color="white",fill="dodgerblue2",bins=50) +
+    geom_histogram(aes(x=v, y=..density..),bins=50,
+                   color="dodgerblue2",fill="dodgerblue2") + #dodgerblue2
+    geom_hline(yintercept=0, colour="white", size=1) +
     geom_vline(xintercept = 0) +
+    geom_hline(yintercept=0, colour="black", size=1) +
     theme(panel.spacing = unit(2, "lines")) +
     theme(axis.text.y = element_blank(),
           axis.ticks.y = element_blank()) +
@@ -217,7 +220,7 @@ plot_xWOBA_over_time <- function(A) {
                        breaks = c(0,5,10,15,20,25)) +
     scale_y_continuous(name="Expected wOBA", 
                        # limits = c(.2, .4),
-                       breaks = seq(-1, 1, .05)
+                       breaks = seq(-1, 1, .025)
     ) 
   pxw
 }
@@ -234,9 +237,8 @@ plot_xWOBA_over_time_bayes <- function(A,AAA) {
                                  stat = "identity", scale = 1, ) +
     scale_fill_viridis_c(name = "Expected wOBA", option = "C") +
     labs(title = 'Trend in Expected wOBA over the Course of a Game') +
-    # theme(legend.position="none") +
+    theme(legend.position="none") +
     # theme(axis.title.y = element_blank()) +
-    geom_point(aes(x=avg, y=bn),data=A,color="darkorchid4", shape=21, size=2, fill="white") +
     scale_y_continuous(name="Batter Sequence Number", #TeX("Batter Sequence Number $m$"), 
                        limits = c(0,28),
                        breaks = c(0,5,10,15,20,25)) +
@@ -249,8 +251,10 @@ plot_xWOBA_over_time_bayes <- function(A,AAA) {
     # print(b)
     PP = PP + geom_segment(aes_string(x=A$avg[b], y=A$bn[b],
                                       xend=A$avg[b+1],yend=A$bn[b+1]),
-                           data=A,color="darkorchid4", size=line_size) 
+                           data=A,color="lightskyblue1", size=line_size) 
+                            #aquamarine2
   }
+  PP = PP + geom_point(aes(x=avg, y=bn),data=A,color="black", shape=21, size=2, fill="white") 
   PP
 }
 
@@ -326,7 +330,8 @@ get_prob_trend_df <- function(fit) {
 ###############
 
 ### posterior samples of SPLINE model
-fit <- readRDS("job_output/fit_rstan8-3.R.rds")
+# fit <- readRDS("job_output/fit_rstan8-3.R.rds")
+fit <- readRDS("job_output/fit_rstan8-3_noPitAsBat.R.rds")
 draws <- as.matrix(fit)
 
 ### batter sequence draws 1,...,36 for each category
@@ -396,7 +401,7 @@ pxwb
 # ggsave("plots_spline/plot_xwoba19_bayes.png", pxwb)
 
 
-# ### plot trend in expected wOBA **SPLINE** over the course of a game
+### plot trend in expected wOBA **SPLINE** over the course of a game
 # # repeating a knot 4 times means the spline itself is discontinuous at that knot
 # # knots = c(9.5,9.5,9.5,9.5,  18.5,18.5,18.5,18.5)
 # knots = c(rep(9.5,3), rep(18.5,3)); dd=2;
