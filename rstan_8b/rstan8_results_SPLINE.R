@@ -331,7 +331,10 @@ get_prob_trend_df <- function(fit) {
 
 ### posterior samples of SPLINE model
 # fit <- readRDS("job_output/fit_rstan8-3.R.rds")
-fit <- readRDS("job_output/fit_rstan8-3_noPitAsBat.R.rds")
+year = 2014
+# fit <- readRDS("job_output/fit_rstan8-3_noPitAsBat.R.rds")
+fit <- readRDS(paste0("job_output/fit_rstan8-",year-2000,".R.rds"))
+
 draws <- as.matrix(fit)
 
 ### batter sequence draws 1,...,36 for each category
@@ -362,12 +365,12 @@ p12t = "magnitude of mean 2TTO effect"
 #p12t = TeX("$\\frac{1}{9} \\sum_{m=10}^{18} \\alpha_m - \\frac{1}{9} \\sum_{m=1}^{9} \\alpha_m$")
 p12 = plot_hists_by_category(a12_df, p12t)
 p12
-# ggsave("plots_spline/plot_mean2TTOeffect.png", p12)
+# ggsave(paste0("plots_spline/plot_mean2TTOeffect_",year,".png"), p12)
 
 p23t = "magnitude of mean 3TTO effect"
 p23 = plot_hists_by_category(a23_df, p23t)
 p23
-# ggsave("plots_spline/plot_mean3TTOeffect.png", p23)
+# ggsave(paste0("plots_spline/plot_mean3TTOeffect_",year,".png"), p23)
 
 ## for each category, was a 2TTO & 3TTO BL effect detected
 gbted = get_BL_tto_effect_dfs(bat_seq_draws)
@@ -379,27 +382,26 @@ b23_df$k = factor(b23_df$k, labels = category_strings[2:7])
 pb12t = "magnitude of batter learning 2TTO effect"
 pb12 = plot_hists_by_category(b12_df, pb12t)
 pb12
-# ggsave("plots_spline/plot_BL_2TTOeffect.png", pb12)
+# ggsave(paste0("plots_spline/plot_BL_2TTOeffect_",year,".png"), pb12)
 
 pb23t = "magnitude of batter learning 3TTO effect"
 pb23 = plot_hists_by_category(b23_df, pb23t)
 pb23
-# ggsave("plots_spline/plot_BL_3TTOeffect.png", pb23)
+# ggsave(paste0("plots_spline/plot_BL_3TTOeffect_",year,".png"), pb23)
 
 ### plot trend in expected wOBA over the course of a game
 xw = spline_xWoba_post()
 A = get_tto_means_and_ci(xw)
 pxw = plot_xWOBA_over_time(A)
 pxw
-# ggsave("plots_spline/plot_xwoba19.png", pxw)
+# ggsave(paste0("plots_spline/plot_xwoba_",year,".png"), pxw)
 get_tto_draws_xw = get_tto_draws(xw) 
 # A$avg <- factor(A$avg, levels = A$avg) ## make A$avg an ordered factor
 AA = get_tto_draws_xw[[1]]
 AAA = get_tto_draws_xw[[2]]
 pxwb = plot_xWOBA_over_time_bayes(A,AAA)
 pxwb
-# ggsave("plots_spline/plot_xwoba19_bayes.png", pxwb)
-
+# ggsave(paste0("plots_spline/plot_xwoba_bayes_",year,".png"), pxwb)
 
 ### plot trend in expected wOBA **SPLINE** over the course of a game
 # # repeating a knot 4 times means the spline itself is discontinuous at that knot
