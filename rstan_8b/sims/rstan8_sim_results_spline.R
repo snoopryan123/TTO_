@@ -13,7 +13,18 @@ source("rstan8_sim_main.R")
 ### HELPER FUNCTIONS ####
 #########################
 
-bsn_fit_to_posterior_probs <- function(S_test,X_test,fit) {
+get_bat_seq_draws <- function(draws) {
+  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+  bat_seq_draws = list()
+  for (k in 1:7) {
+    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    bat_seq_draws_k = alpha_draws_k %*% t(bbb)
+    bat_seq_draws[[length(bat_seq_draws) + 1]] = bat_seq_draws_k
+  }
+  bat_seq_draws
+}
+
+spline_fit_to_posterior_probs <- function(SPL_test,X_test,fit) {
   draws=as.matrix(fit)
   alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
   eta_draws = draws[,str_detect(colnames(draws), "^eta")]
@@ -23,7 +34,7 @@ bsn_fit_to_posterior_probs <- function(S_test,X_test,fit) {
     print(k)
     alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = S_test%*%t(alpha_draws_k) + X_test%*%t(eta_draws_k)
+    linpred_k = SPL_test%*%t(alpha_draws_k) + X_test%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -50,16 +61,13 @@ cross_entropy_loss_posterior <- function(probs,y_test) {
   mean(cross_entropy_losses)
 }
 
-bsn_get_all_params <- function(fit) {
-  draws=as.matrix(fit)
-  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
-  eta_draws = draws[,str_detect(colnames(draws), "^eta")]
+spline_get_all_params <- function(bat_seq_draws,eta_draws) {
   all_params = list()
   for (k in 1:7) {
     # print(k)
-    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    bat_seq_draws_k = bat_seq_draws[[k]]
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    all_params_k = cbind(alpha_draws_k, eta_draws_k)
+    all_params_k = cbind(bat_seq_draws_k, eta_draws_k)
     all_params[[length(all_params)+1]] = all_params_k
   }
   all_params
@@ -83,14 +91,12 @@ bsn_post_means_and_ci <- function(all_params) {
                                    pplength = ppupper - pplower)
 }
 
-bsn_detect_avg_tto_effect <- function(fit) {
-  draws=as.matrix(fit)
-  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+spl_detect_avg_tto_effect <- function(bat_seq_draws) {
   tto12_avg_effect_detected = numeric(6)
   tto23_avg_effect_detected = numeric(6)
   for (k in 2:7) {
     # print(k)
-    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))][,1:27]
+    alpha_draws_k = bat_seq_draws[[k]][,1:27]
     a_tto1 = rowMeans(alpha_draws_k[,1:9])
     a_tto2 = rowMeans(alpha_draws_k[,10:18])
     a_tto3 = rowMeans(alpha_draws_k[,19:27])
@@ -103,14 +109,12 @@ bsn_detect_avg_tto_effect <- function(fit) {
        tto23_avg_effect_detected=tto23_avg_effect_detected)
 }
 
-bsn_detect_BL_tto_effect <- function(fit) {
-  draws=as.matrix(fit)
-  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+spl_detect_BL_tto_effect <- function(bat_seq_draws) {
   tto12_BL_effect_detected = numeric(6)
   tto23_BL_effect_detected = numeric(6)
   for (k in 2:7) {
     # print(k)
-    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    alpha_draws_k = bat_seq_draws[[k]][,1:27]
     a_tto12 = alpha_draws_k[,10] - alpha_draws_k[,9]
     a_tto23 = alpha_draws_k[,19] - alpha_draws_k[,18]
     a21lower = quantile(a_tto12,.025)
@@ -157,7 +161,7 @@ tto3_BL_detected = matrix(nrow=NSIM,ncol=6)
 
 test_rows = which(folds == 1)
 for (i in 1:NSIM) {
-  ii = i + 0
+  ii = i + 100
   print(paste0("i = ",ii))
 
   # posterior samples & y vector
@@ -168,11 +172,12 @@ for (i in 1:NSIM) {
   ### test data matrices
   X_test = X[test_rows,]
   S_test = S[test_rows,]
+  SPL_test = SPL[test_rows,]
   y_test = y[test_rows,]
   n_test = nrow(X_test)
   
   ### posterior probabilities for each outcome
-  probs = bsn_fit_to_posterior_probs(S_test,X_test,fit)
+  probs = spline_fit_to_posterior_probs(SPL_test,X_test,fit)
   # probs[[1]][1:1000]
   
   ### cross entropy loss
@@ -183,8 +188,12 @@ for (i in 1:NSIM) {
   # as_tibble(y_test) %>% group_by(value) %>% summarise(count=n()) %>% ungroup() %>% mutate(prop = count/sum(count))
   # c(mean(probs[[1]]),mean(probs[[2]]), mean(probs[[3]]), mean(probs[[4]]), mean(probs[[5]]), mean(probs[[6]]), mean(probs[[7]]))
   
+  ### bat_seq_draws and eta_draws
+  bat_seq_draws = get_bat_seq_draws(draws)
+  eta_draws = draws[,str_detect(colnames(draws), "^eta")]
+    
   ### posterior means & CI's for all parameters
-  all_params = bsn_get_all_params(fit)
+  all_params = spline_get_all_params(bat_seq_draws,eta_draws) 
   pp_df = bsn_post_means_and_ci(all_params)
   
   ### which params are covered
@@ -199,12 +208,12 @@ for (i in 1:NSIM) {
   avg_length_ci_tto_params[i] = mean((pp_df %>% filter(k!=1) %>% filter(var %in% tto_params))$pplength)
 
   ## for each category, was a 2TTO & 3TTO avg. effect detected
-  detect_tto_avg_effect = bsn_detect_avg_tto_effect(fit)
+  detect_tto_avg_effect = spl_detect_avg_tto_effect(bat_seq_draws)
   tto2_avg_detected[i,] = detect_tto_avg_effect[[1]]
   tto3_avg_detected[i,] = detect_tto_avg_effect[[2]]
   
   ## for each category, was a 2TTO & 3TTO batter-learning effect detected
-  detect_tto_BL_effect = bsn_detect_BL_tto_effect(fit)
+  detect_tto_BL_effect = spl_detect_BL_tto_effect(bat_seq_draws)
   tto2_BL_detected[i,] = detect_tto_BL_effect[[1]]
   tto3_BL_detected[i,] = detect_tto_BL_effect[[2]]
 }

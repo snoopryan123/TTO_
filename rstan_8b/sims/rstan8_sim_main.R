@@ -13,6 +13,7 @@ source("../rstan8_main.R")
 N = dim(X)[1]
 P = dim(X)[2]
 p_s = dim(S)[2] 
+p_spl = dim(SPL)[2]
 p_u = dim(U)[2] 
 p_x = dim(X)[2] 
 p_o = dim(O)[2] 
