@@ -14,4 +14,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript --vanilla rstan8-2.R
+Rscript --vanilla rstan8-4.R

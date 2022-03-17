@@ -58,6 +58,9 @@ SPL = S %*% bbb ### splined data matrix
 # UBI data matrices 
 U <- as.matrix(BATTER_IDX_dummies)
 O <- as.matrix(ORDER_CT_dummies)
+# CUBIC WITH SHIFTS data matrices
+bbb2 = outer(1:27, seq(0, 3), `^`)
+S_cws = S %*% bbb2
 ### X is loaded in another file
 y_og <- D$EVENT_WOBA_19
 categories = sort(unique(y_og))
@@ -106,6 +109,8 @@ fit_model_bsn <- function(fold_num=NA) {
   fit
 }
 
+########### SPLINE MODEL ###########
+
 fit_model_spline <- function(fold_num=NA) {
   # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
   train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
@@ -148,6 +153,34 @@ fit_model_ubi <- function(fold_num=NA) {
   y_train = y[train_rows,]
   X_train = X[train_rows,]
   U_train = U[train_rows,]
+  O_train = O[train_rows,]
+  data_train <- list(
+    y=y_train,X=X_train,U=U_train,O=O_train,
+    n=nrow(X_train),p_x=ncol(X_train),p_u=ncol(U_train),p_o=ncol(O_train),K=num_categories
+  )
+  # Train the models
+  NUM_ITERS_IN_CHAIN = NUM_ITS
+  seed = 12345
+  set.seed(seed)
+  fit <- sampling(model_ubi,
+                  data = data_train,
+                  iter = NUM_ITERS_IN_CHAIN,
+                  pars=c("linpred","beta_raw","gamma_raw","eta_raw","gamma_wo_g1"), include=FALSE,
+                  chains = cores, #1 #cores, 
+                  cores = cores, # HPCC
+                  seed = seed)
+  fit
+}
+
+########### CUBIC WITH SHIFTS MODEL ###########
+
+fit_model_cubic_w_shifts <- function(fold_num=NA) {
+  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
+  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
+  #train_rows = which(folds != fold_num)
+  y_train = y[train_rows,]
+  X_train = X[train_rows,]
+  U_train = S_cws[train_rows,] ### this is where fit_model_cubic_w_shifts differs from fit_model_ubi
   O_train = O[train_rows,]
   data_train <- list(
     y=y_train,X=X_train,U=U_train,O=O_train,
