@@ -4,11 +4,11 @@ output_folder = './job_output/'
 ### load data
 input_file = "./../data/TTO_dataset_510.csv"  
 D <- read_csv(input_file) %>% filter(!PIT_IS_BAT) # %>% drop_na() 
-D <- D %>% filter(YEAR == 2019) %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1)
+D <- D %>% filter(2010 <= YEAR & YEAR <= 2019) %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1)
 D <- D %>% filter(ORDER_CT <= 3) # keep only 1TTO, 2TTO, 3TTO
 logit <- function(p) { log(p/(1-p)) }
 X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan8-4.R"
+OUTPUT_FILE = "rstan8-5.R"
 
 ### rstan
 source("rstan8_main.R")
@@ -24,32 +24,6 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
 
 
-###
-# dd=3
-# time_varying_0 = outer(D$BATTER_SEQ_NUM, seq(0, dd), `^`)
-# # time_varying_0 = S
-# colnames(time_varying_0) = paste0("alpha_",0:(ncol(time_varying_0)-1))
-# AA = as.data.frame(cbind(y, time_varying_0, O[,2:3], X))
-# # AA = as.data.frame(cbind(y, time_varying_0, X))
-# colnames(AA)[1] = "y"
-# AA$y = as.factor(AA$y)
-# 
-# model <- nnet::multinom(y ~ . + 0, data = AA)
-# # coefficients(model)
-# 
-# time_varying_0_test = outer(1:27, seq(0, dd), `^`)
-# # time_varying_0_test = diag(1,nrow=27)
-# oc_test = cbind(c(rep(0,9), rep(1,9), rep(0,9)),  c(rep(0,9), rep(0,9), rep(1,9)))
-# X__test = t(matrix(c(logit(0.3),logit(0.3),1,1), nrow=4, ncol=27))
-# AA_test = cbind(time_varying_0_test, oc_test, X__test)
-# # AA_test = cbind(time_varying_0_test, X__test)
-# betasss = coefficients(model)
-# linpred = AA_test %*% t(betasss)
-# pred0 = exp(linpred)
-# pred0 = cbind(1, pred0)
-# pred = pred0 / apply(pred0, MARGIN=1, FUN=sum)
-# xwoba_test = pred %*% matrix(categories)
-# plot(xwoba_test)
 
 ###########################
 ### CROSS ENTROPY LOSS ####

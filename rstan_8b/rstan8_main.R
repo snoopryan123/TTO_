@@ -45,6 +45,11 @@ names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
 # categorical dummies for ORDER_CT
 ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
+# categorical dummies for YEAR
+YEAR_dummies <- D %>% modelr::model_matrix(~ factor(YEAR) + 0) 
+names(YEAR_dummies) <- change_factor_names(names(YEAR_dummies))
+# ### sum(YEAR_dummies$YEAR2019) 
+YEAR_dummies$YEAR2019 = 0
 # BSN data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
 # SPLINE data matrices
@@ -61,6 +66,8 @@ O <- as.matrix(ORDER_CT_dummies)
 # CUBIC WITH SHIFTS data matrices
 bbb2 = outer(1:27, seq(0, 3), `^`)
 S_cws = S %*% bbb2
+### Fixed Effect for Year
+YR = as.matrix(YEAR_dummies)
 ### X is loaded in another file
 y_og <- D$EVENT_WOBA_19
 categories = sort(unique(y_og))
