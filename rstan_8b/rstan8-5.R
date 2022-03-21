@@ -1,5 +1,6 @@
 library(tidyverse)
 output_folder = './job_output/'
+YEAR_EFFECTS = TRUE
 
 ### load data
 input_file = "./../data/TTO_dataset_510.csv"  
@@ -9,6 +10,7 @@ D <- D %>% filter(ORDER_CT <= 3) # keep only 1TTO, 2TTO, 3TTO
 logit <- function(p) { log(p/(1-p)) }
 X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND)) 
 OUTPUT_FILE = "rstan8-5.R"
+
 
 ### rstan
 source("rstan8_main.R")

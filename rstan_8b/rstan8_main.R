@@ -46,10 +46,14 @@ names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
 ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 # categorical dummies for YEAR
-YEAR_dummies <- D %>% modelr::model_matrix(~ factor(YEAR) + 0) 
-names(YEAR_dummies) <- change_factor_names(names(YEAR_dummies))
-# ### sum(YEAR_dummies$YEAR2019) 
-YEAR_dummies_woLastCol = YEAR_dummies[,1:(ncol(YEAR_dummies)-1)]
+if (exists("YEAR_EFFECTS")) { 
+  if (YEAR_EFFECTS) {
+    YEAR_dummies <- D %>% modelr::model_matrix(~ factor(YEAR) + 0) 
+    names(YEAR_dummies) <- change_factor_names(names(YEAR_dummies))
+    # ### sum(YEAR_dummies$YEAR2019) 
+    YEAR_dummies_woLastCol = YEAR_dummies[,1:(ncol(YEAR_dummies)-1)]
+  }
+}
 # BSN data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
 # SPLINE data matrices
