@@ -52,6 +52,9 @@ if (exists("YEAR_EFFECTS")) {
     names(YEAR_dummies) <- change_factor_names(names(YEAR_dummies))
     # ### sum(YEAR_dummies$YEAR2019) 
     YEAR_dummies_woLastCol = YEAR_dummies[,1:(ncol(YEAR_dummies)-1)]
+    ### Fixed Effect for Year
+    YR = as.matrix(YEAR_dummies_woLastCol)
+    X_yr = cbind(X, YR)
   }
 }
 # BSN data matrices 
@@ -70,9 +73,6 @@ O <- as.matrix(ORDER_CT_dummies)
 # CUBIC WITH SHIFTS data matrices
 bbb2 = outer(1:27, seq(0, 3), `^`)
 S_cws = S %*% bbb2
-### Fixed Effect for Year
-YR = as.matrix(YEAR_dummies_woLastCol)
-X_yr = cbind(X, YR)
 ### X is loaded in another file
 y_og <- D$EVENT_WOBA_19
 categories = sort(unique(y_og))
