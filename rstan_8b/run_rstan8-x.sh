@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan8-x2.R
+#$ -N rstan8-5.R
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -14,4 +14,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript --vanilla rstan8-4.R
+Rscript --vanilla rstan8-5.R

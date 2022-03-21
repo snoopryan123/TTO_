@@ -12,7 +12,7 @@ OUTPUT_FILE = "rstan8-5.R"
 
 ### rstan
 source("rstan8_main.R")
-fit = fit_model_cubic_w_shifts(NA) 
+fit = fit_model_spline_yr(NA)
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
 ### plot

@@ -6,8 +6,9 @@ rstan8-x
 8-2	UBI, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (BQ,PQ)
 8-3	cubic spline with discontinuities at end of each TTO
 8-4	one cubic, with shifts at each TTO
-8-5	one cubic, with shifts at each TTO, with fixed effects for each year
+8-5	spline, with discontinuities at end of each TTO, with fixed effects for each year
 
+###8-6	one cubic, with shifts at each TTO, with fixed effects for each year
 
 
 8-10:18 years 2010-2018 spline model

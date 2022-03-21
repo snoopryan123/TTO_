@@ -20,7 +20,7 @@ rstan_options(auto_write = TRUE)
 ####### uncomment these if working on HPCC ##########
 cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
-NUM_ITS = 2500 #1500 #5000
+NUM_ITS = 1500 #2500 #1500 #5000
 #####################################################
 
 #####################################
@@ -49,7 +49,7 @@ names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 YEAR_dummies <- D %>% modelr::model_matrix(~ factor(YEAR) + 0) 
 names(YEAR_dummies) <- change_factor_names(names(YEAR_dummies))
 # ### sum(YEAR_dummies$YEAR2019) 
-YEAR_dummies$YEAR2019 = 0
+YEAR_dummies_woLastCol = YEAR_dummies[,1:(ncol(YEAR_dummies)-1)]
 # BSN data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
 # SPLINE data matrices
@@ -67,7 +67,8 @@ O <- as.matrix(ORDER_CT_dummies)
 bbb2 = outer(1:27, seq(0, 3), `^`)
 S_cws = S %*% bbb2
 ### Fixed Effect for Year
-YR = as.matrix(YEAR_dummies)
+YR = as.matrix(YEAR_dummies_woLastCol)
+X_yr = cbind(X, YR)
 ### X is loaded in another file
 y_og <- D$EVENT_WOBA_19
 categories = sort(unique(y_og))
@@ -124,6 +125,33 @@ fit_model_spline <- function(fold_num=NA) {
   #train_rows = which(folds != fold_num)
   y_train = y[train_rows,]
   X_train = X[train_rows,]
+  S_train = SPL[train_rows,] ### this is where fit_model_spline differs from fit_model_bsn
+  data_train <- list(
+    y=y_train,S=S_train,X=X_train,
+    n=nrow(X_train),p_x=ncol(X_train),p_s=ncol(S_train),K=num_categories
+  )
+  # Train the models
+  seed = 12345
+  set.seed(seed)
+  NUM_ITERS_IN_CHAIN = NUM_ITS
+  fit <- sampling(model_bsn,
+                  data = data_train,
+                  iter = NUM_ITERS_IN_CHAIN,
+                  pars=c("linpred","alpha_raw","eta_raw"), include=FALSE,
+                  chains = cores, #1 #cores, 
+                  cores = cores, # HPCC
+                  seed = seed)
+  fit
+}
+
+########### SPLINE MODEL with YR fixed effects ###########
+
+fit_model_spline_yr <- function(fold_num=NA) {
+  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
+  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
+  #train_rows = which(folds != fold_num)
+  y_train = y[train_rows,]
+  X_train = X_yr[train_rows,]
   S_train = SPL[train_rows,] ### this is where fit_model_spline differs from fit_model_bsn
   data_train <- list(
     y=y_train,S=S_train,X=X_train,
