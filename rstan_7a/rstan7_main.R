@@ -13,7 +13,7 @@ cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
 # options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
-NUM_ITS = 2500 #FIXME #1500 #3000 #10
+NUM_ITS = 5000 #FIXME #1500 #3000 #10
 
 #####################################
 ########### OBSERVED DATA ###########

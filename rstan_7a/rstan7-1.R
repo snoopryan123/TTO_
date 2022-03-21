@@ -7,7 +7,7 @@ D <- read_csv(input_file)
 ##D <- D %>% drop_na() 
 #FIXME 
 D <- D %>% filter(YEAR == 2019) 
-X <- as.matrix(D %>% select(BQ, PQ, HAND_MATCH, BAT_HOME_IND)) 
+X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND)) 
 OUTPUT_FILE = "rstan7-1.R"
 
 ### rstan
