@@ -6,13 +6,22 @@ library(tidyverse)
 library(rstan)
 library(ggthemes)
 library(latex2exp)
+library(splines)
 theme_set(theme_bw())
+theme_update(text = element_text(size=18))
 theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
-cores = strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
-options(mc.cores = cores) ### for HPCC
-# options(mc.cores = parallel::detectCores()) # use this on my computer
 rstan_options(auto_write = TRUE)
+##### uncomment these if working on my computer #####
+# cores = 1
+# NUM_ITS = 10
+# #### options(mc.cores = parallel::detectCores())
+#####################################################
+####### uncomment these if working on HPCC ##########
+cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+options(mc.cores = cores) ### for HPCC
+NUM_ITS = 1500 #2500 #1500 #5000
+#####################################################
 
 #####################################
 ########### OBSERVED DATA ###########
@@ -36,10 +45,22 @@ names(BATTER_IDX_dummies) <- change_factor_names(names(BATTER_IDX_dummies))
 # categorical dummies for ORDER_CT
 ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT) + 0) 
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
-# Observed data matrices 
+# BSN data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
+# SPLINE data matrices
+knots = c(rep(9.5,4), rep(18.5,4), rep(27.5,4))  
+aa = unique(D$BATTER_SEQ_NUM) 
+BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
+colnames(BB_) = paste0("B",1:ncol(BB_))
+BB = as_tibble(BB_)
+bbb = as.matrix(BB)
+SPL = S %*% bbb ### splined data matrix
+# UBI data matrices 
 U <- as.matrix(BATTER_IDX_dummies)
 O <- as.matrix(ORDER_CT_dummies)
+# CUBIC WITH SHIFTS data matrices
+bbb2 = outer(1:27, seq(0, 3), `^`)
+S_cws = S %*% bbb2
 ### X is loaded in another file
 y <- matrix(D$std_EVENT_WOBA_19, ncol=1)
 # 10 Fold CV folds
@@ -68,7 +89,33 @@ fit_model_bsn <- function(fold_num=NA) {
   # Train the models
   seed = 12345
   set.seed(seed)
-  NUM_ITERS_IN_CHAIN = 1500 #FIXME #10 
+  NUM_ITERS_IN_CHAIN = NUM_ITS
+  fit <- sampling(model_bsn,
+                  data = data_train,
+                  iter = NUM_ITERS_IN_CHAIN,
+                  chains = cores, #1 #cores, 
+                  cores = cores, # HPCC
+                  seed = seed)
+  fit
+}
+
+########### SPLINE MODEL ###########
+
+fit_model_spline <- function(fold_num=NA) {
+  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
+  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
+  #train_rows = which(folds != fold_num)
+  y_train = y[train_rows,]
+  X_train = X[train_rows,]
+  S_train = SPL[train_rows,] ### this is where fit_model_spline differs from fit_model_bsn
+  data_train <- list(
+    y=y_train,S=S_train,X=X_train,
+    n=nrow(X_train),p_x=ncol(X_train),p_s=ncol(S_train)
+  )
+  # Train the models
+  seed = 12345
+  set.seed(seed)
+  NUM_ITERS_IN_CHAIN = NUM_ITS
   fit <- sampling(model_bsn,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
@@ -98,7 +145,32 @@ fit_model_ubi <- function(fold_num=NA) {
     n=nrow(X_train),p_x=ncol(X_train),p_u=ncol(U_train),p_o=ncol(O_train)
   )
   # Train the models
-  NUM_ITERS_IN_CHAIN = 1500
+  NUM_ITERS_IN_CHAIN = NUM_ITS
+  seed = 12345
+  set.seed(seed)
+  fit <- sampling(model_ubi,
+                  data = data_train,
+                  iter = NUM_ITERS_IN_CHAIN,
+                  chains = cores, #1 #cores, 
+                  cores = cores, # HPCC
+                  seed = seed)
+  fit
+}
+
+fit_model_cubic_w_shifts <- function(fold_num=NA) {
+  # training data - exclude FOLD_NUM, unless FOLD_NUM is NA 
+  train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
+  #train_rows = which(folds != fold_num)
+  y_train = y[train_rows,]
+  X_train = X[train_rows,]
+  U_train = S_cws[train_rows,] ### this is where fit_model_cubic_w_shifts differs from fit_model_ubi
+  O_train = O[train_rows,]
+  data_train <- list(
+    y=y_train,X=X_train,U=U_train,O=O_train,
+    n=nrow(X_train),p_x=ncol(X_train),p_u=ncol(U_train),p_o=ncol(O_train)
+  )
+  # Train the models
+  NUM_ITERS_IN_CHAIN = NUM_ITS
   seed = 12345
   set.seed(seed)
   fit <- sampling(model_ubi,
@@ -120,6 +192,24 @@ sd_y = sd(D$EVENT_WOBA_19)
 
 transform_back <- function(x) {
   2*sd_y*x # +mu_y
+}
+
+cubic_w_shifts_to_bat_seq_draws <- function(fit) {
+  draws = as.matrix(fit)
+  beta_draws = draws[,str_detect(colnames(draws), "^beta")]
+  gamma_draws = draws[,str_detect(colnames(draws), "^gamma")]
+  gg = cbind(matrix(gamma_draws[,1], nrow(gamma_draws), 9),
+             matrix(gamma_draws[,2], nrow(gamma_draws), 9),
+             matrix(gamma_draws[,3], nrow(gamma_draws), 9))
+  bat_seq_draws = beta_draws %*% t(bbb2) + gg 
+  bat_seq_draws
+}
+
+spl_to_bat_seq_draws <- function(fit) {
+  draws = as.matrix(fit)
+  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+  bat_seq_draws = alpha_draws %*% t(bbb)
+  bat_seq_draws
 }
 
 plot_bsn0 <- function(fit) {
@@ -283,6 +373,50 @@ plot_bsn_spline <- function(fit) {
                        limits = c(0,28),
                        breaks = c(0,5,10,15,20,25)) +
     scale_y_continuous(name=TeX("Posterior change in wOBA"), # "Posterior change in wOBA" "$\\alpha_k$"
+                       #limits = c(-.02, .03),
+                       breaks = seq(-.1, .1, .005)
+    ) 
+  production_plot
+}
+
+plot_bat_seq_draws <- function(bat_seq_draws) {
+  
+  # compute mean and 2.5%, 97.5% quantiles of posterior samples
+  p = 27 #dim(BATTER_SEQ_dummies)[2]
+  lower <- numeric(p)
+  avg <- numeric(p)
+  upper <- numeric(p)
+  for (i in 1:p) {
+    x = transform_back(bat_seq_draws[,i])
+    lower[i] = quantile(x,.025)
+    avg[i] = mean(x)
+    upper[i] = quantile(x,.975)
+  }
+  
+  # plot
+  A4 = data.frame(
+    lower = lower,
+    avg = avg,
+    upper= upper,
+    bn = 1:p
+  )
+  
+  # PRODUCTION PLOT
+  production_plot = A4 %>% 
+    ggplot(aes(x=bn, y=avg)) +
+    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
+    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
+    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
+    geom_vline(aes(xintercept = 9.5), size=1.2) +
+    geom_vline(aes(xintercept = 18.5), size=1.2) +
+    labs(title = TeX("Posterior distribution of $\\alpha$")) + 
+    theme(legend.position="none") +
+    scale_x_continuous(name=TeX("Batter sequence number $k$"), 
+                       limits = c(0,28),
+                       breaks = c(0,5,10,15,20,25)) +
+    scale_y_continuous(name=TeX("$\\alpha_k$"), 
                        #limits = c(-.02, .03),
                        breaks = seq(-.1, .1, .005)
     ) 

@@ -56,6 +56,10 @@ rstan5-x
 5-48	UBI model (*d), 2018 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
 
 
+5-50 	one cubic, allowing for shifts/discontinuities at the end of each TTO
+5-51 	cubic spline, allowing for discontinuities at the end of each TTO
+
+
 
 
 
