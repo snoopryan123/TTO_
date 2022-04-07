@@ -8,23 +8,13 @@ theme_update(text = element_text(size=18))
 theme_update(plot.title = element_text(hjust = 0.5))
 output_folder = './job_output/'
 
-###############
-### RESULTS ###
-###############
-
-### posterior samples of SPLINE model
-# fit <- readRDS("job_output/fit_rstan8-3.R.rds")
-# fit <- readRDS("job_output/fit_rstan8-3_noPitAsBat.R.rds")
-year = 2018
-fit <- readRDS(paste0("job_output/fit_rstan8-",year-2000,".R.rds"))
-draws <- as.matrix(fit)
-
 ### load data
-input_file = "../data/TTO_dataset_510.csv"  
-D <- read_csv(input_file) #%>% drop_na() 
-D <- D %>% filter(YEAR == year) %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1 ) %>% filter(ORDER_CT <= 3)
+input_file = "./../data/TTO_dataset_510.csv"  
+D <- read_csv(input_file) %>% filter(!PIT_IS_BAT) # %>% drop_na() 
+D <- D %>% filter(2010 <= YEAR & YEAR <= 2019) %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1)
+D <- D %>% filter(ORDER_CT <= 3) # keep only 1TTO, 2TTO, 3TTO
 logit <- function(p) { log(p/(1-p)) }
-X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND)) 
+X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND))
 source("rstan8_main.R")
 
 #########################
@@ -65,154 +55,6 @@ spline_fit_to_posterior_probs <- function(SPL_test,X_test,fit) {
   ## dim(probs[[7]])
   probs
 }
-
-get_eta_draws <- function(fit) {
-  draws=as.matrix(fit)
-  eta_draws = draws[,str_detect(colnames(draws), "^eta")]
-  all_params = list()
-  for (k in 1:7) {
-    # print(k)
-    eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    all_params[[length(all_params)+1]] = eta_draws_k
-  }
-  all_params
-}
-
-
-###########################################################################
-
-prob_ktx <- function(k,t,x,bat_seq_draws,eta_draws) {
-  # batter sequence number t \in {1,...,27}
-  # confounder vector x^T = (logit(BQ), logit(PQ), hand, home)
-  # return posterior distribution of P(y = k| t, x)
-  # bat_seq_draws === alpha_{tk}
-  log_numerator = bat_seq_draws[[k]][,t] + eta_draws[[k]] %*% matrix(x)
-  denominator = 1
-  for (j in 2:7) {
-    denominator = denominator + exp(bat_seq_draws[[j]][,t] + eta_draws[[j]] %*% matrix(x))
-  }
-  log_p = log_numerator - log(denominator)
-  p = exp(log_p)
-  p
-}
-
-get_prob_tibble <- function(x, bat_seq_draws, eta_draws) {
-  all_prob_ktx = tibble()
-  for (t in 1:27) {
-    print(t)
-    for (k in 2:7) {
-      pktx = as.numeric(prob_ktx(k,t,x, bat_seq_draws,eta_draws))
-      tib_pktx = tibble(p = pktx, k=k, t=t)
-      all_prob_ktx = bind_rows(all_prob_ktx, tib_pktx)
-    }
-  }
-  all_prob_ktx
-}
-
-########################################
-### RESULTS on the PROBABILITY SCALE ###
-########################################
-
-### batter sequence too draws 1,...,27
-bat_seq_draws = get_bat_seq_draws(draws) #bat_seq_draws[[7]][1:10,1:10]
-eta_draws = get_eta_draws(fit)
-
-### confounder vector examples
-mean(D$BQ)
-mean(D$PQ)
-quantile(D$BQ,.95)
-quantile(D$PQ,.05)
-quantile(D$BQ,.05)
-quantile(D$PQ,.95)
-# x1 = c(logit(mean(D$BQ)), logit(mean(D$PQ)), 1, 0) # x1
-# x1 = c(logit(quantile(D$BQ,.95)), logit(quantile(D$PQ,.05)), 1, 1) # x2
-x1 = c(logit(quantile(D$BQ,.05)), logit(quantile(D$PQ,.95)), 0, 0) # x3
-probs1 = get_prob_tibble(x1, bat_seq_draws, eta_draws)
-probs1
-
-plot_category_prob_hists <- function(p_diff_df) {
-  p_diff_df %>% ggplot() +
-    facet_wrap(~k) +
-    geom_histogram(aes(x=p, y=..density..), fill="black", bins=50) +
-    geom_vline(aes(xintercept=0), color="dodgerblue2") +
-    # scale_x_continuous(name="probability", breaks=seq(-0.03,0.03,by=0.01)) +
-    scale_x_continuous(name="probability") +
-    theme(panel.spacing = unit(2, "lines")) +
-    theme(axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) 
-}
-
-get_avg_tto_diff_plot <- function(tto1, tto2, probs) {
-  ts1 = 1:9 + (tto1-1)*9
-  ts2 = 1:9 + (tto2-1)*9
-  p_tto1 = probs %>% filter(t %in% ts1) 
-  p_tto2 = probs %>% filter(t %in% ts2) 
-  
-  p_avg_tto1 = numeric( nrow(p_tto1)/9 )
-  p_avg_tto2 = numeric( nrow(p_tto1)/9 )
-  for (i in 1:length(ts1)) {
-    t1 = ts1[i]
-    t2 = ts2[i]
-    p_avg_tto1 = p_avg_tto1 + (p_tto1 %>% filter(t == t1))$p
-    p_avg_tto2 = p_avg_tto2 + (p_tto2 %>% filter(t == t2))$p
-  } 
-  p_avg_tto1 = p_avg_tto1/9
-  p_avg_tto2 = p_avg_tto2/9
-  p_diff = p_avg_tto2 - p_avg_tto1
-  p_diff_tib = tibble(p=p_diff, k=(p_tto1 %>% filter(t == ts1[1]))$k)
-  p_diff_tib$k = factor(p_diff_tib$k, labels = category_strings[2:7])
-  plot_category_prob_hists(p_diff_tib)
-}
-
-get_diff_plot_2_batters <- function(t1, t2, probs) {
-  p_t1 = probs %>% filter(t == t1) 
-  p_t2 = probs %>% filter(t == t2) 
-  p_diff = tibble(p = p_t2$p - p_t1$p, k = p_t1$k)
-  p_diff$k = factor(p_diff$k, labels = category_strings[2:7])
-  plot_category_prob_hists(p_diff)
-}
-
-get_diff_plot_2_batters(1,10,probs1)
-
-t_pairs = tibble(
-  t1 = c(1, 2, 3, 4, 5, 10,11,12,13,9, 18),
-  t2 = c(10,11,12,13,14,19,20,21,22,10,19)
-)
-
-save_all_t1t2_plots <- function(probs) {
-  for (i in 1:nrow(t_pairs)) {
-    t1 = t_pairs[i,]$t1
-    t2 = t_pairs[i,]$t2
-    plot_t1t2 = get_diff_plot_2_batters(t1,t2,probs)
-    ggsave(paste0("plots/","plot_pdiff_",t1,"_",t2,".png"), plot_t1t2)
-  }
-}
-
-{
-  save_all_t1t2_plots(probs1)
-  
-  ptto12 = get_avg_tto_diff_plot(1, 2, probs1)
-  ptto23 = get_avg_tto_diff_plot(2, 3, probs1)
-  
-  # ptto12
-  # ptto23
-  
-  ggsave("plots/tto_diff_12.png", ptto12)
-  ggsave("plots/tto_diff_32.png", ptto23)
-}
-
-
-###########################################################################
-###########################################################################
-
-
-
-
-
-
-
-
-
 
 ###########################################################################
 
@@ -320,9 +162,10 @@ plot_hists_by_category <- function(df, xTitle) {
 ###########################################################################
 
 spline_xWoba_post <- function() {
-  S1 = diag(36)
+  S1 = diag(27)
   SPL1 = S1 %*% bbb
-  X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
+  X0 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=27, ncol=4, byrow=TRUE)
+  X1 = cbind(X0, matrix(0,nrow=27,ncol=9))
   probs1 = spline_fit_to_posterior_probs(SPL1,X1,fit)
   # probs1[[1]][1:10,1:10]
   xw = matrix(0, ncol = dim(probs1[[1]])[1], nrow = dim(probs1[[1]])[2])
@@ -466,9 +309,10 @@ plot_prob_trend_by_k <- function(dfk) {
 }
 
 get_prob_trend_df <- function(fit) {
-  S1 = diag(36)
+  S1 = diag(27)
   SPL1 = S1 %*% bbb
-  X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
+  X0 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=27, ncol=4, byrow=TRUE)
+  X1 = cbind(X0, matrix(0,nrow=27,ncol=9))
   probs1 = spline_fit_to_posterior_probs(SPL1,X1,fit)
   # probs1[[1]][1:10,1:10]
   pp1_df = tibble()
@@ -478,11 +322,32 @@ get_prob_trend_df <- function(fit) {
     pmeans_k = colMeans(probs1_k)
     pupper_k = apply(probs1_k, 2, function(x) quantile(x,.975))
     # p_names = c(paste0("alpha",1:(dim(S)[2])),paste0("eta",1:(dim(X)[2])))
-    pp1_df_k = tibble(k=k,plower=plower_k,pmean=pmeans_k,pupper=pupper_k,bn=1:36)
+    pp1_df_k = tibble(k=k,plower=plower_k,pmean=pmeans_k,pupper=pupper_k,bn=1:27)
     pp1_df = bind_rows(pp1_df, pp1_df_k)
   }
   pp1_df %>% arrange(-k)
 }
+
+###############
+### RESULTS ###
+###############
+
+### posterior samples of SPLINE model
+fit <- readRDS("job_output/fit_rstan8-5.R.rds")
+draws <- as.matrix(fit)
+
+### batter sequence draws 1,...,27 for each category
+bat_seq_draws = get_bat_seq_draws(draws) 
+#bat_seq_draws[[7]][1:10,1:10]
+  
+### posterior probabilities for each outcome
+# probs = spline_fit_to_posterior_probs(SPL,X,fit)
+# # probs[[1]][1:10,1:10]
+# 
+### posterior means & CI's for all parameters
+# all_params = bsn_get_all_params(fit)
+# pp_df = bsn_post_means_and_ci(all_params)
+# probs_df = bsn_get_probs_means_and_ci(probs)
 
 ###############
 ### PLOTS ###
@@ -523,19 +388,22 @@ pb23 = plot_hists_by_category(b23_df, pb23t)
 pb23
 # ggsave(paste0("plots_spline/plot_BL_3TTOeffect_",year,".png"), pb23)
 
+
+
+
 ### plot trend in expected wOBA over the course of a game
 xw = spline_xWoba_post()
 A = get_tto_means_and_ci(xw)
 pxw = plot_xWOBA_over_time(A)
 pxw
-# ggsave(paste0("plots_spline/plot_xwoba_",year,".png"), pxw)
+# ggsave("plots_spline/plot_xwoba_yr_fixed_eff.png", pxw)
 get_tto_draws_xw = get_tto_draws(xw) 
 # A$avg <- factor(A$avg, levels = A$avg) ## make A$avg an ordered factor
 AA = get_tto_draws_xw[[1]]
 AAA = get_tto_draws_xw[[2]]
 pxwb = plot_xWOBA_over_time_bayes(A,AAA)
 pxwb
-# ggsave(paste0("plots_spline/plot_xwoba_bayes_",year,".png"), pxwb)
+# ggsave("plots_spline/plot_xwoba_bayes_yr_fixed_eff.png", pxwb)
 
 ### plot trend in expected wOBA **SPLINE** over the course of a game
 # # repeating a knot 4 times means the spline itself is discontinuous at that knot

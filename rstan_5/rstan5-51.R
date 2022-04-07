@@ -7,7 +7,7 @@ D <- read_csv(input_file)
 D <- D %>% filter(ORDER_CT <= 3) # keep only 1TTO, 2TTO, 3TTO
 D <- D %>% filter(YEAR == 2019) 
 X <- as.matrix(D %>% select(std_BQ, std_PQ, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan5-50.R"
+OUTPUT_FILE = "rstan5-51.R"
 
 ### rstan
 source("rstan5_main.R")

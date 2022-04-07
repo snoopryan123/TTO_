@@ -117,99 +117,30 @@ get_prob_tibble <- function(x, bat_seq_draws, eta_draws) {
 bat_seq_draws = get_bat_seq_draws(draws) #bat_seq_draws[[7]][1:10,1:10]
 eta_draws = get_eta_draws(fit)
 
-### confounder vector examples
+### confounder vector example 1
 mean(D$BQ)
 mean(D$PQ)
-quantile(D$BQ,.95)
-quantile(D$PQ,.05)
-quantile(D$BQ,.05)
-quantile(D$PQ,.95)
-# x1 = c(logit(mean(D$BQ)), logit(mean(D$PQ)), 1, 0) # x1
-# x1 = c(logit(quantile(D$BQ,.95)), logit(quantile(D$PQ,.05)), 1, 1) # x2
-x1 = c(logit(quantile(D$BQ,.05)), logit(quantile(D$PQ,.95)), 0, 0) # x3
+x1 = c(logit(mean(D$BQ)), logit(mean(D$PQ)), 1, 1)
+
 probs1 = get_prob_tibble(x1, bat_seq_draws, eta_draws)
 probs1
 
-plot_category_prob_hists <- function(p_diff_df) {
-  p_diff_df %>% ggplot() +
-    facet_wrap(~k) +
-    geom_histogram(aes(x=p, y=..density..), fill="black", bins=50) +
-    geom_vline(aes(xintercept=0), color="dodgerblue2") +
-    # scale_x_continuous(name="probability", breaks=seq(-0.03,0.03,by=0.01)) +
-    scale_x_continuous(name="probability") +
-    theme(panel.spacing = unit(2, "lines")) +
-    theme(axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) 
-}
 
-get_avg_tto_diff_plot <- function(tto1, tto2, probs) {
-  ts1 = 1:9 + (tto1-1)*9
-  ts2 = 1:9 + (tto2-1)*9
-  p_tto1 = probs %>% filter(t %in% ts1) 
-  p_tto2 = probs %>% filter(t %in% ts2) 
+
+
+
+
+p1_t1 = probs1 %>% filter(t == 1) 
+p1_t10 = probs1 %>% filter(t == 10) 
+p1_diff = tibble(p = p1_t10$p - p1_t1$p, k = p1_t1$k)
+
+
+
+p1_diff %>% ggplot() +
+  facet_wrap(~k) +
+  geom_histogram(aes(x=p)) +
+  geom_vline()
   
-  p_avg_tto1 = numeric( nrow(p_tto1)/9 )
-  p_avg_tto2 = numeric( nrow(p_tto1)/9 )
-  for (i in 1:length(ts1)) {
-    t1 = ts1[i]
-    t2 = ts2[i]
-    p_avg_tto1 = p_avg_tto1 + (p_tto1 %>% filter(t == t1))$p
-    p_avg_tto2 = p_avg_tto2 + (p_tto2 %>% filter(t == t2))$p
-  } 
-  p_avg_tto1 = p_avg_tto1/9
-  p_avg_tto2 = p_avg_tto2/9
-  p_diff = p_avg_tto2 - p_avg_tto1
-  p_diff_tib = tibble(p=p_diff, k=(p_tto1 %>% filter(t == ts1[1]))$k)
-  p_diff_tib$k = factor(p_diff_tib$k, labels = category_strings[2:7])
-  plot_category_prob_hists(p_diff_tib)
-}
-
-get_diff_plot_2_batters <- function(t1, t2, probs) {
-  p_t1 = probs %>% filter(t == t1) 
-  p_t2 = probs %>% filter(t == t2) 
-  p_diff = tibble(p = p_t2$p - p_t1$p, k = p_t1$k)
-  p_diff$k = factor(p_diff$k, labels = category_strings[2:7])
-  plot_category_prob_hists(p_diff)
-}
-
-get_diff_plot_2_batters(1,10,probs1)
-
-t_pairs = tibble(
-  t1 = c(1, 2, 3, 4, 5, 10,11,12,13,9, 18),
-  t2 = c(10,11,12,13,14,19,20,21,22,10,19)
-)
-
-save_all_t1t2_plots <- function(probs) {
-  for (i in 1:nrow(t_pairs)) {
-    t1 = t_pairs[i,]$t1
-    t2 = t_pairs[i,]$t2
-    plot_t1t2 = get_diff_plot_2_batters(t1,t2,probs)
-    ggsave(paste0("plots/","plot_pdiff_",t1,"_",t2,".png"), plot_t1t2)
-  }
-}
-
-{
-  save_all_t1t2_plots(probs1)
-  
-  ptto12 = get_avg_tto_diff_plot(1, 2, probs1)
-  ptto23 = get_avg_tto_diff_plot(2, 3, probs1)
-  
-  # ptto12
-  # ptto23
-  
-  ggsave("plots/tto_diff_12.png", ptto12)
-  ggsave("plots/tto_diff_32.png", ptto23)
-}
-
-
-###########################################################################
-###########################################################################
-
-
-
-
-
-
 
 
 

@@ -13,14 +13,14 @@ theme_update(plot.title = element_text(hjust = 0.5))
 if(!interactive()) pdf(NULL)
 rstan_options(auto_write = TRUE)
 ##### uncomment these if working on my computer #####
-# cores = 1
-# NUM_ITS = 10
+cores = 1
+NUM_ITS = 10
 # #### options(mc.cores = parallel::detectCores())
 #####################################################
 ####### uncomment these if working on HPCC ##########
-cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
-options(mc.cores = cores) ### for HPCC
-NUM_ITS = 5000 #2500 #1500 #5000
+# cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
+# options(mc.cores = cores) ### for HPCC
+# NUM_ITS = 5000 #2500 #1500 #5000
 #####################################################
 
 #####################################
@@ -155,7 +155,7 @@ fit_model_spline_yr <- function(fold_num=NA) {
   train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
   #train_rows = which(folds != fold_num)
   y_train = y[train_rows,]
-  X_train = X_yr[train_rows,]
+  X_train = X_yr[train_rows,] ### this is where the YEAR effects come into play
   S_train = SPL[train_rows,] ### this is where fit_model_spline differs from fit_model_bsn
   data_train <- list(
     y=y_train,S=S_train,X=X_train,
