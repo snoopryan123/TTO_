@@ -27,6 +27,47 @@ logit <- function(p) { log(p/(1-p)) }
 X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND)) 
 source("rstan8_main.R")
 
+##########################
+### understanding wOBA ###
+##########################
+
+batters_woba = D %>% group_by(BAT_ID) %>% 
+  summarise(WOBA = unique(WOBA_FINAL_BAT_19)*1000, num_pa=n()) %>%
+  filter(num_pa >= 100)
+batters_woba
+pitchers_woba = D %>% group_by(PIT_ID) %>% 
+  summarise(WOBA = unique(WOBA_FINAL_PIT_19)*1000, num_pa=n()) %>%
+  filter(num_pa >= 100)
+pitchers_woba
+
+sd(batters_woba$WOBA)
+sd(pitchers_woba$WOBA)
+
+quantile(batters_woba$WOBA, c(.05,.5,.95))
+quantile(pitchers_woba$WOBA, c(.05,.5,.95))
+
+
+
+plot_woba_hist <- function(woba_df) {
+  woba_df %>% ggplot() +
+    geom_histogram(aes(x=WOBA), bins=50, fill="black") +
+    geom_vline(aes(xintercept=mean(WOBA)), color="firebrick", size=1) +
+    scale_x_continuous(name="wOBA points", limits=c(200,450))
+}
+
+plot_bat_woba = plot_woba_hist(batters_woba)
+plot_bat_woba
+plot_pit_woba = plot_woba_hist(pitchers_woba)
+plot_pit_woba
+
+ggsave("plots/plot_bat_woba.png", plot_bat_woba, width=6, height=5)
+ggsave("plots/plot_pit_woba.png", plot_pit_woba, width=6, height=5)
+
+
+
+
+
+
 #########################
 ### HELPER FUNCTIONS ####
 #########################
@@ -127,24 +168,32 @@ quantile(D$PQ,.95)
 sd(D$EVENT_WOBA_19)
 
 
-x1 = c(logit(mean(D$BQ)), logit(mean(D$PQ)), 1, 0); subfolder = "x1/";
-# x1 = c(logit(quantile(D$BQ,.95)), logit(quantile(D$PQ,.05)), 1, 1);  subfolder = "x2/";
-# x1 = c(logit(quantile(D$BQ,.05)), logit(quantile(D$PQ,.95)), 0, 0);  subfolder = "x3/";
+x1 = c(logit(median(batters_woba$WOBA)/1000), logit(median(pitchers_woba$WOBA)/1000), 1, 0); subfolder = "x1/";
+# x1 = c(logit(quantile(batters_woba$WOBA,.95)/1000), logit(quantile(pitchers_woba$WOBA,.05)/1000), 1, 0);  subfolder = "x2/";
+# x1 = c(logit(quantile(batters_woba$WOBA,.05)/1000), logit(quantile(pitchers_woba$WOBA,.95)/1000), 1, 0);  subfolder = "x3/";
+# x1 = c(logit(median(batters_woba$WOBA)/1000), logit(median(pitchers_woba$WOBA)/1000), 1, 1);  subfolder = "x4/";
+# x1 = c(logit(median(batters_woba$WOBA)/1000), logit(median(pitchers_woba$WOBA)/1000), 0, 0);  subfolder = "x5/";
 probs1 = get_prob_tibble(x1, bat_seq_draws, eta_draws)
 probs1
 
-plot_category_prob_hists <- function(p_diff_df) {
+plot_category_prob_hists <- function(p_diff_df, l=-0.02, u=0.02) {
+  p_diff_df2 = p_diff_df %>% group_by(k) %>% summarise(mean_p=mean(p))
   p_diff_df %>% ggplot() +
     facet_wrap(~k) +
     geom_histogram(aes(x=p, y=..density..), fill="black", bins=50) +
     geom_vline(aes(xintercept=0), color="dodgerblue2", size=0.5) +
-    geom_vline(aes(xintercept=mean(p)), color="firebrick", size=0.5) +
-    # scale_x_continuous(name="probability", breaks=seq(-0.03,0.03,by=0.01)) +
-    scale_x_continuous(name="probability") +
-    theme(panel.spacing = unit(2, "lines")) +
+    geom_vline(data=p_diff_df2, aes(xintercept=mean_p), color="firebrick", size=0.5) +
+    scale_x_continuous(name="difference in probability", 
+                       breaks=seq(-0.03,0.03,by=0.01), limits=c(l-0.007, u+0.007)) +
+    # scale_x_continuous(name="probability") +
+    theme_update(text = element_text(size=12)) +
+    theme(panel.spacing = unit(.25, "lines")) +
     theme(axis.text.y = element_blank(),
           axis.ticks.y = element_blank()) 
 }
+
+# get_diff_plot_2_batters(5,14,probs1)
+
 
 get_avg_tto_diff_plot <- function(tto1, tto2, probs) {
   ts1 = 1:9 + (tto1-1)*9
@@ -165,7 +214,7 @@ get_avg_tto_diff_plot <- function(tto1, tto2, probs) {
   p_diff = p_avg_tto2 - p_avg_tto1
   p_diff_tib = tibble(p=p_diff, k=(p_tto1 %>% filter(t == ts1[1]))$k)
   p_diff_tib$k = factor(p_diff_tib$k, labels = category_strings[2:7])
-  plot_category_prob_hists(p_diff_tib)
+  plot_category_prob_hists(p_diff_tib, l=-0.01, u=0.01)
 }
 
 get_diff_plot_2_batters <- function(t1, t2, probs) {
@@ -176,7 +225,9 @@ get_diff_plot_2_batters <- function(t1, t2, probs) {
   plot_category_prob_hists(p_diff)
 }
 
-# get_diff_plot_2_batters(1,10,probs1)
+# get_diff_plot_2_batters(5,14,probs1)
+
+
 
 t_pairs = tibble(
   # t1 = c(1, 2, 3, 4, 5, 10,11,12,13,9, 18),
@@ -272,7 +323,7 @@ save_all_t1t2_xwoba_plots <- function(xw) {
     t1 = t_pairs[i,]$t1
     t2 = t_pairs[i,]$t2
     plot_t1t2 = get_xwoba_diff_plot_2_batters(t1,t2,xw)
-    ggsave(paste0("plots/xwoba_scale/",subfolder,"plot_xwoba_diff_",t1,"_",t2,".png"), plot_t1t2, width=8, height=5)
+    ggsave(paste0("plots/xwoba_scale/",subfolder,"plot_xwoba_diff_",t1,"_",t2,".png"), plot_t1t2, width=5, height=4)
   }
 }
 
@@ -286,6 +337,7 @@ plot_xWOBA_over_time <- function(xw) {
     filter(t <= 26) %>%
     ggplot(aes(x=t, y=xWOBA)) +
     geom_errorbar(aes(ymin = xwL2, ymax = xwU2), fill = "black", width = .4) +
+    geom_errorbar(aes(ymin = xwL1, ymax = xwU1), fill = "black", width = .6, size=1.25) +
     geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
     geom_line(aes(y = c(xWOBA[1:9], rep(NA,17))), color="dodgerblue2", size=0.5) +
     geom_line(aes(y = c(rep(NA,9), xWOBA[10:18], rep(NA,8))), color="dodgerblue2", size=0.5) +
@@ -295,7 +347,7 @@ plot_xWOBA_over_time <- function(xw) {
     # geom_line(aes(y = c(rep(NA,18), xWOBA[19:27])), color="dodgerblue2", size=0.5) +
     geom_vline(aes(xintercept = 9.5), size=1.2) +
     geom_vline(aes(xintercept = 18.5), size=1.2) +
-    labs(title = "Trend in Expected wOBA over the Course of a Game") + 
+    # labs(title = "Trend in Expected wOBA over the Course of a Game") + 
     theme(legend.position="none") +
     scale_x_continuous(name=TeX("Batter Sequence Number $t$"), 
                        # limits = c(0,28),
