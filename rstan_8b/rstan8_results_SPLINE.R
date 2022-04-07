@@ -124,9 +124,12 @@ quantile(D$BQ,.95)
 quantile(D$PQ,.05)
 quantile(D$BQ,.05)
 quantile(D$PQ,.95)
-# x1 = c(logit(mean(D$BQ)), logit(mean(D$PQ)), 1, 0) # x1
-# x1 = c(logit(quantile(D$BQ,.95)), logit(quantile(D$PQ,.05)), 1, 1) # x2
-x1 = c(logit(quantile(D$BQ,.05)), logit(quantile(D$PQ,.95)), 0, 0) # x3
+sd(D$EVENT_WOBA_19)
+
+
+x1 = c(logit(mean(D$BQ)), logit(mean(D$PQ)), 1, 0); subfolder = "x1/";
+# x1 = c(logit(quantile(D$BQ,.95)), logit(quantile(D$PQ,.05)), 1, 1);  subfolder = "x2/";
+# x1 = c(logit(quantile(D$BQ,.05)), logit(quantile(D$PQ,.95)), 0, 0);  subfolder = "x3/";
 probs1 = get_prob_tibble(x1, bat_seq_draws, eta_draws)
 probs1
 
@@ -134,7 +137,8 @@ plot_category_prob_hists <- function(p_diff_df) {
   p_diff_df %>% ggplot() +
     facet_wrap(~k) +
     geom_histogram(aes(x=p, y=..density..), fill="black", bins=50) +
-    geom_vline(aes(xintercept=0), color="dodgerblue2") +
+    geom_vline(aes(xintercept=0), color="dodgerblue2", size=0.5) +
+    geom_vline(aes(xintercept=mean(p)), color="firebrick", size=0.5) +
     # scale_x_continuous(name="probability", breaks=seq(-0.03,0.03,by=0.01)) +
     scale_x_continuous(name="probability") +
     theme(panel.spacing = unit(2, "lines")) +
@@ -172,11 +176,13 @@ get_diff_plot_2_batters <- function(t1, t2, probs) {
   plot_category_prob_hists(p_diff)
 }
 
-get_diff_plot_2_batters(1,10,probs1)
+# get_diff_plot_2_batters(1,10,probs1)
 
 t_pairs = tibble(
-  t1 = c(1, 2, 3, 4, 5, 10,11,12,13,9, 18),
-  t2 = c(10,11,12,13,14,19,20,21,22,10,19)
+  # t1 = c(1, 2, 3, 4, 5, 10,11,12,13,9, 18),
+  # t2 = c(10,11,12,13,14,19,20,21,22,10,19)
+  t1 = c(1:9,   10:18, 9, 18),
+  t2 = c(10:18, 19:27, 10,19)
 )
 
 save_all_t1t2_plots <- function(probs) {
@@ -184,7 +190,7 @@ save_all_t1t2_plots <- function(probs) {
     t1 = t_pairs[i,]$t1
     t2 = t_pairs[i,]$t2
     plot_t1t2 = get_diff_plot_2_batters(t1,t2,probs)
-    ggsave(paste0("plots/","plot_pdiff_",t1,"_",t2,".png"), plot_t1t2)
+    ggsave(paste0("plots/prob_scale/",subfolder,"plot_pdiff_",t1,"_",t2,".png"), plot_t1t2, width=8, height=4)
   }
 }
 
@@ -193,378 +199,136 @@ save_all_t1t2_plots <- function(probs) {
   
   ptto12 = get_avg_tto_diff_plot(1, 2, probs1)
   ptto23 = get_avg_tto_diff_plot(2, 3, probs1)
-  
-  # ptto12
-  # ptto23
-  
-  ggsave("plots/tto_diff_12.png", ptto12)
-  ggsave("plots/tto_diff_32.png", ptto23)
+  ggsave(paste0("plots/prob_scale/",subfolder,"tto_diff_12.png"), ptto12, width=8, height=4)
+  ggsave(paste0("plots/prob_scale/",subfolder,"tto_diff_32.png"), ptto23, width=8, height=4)
 }
 
 
-###########################################################################
-###########################################################################
+##########################################
+### RESULTS on the EXPECTED WOBA SCALE ###
+##########################################
 
-
-
-
-
-
-
-
-
-
-###########################################################################
-
-# cross_entropy_loss_posterior <- function(probs,y_test) {
-#   cross_entropy_losses = list()
-#   for (i in 1:length(y_test)) {
-#     entropy_i = as.matrix( probs[[y_test[i]]][i,] )
-#     cross_entropy_losses[[length(cross_entropy_losses) + 1]] = entropy_i
-#   }
-#   cross_entropy_loss_M = t(do.call(cbind, cross_entropy_losses))
-#   ## cross_entropy_loss_M[1:10,1:10]
-#   cross_entropy_loss_M = -log(cross_entropy_loss_M)
-#   cross_entropy_losses = rowMeans(cross_entropy_loss_M)
-#   mean(cross_entropy_losses)
-# }
-# 
-# bsn_get_all_params <- function(fit) {
-#   draws=as.matrix(fit)
-#   alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
-#   eta_draws = draws[,str_detect(colnames(draws), "^eta")]
-#   all_params = list()
-#   for (k in 1:7) {
-#     # print(k)
-#     alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
-#     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-#     all_params_k = cbind(alpha_draws_k, eta_draws_k)
-#     all_params[[length(all_params)+1]] = all_params_k
-#   }
-#   all_params
-# }
-# 
-# bsn_post_means_and_ci <- function(all_params) {
-#   pp_df = tibble()
-#   for (k in 1:7) {
-#     all_params_k = all_params[[k]]
-#     pplower_k = apply(all_params_k, 2, function(x) quantile(x,.025))
-#     ppmeans_k = colMeans(all_params_k)
-#     ppupper_k = apply(all_params_k, 2, function(x) quantile(x,.975))
-#     p_names = c(paste0("alpha",1:(dim(S)[2])),paste0("eta",1:(dim(X)[2])))
-#     pp_df_k = tibble(k=k,pplower=pplower_k,ppmean=ppmeans_k,ppupper=ppupper_k,
-#                      var=p_names)
-#     pp_df = bind_rows(pp_df, pp_df_k)
-#   }
-#   pp_df %>% arrange(-k)
-# }
-# 
-# 
-# 
-
-###########################################################################
-
-get_avg_tto_effect_dfs <- function(bat_seq_draws) {
-  a12_df = tibble()
-  a23_df = tibble()
-  for (k in 2:7) {
-    #print(k)
-    bat_seq_draws_k = bat_seq_draws[[k]]
-    a_tto1 = rowMeans(bat_seq_draws_k[,1:9])
-    a_tto2 = rowMeans(bat_seq_draws_k[,10:18])
-    a_tto3 = rowMeans(bat_seq_draws_k[,19:27])
-    a12 = a_tto2 - a_tto1
-    a23 = a_tto3 - a_tto2
-    q12 = quantile(a12, c(.025,.975))
-    q23 = quantile(a23, c(.025,.975))
-    a12_df_k = tibble(v=a12, k=k) ##%>% filter(q12[1] <= v & v <= q12[2])
-    a23_df_k = tibble(v=a23, k=k) ##%>% filter(q23[1] <= v & v <= q23[2])
-    a12_df = bind_rows(a12_df, a12_df_k)
-    a23_df = bind_rows(a23_df, a23_df_k)
+xWOBA_dists <- function(probs) {
+  xws = tibble()
+  for (t1 in 1:27) {
+    pt = probs %>% filter(t == t1)
+    ptk2 = (pt %>% filter(k==2))$p
+    ptk3 = (pt %>% filter(k==3))$p
+    ptk4 = (pt %>% filter(k==4))$p
+    ptk5 = (pt %>% filter(k==5))$p
+    ptk6 = (pt %>% filter(k==6))$p
+    ptk7 = (pt %>% filter(k==7))$p
+    xw = ptk2*categories[2] + ptk3*categories[3] + ptk4*categories[4] + 
+      ptk5*categories[5] + ptk6*categories[6] + ptk7*categories[7] 
+    xws = bind_rows(xws, tibble(xWOBA = xw*1000, t = t1))
   }
-  list(a12_df, a23_df)
+  xws
 }
 
-get_BL_tto_effect_dfs <- function(bat_seq_draws) {
-  a12_df = tibble()
-  a23_df = tibble()
-  for (k in 2:7) {
-    #print(k)
-    bat_seq_draws_k = bat_seq_draws[[k]]
-    a_tto12 = bat_seq_draws_k[,10] - bat_seq_draws_k[,9]
-    a_tto23 = bat_seq_draws_k[,19] - bat_seq_draws_k[,18]
-    q12 = quantile(a_tto12,c(.025,.975))
-    q23 = quantile(a_tto23,c(.025,.975))
-    a12_df_k = tibble(v=a_tto12, k=k) ##%>% filter(q12[1] <= v & v <= q12[2])
-    a23_df_k = tibble(v=a_tto23, k=k) ##%>% filter(q23[1] <= v & v <= q23[2])
-    a12_df = bind_rows(a12_df, a12_df_k)
-    a23_df = bind_rows(a23_df, a23_df_k)
-  }
-  list(a12_df, a23_df)
-}
-
-plot_hists_by_category <- function(df, xTitle) {
-  df %>% ggplot() +
-    facet_wrap(~k) +
-    geom_histogram(aes(x=v, y=..density..),bins=50,
-                   color="dodgerblue2",fill="dodgerblue2") + #dodgerblue2
-    geom_hline(yintercept=0, colour="white", size=1) +
-    geom_vline(xintercept = 0) +
-    geom_hline(yintercept=0, colour="black", size=1) +
+plot_xwoba_diff_hist <- function(xw_diff) {
+  xw_diff %>% ggplot() +
+    geom_histogram(aes(x=xWOBA, y=..density..), fill="black", bins=50) +
+    geom_vline(aes(xintercept=0), color="dodgerblue2", size=1) +
+    geom_vline(aes(xintercept=mean(xWOBA)), color="firebrick", size=1) +
+    # scale_x_continuous(name="probability", breaks=seq(-0.03,0.03,by=0.01)) +
+    scale_x_continuous(name="difference in expected wOBA points") +
     theme(panel.spacing = unit(2, "lines")) +
     theme(axis.text.y = element_blank(),
-          axis.ticks.y = element_blank()) +
-    xlab(xTitle)
+          axis.ticks.y = element_blank()) 
 }
 
-###########################################################################
+get_avg_tto_xwoba_diff_plot <- function(tto1, tto2, xw) {
+  ts1 = 1:9 + (tto1-1)*9
+  ts2 = 1:9 + (tto2-1)*9
+  p_tto1 = xw %>% filter(t %in% ts1) 
+  p_tto2 = xw %>% filter(t %in% ts2) 
+  
+  p_avg_tto1 = numeric( nrow(p_tto1)/9 )
+  p_avg_tto2 = numeric( nrow(p_tto1)/9 )
+  for (i in 1:length(ts1)) {
+    t1 = ts1[i]
+    t2 = ts2[i]
+    p_avg_tto1 = p_avg_tto1 + (p_tto1 %>% filter(t == t1))$xWOBA
+    p_avg_tto2 = p_avg_tto2 + (p_tto2 %>% filter(t == t2))$xWOBA
+  } 
+  p_avg_tto1 = p_avg_tto1/9
+  p_avg_tto2 = p_avg_tto2/9
+  p_diff = p_avg_tto2 - p_avg_tto1
+  p_diff = tibble(xWOBA = p_diff)
+  
+  plot_xwoba_diff_hist(p_diff)
+}
 
-spline_xWoba_post <- function() {
-  S1 = diag(36)
-  SPL1 = S1 %*% bbb
-  X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
-  probs1 = spline_fit_to_posterior_probs(SPL1,X1,fit)
-  # probs1[[1]][1:10,1:10]
-  xw = matrix(0, ncol = dim(probs1[[1]])[1], nrow = dim(probs1[[1]])[2])
-  for (k in 1:7) {
-    xw = xw + t(probs1[[k]]) * categories[k]
+
+get_xwoba_diff_plot_2_batters <- function(t1,t2,xw) {
+  xw_t1 = xw %>% filter(t == t1) 
+  xw_t2 = xw %>% filter(t == t2) 
+  xw_diff = tibble(xWOBA = xw_t2$xWOBA - xw_t1$xWOBA)
+  plot_xwoba_diff_hist(xw_diff)
+}
+
+save_all_t1t2_xwoba_plots <- function(xw) {
+  for (i in 1:nrow(t_pairs)) {
+    t1 = t_pairs[i,]$t1
+    t2 = t_pairs[i,]$t2
+    plot_t1t2 = get_xwoba_diff_plot_2_batters(t1,t2,xw)
+    ggsave(paste0("plots/xwoba_scale/",subfolder,"plot_xwoba_diff_",t1,"_",t2,".png"), plot_t1t2, width=8, height=5)
   }
-  xw
 }
 
-get_tto_means_and_ci <- function(xw) {
-  # compute mean and 2.5%, 97.5% quantiles of posterior samples
-  p = dim(xw)[2] #27 
-  lower <- numeric(p)
-  avg <- numeric(p)
-  upper <- numeric(p)
-  for (i in 1:p) {
-    x = xw[,i]
-    lower[i] = quantile(x,.025)
-    avg[i] = mean(x)
-    upper[i] = quantile(x,.975)
-  }
-  A = (data.frame(lower = lower,avg = avg,upper= upper,bn = 1:p))[1:27,]
-  A
-}
-
-get_tto_draws <- function(xw) {
-  xwt = reshape::melt(xw) %>% rename(bn=X2)
-  xwt = as_tibble(xwt) %>% filter(bn <= 27)
-  xwtR = tibble()
-  for (b in 1:27) {
-    xwtd = density( (xwt %>% filter(bn==b))$value)
-    xwtd_bn = tibble(value=xwtd$x, density=xwtd$y, bn=b)
-    xwtR = bind_rows(xwtR,xwtd_bn)
-  }
-  list(xwt, xwtR)
-}
-
-
-
-plot_xWOBA_over_time <- function(A) {
-  pxw = A %>% 
-    ggplot(aes(x=bn, y=avg)) +
-    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
+plot_xWOBA_over_time <- function(xw) {
+  xw %>% group_by(t) %>%
+    summarise(xwL2 = quantile(xWOBA,.05),
+              xwL1 = quantile(xWOBA,.25),
+              xwU1 = quantile(xWOBA,.75),
+              xwU2 = quantile(xWOBA,.95),
+              xWOBA = mean(xWOBA)) %>% 
+    filter(t <= 26) %>%
+    ggplot(aes(x=t, y=xWOBA)) +
+    geom_errorbar(aes(ymin = xwL2, ymax = xwU2), fill = "black", width = .4) +
     geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-    geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="dodgerblue2", size=0.5) +
-    geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="dodgerblue2", size=0.5) +
-    geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="dodgerblue2", size=0.5) +
+    geom_line(aes(y = c(xWOBA[1:9], rep(NA,17))), color="dodgerblue2", size=0.5) +
+    geom_line(aes(y = c(rep(NA,9), xWOBA[10:18], rep(NA,8))), color="dodgerblue2", size=0.5) +
+    geom_line(aes(y = c(rep(NA,18), xWOBA[19:26])), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(y = c(xWOBA[1:9], rep(NA,18))), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(y = c(rep(NA,9), xWOBA[10:18], rep(NA,9))), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(y = c(rep(NA,18), xWOBA[19:27])), color="dodgerblue2", size=0.5) +
     geom_vline(aes(xintercept = 9.5), size=1.2) +
     geom_vline(aes(xintercept = 18.5), size=1.2) +
     labs(title = "Trend in Expected wOBA over the Course of a Game") + 
     theme(legend.position="none") +
-    scale_x_continuous(name=TeX("Batter Sequence Number $m$"), 
-                       limits = c(0,28),
+    scale_x_continuous(name=TeX("Batter Sequence Number $t$"), 
+                       # limits = c(0,28),
+                       limits = c(0,27),
                        breaks = c(0,5,10,15,20,25)) +
     scale_y_continuous(name="Expected wOBA", 
                        # limits = c(.2, .4),
-                       breaks = seq(-1, 1, .025)
+                       # breaks = seq(-1, 1, .025)
     ) 
-  pxw
 }
 
-plot_xWOBA_over_time_bayes <- function(A,AAA) {
-  line_size=1
-  PP = AAA %>% ggplot() + 
-    geom_hline(aes(yintercept = 9.5), size=1.2) +
-    geom_hline(aes(yintercept = 18.5), size=1.2) +
-    # geom_density_ridges(aes(x=value, y=bn, height = density, group = bn),
-    #                     stat = "identity", scale = 1, fill="dodgerblue2") +
-    geom_density_ridges_gradient(scale = 2, rel_min_height = 0.01, gradient_lwd = 1,
-                                 aes(x=value, y=bn, height = density, group = bn, fill = stat(x)), #fill="dodgerblue2"
-                                 stat = "identity", scale = 1, ) +
-    scale_fill_viridis_c(name = "Expected wOBA", option = "C") +
-    labs(title = 'Trend in Expected wOBA over the Course of a Game') +
-    theme(legend.position="none") +
-    # theme(axis.title.y = element_blank()) +
-    scale_y_continuous(name="Batter Sequence Number", #TeX("Batter Sequence Number $m$"), 
-                       limits = c(0,28),
-                       breaks = c(0,5,10,15,20,25)) +
-    scale_x_continuous(name="Expected wOBA", 
-                       # limits = c(.2, .4),
-                       breaks = seq(-1, 1, .05)) +
-    coord_flip()
-  PP
-  for (b in c(1:8, 10:17, 19:26)) {
-    # print(b)
-    PP = PP + geom_segment(aes_string(x=A$avg[b], y=A$bn[b],
-                                      xend=A$avg[b+1],yend=A$bn[b+1]),
-                           data=A,color="lightskyblue1", size=line_size) 
-                            #aquamarine2
-  }
-  PP = PP + geom_point(aes(x=avg, y=bn),data=A,color="black", shape=21, size=2, fill="white") 
-  PP
+# get_xwoba_diff_plot_2_batters(1,10,xw1)
+
+# AVG TTO XWOBA
+
+
+{
+  xw1 = xWOBA_dists(probs1)
+  save_all_t1t2_xwoba_plots(xw1)
+  
+  xwtto12 = get_avg_tto_xwoba_diff_plot(1, 2, xw1)
+  xwtto23 = get_avg_tto_xwoba_diff_plot(2, 3, xw1)
+  ggsave(paste0("plots/xwoba_scale/",subfolder,"tto_diff_12.png"), xwtto12, width=5, height=4)
+  ggsave(paste0("plots/xwoba_scale/",subfolder,"tto_diff_32.png"), xwtto23, width=5, height=4)
+  
+  plot_xwt = plot_xWOBA_over_time(xw1)
+  ggsave(paste0("plots/xwoba_scale/",subfolder,"plot_xwoba_over_time.png"), plot_xwt, width=9.44, height=4.89)
 }
 
 
-###########################################################################
-
-plot_xWOBA_over_time_spline <- function(df) {
-  pxw = df %>% 
-    ggplot(aes(x=bn, y=avg)) +
-    geom_errorbar(aes(ymin = lower, ymax = upper), fill = "black", width = .4) +
-    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
-    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
-    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
-    geom_vline(aes(xintercept = 9.5), size=1.2) +
-    geom_vline(aes(xintercept = 18.5), size=1.2) +
-    labs(title = "Trend in Expected wOBA over the Course of a Game: Spline") + 
-    theme(legend.position="none") +
-    scale_x_continuous(name=TeX("Batter Sequence Number $m$"), 
-                       limits = c(0,28),
-                       breaks = c(0,5,10,15,20,25)) +
-    scale_y_continuous(name="Expected wOBA", 
-                       # limits = c(.2, .4),
-                       breaks = seq(-1, 1, .05)
-    ) 
-  pxw
-}
-
-plot_prob_trend_by_k <- function(dfk) {
-  pxwk = dfk %>%
-    ggplot(aes(x=bn, y=pmean)) +
-    facet_wrap(~k) +
-    geom_errorbar(aes(ymin = plower, ymax = pupper), fill = "black", width = .4) +
-    geom_point(color="dodgerblue2", shape=21, size=2, fill="white") + 
-    # geom_line(aes(y = c(avg[1:9], rep(NA,18))), color="firebrick", size=1) +
-    # geom_line(aes(y = c(rep(NA,9), avg[10:18], rep(NA,9))), color="firebrick", size=1) +
-    # geom_line(aes(y = c(rep(NA,18), avg[19:27])), color="firebrick", size=1) +
-    geom_vline(aes(xintercept = 9.5), size=1.2) +
-    geom_vline(aes(xintercept = 18.5), size=1.2) +
-    labs(title = "Trend in the Probability of Each Outcome over the Course of a Game") + 
-    theme(legend.position="none") +
-    scale_x_continuous(name=TeX("Batter Sequence Number $m$"), 
-                       limits = c(0,28),
-                       breaks = c(0,5,10,15,20,25)) +
-    scale_y_continuous(name="Probability", 
-                       # limits = c(.2, .4),
-                       breaks = seq(-1, 1, .05)
-    ) 
-  pxwk
-}
-
-get_prob_trend_df <- function(fit) {
-  S1 = diag(36)
-  SPL1 = S1 %*% bbb
-  X1 = matrix( c(logit(mean(D$BQ)),logit(mean(D$PQ)),1,1), nrow=36, ncol=4, byrow=TRUE)
-  probs1 = spline_fit_to_posterior_probs(SPL1,X1,fit)
-  # probs1[[1]][1:10,1:10]
-  pp1_df = tibble()
-  for (k in 1:7) {
-    probs1_k = t(probs1[[k]])
-    plower_k = apply(probs1_k, 2, function(x) quantile(x,.025))
-    pmeans_k = colMeans(probs1_k)
-    pupper_k = apply(probs1_k, 2, function(x) quantile(x,.975))
-    # p_names = c(paste0("alpha",1:(dim(S)[2])),paste0("eta",1:(dim(X)[2])))
-    pp1_df_k = tibble(k=k,plower=plower_k,pmean=pmeans_k,pupper=pupper_k,bn=1:36)
-    pp1_df = bind_rows(pp1_df, pp1_df_k)
-  }
-  pp1_df %>% arrange(-k)
-}
-
-###############
-### PLOTS ###
-###############
-
-## for each category, was a 2TTO & 3TTO avg. effect detected
-gated = get_avg_tto_effect_dfs(bat_seq_draws) 
-a12_df = gated[[1]]
-a23_df = gated[[2]]
-a12_df$k = factor(a12_df$k, labels = category_strings[2:7])
-a23_df$k = factor(a23_df$k, labels = category_strings[2:7])
-
-p12t = "magnitude of mean 2TTO effect"
-#p12t = TeX("$\\frac{1}{9} \\sum_{m=10}^{18} \\alpha_m - \\frac{1}{9} \\sum_{m=1}^{9} \\alpha_m$")
-p12 = plot_hists_by_category(a12_df, p12t)
-p12
-# ggsave(paste0("plots_spline/plot_mean2TTOeffect_",year,".png"), p12)
-
-p23t = "magnitude of mean 3TTO effect"
-p23 = plot_hists_by_category(a23_df, p23t)
-p23
-# ggsave(paste0("plots_spline/plot_mean3TTOeffect_",year,".png"), p23)
-
-## for each category, was a 2TTO & 3TTO BL effect detected
-gbted = get_BL_tto_effect_dfs(bat_seq_draws)
-b12_df = gbted[[1]]
-b23_df = gbted[[2]]
-b12_df$k = factor(b12_df$k, labels = category_strings[2:7])
-b23_df$k = factor(b23_df$k, labels = category_strings[2:7])
-
-pb12t = "magnitude of batter learning 2TTO effect"
-pb12 = plot_hists_by_category(b12_df, pb12t)
-pb12
-# ggsave(paste0("plots_spline/plot_BL_2TTOeffect_",year,".png"), pb12)
-
-pb23t = "magnitude of batter learning 3TTO effect"
-pb23 = plot_hists_by_category(b23_df, pb23t)
-pb23
-# ggsave(paste0("plots_spline/plot_BL_3TTOeffect_",year,".png"), pb23)
-
-### plot trend in expected wOBA over the course of a game
-xw = spline_xWoba_post()
-A = get_tto_means_and_ci(xw)
-pxw = plot_xWOBA_over_time(A)
-pxw
-# ggsave(paste0("plots_spline/plot_xwoba_",year,".png"), pxw)
-get_tto_draws_xw = get_tto_draws(xw) 
-# A$avg <- factor(A$avg, levels = A$avg) ## make A$avg an ordered factor
-AA = get_tto_draws_xw[[1]]
-AAA = get_tto_draws_xw[[2]]
-pxwb = plot_xWOBA_over_time_bayes(A,AAA)
-pxwb
-# ggsave(paste0("plots_spline/plot_xwoba_bayes_",year,".png"), pxwb)
-
-### plot trend in expected wOBA **SPLINE** over the course of a game
-# # repeating a knot 4 times means the spline itself is discontinuous at that knot
-# # knots = c(9.5,9.5,9.5,9.5,  18.5,18.5,18.5,18.5)
-# knots = c(rep(9.5,3), rep(18.5,3)); dd=2;
-# 
-# spline_lower <- lm(lower ~ bs(1:27, knots = knots, degree=dd), data = A )
-# spline_avg <- lm(avg ~ bs(1:27, knots = knots, degree=dd), data = A )
-# spline_upper <- lm(upper ~ bs(1:27, knots = knots, degree=dd), data = A )
-# spline_A = as_tibble(data.frame(lower=fitted(spline_lower),avg=fitted(spline_avg),
-#                                 upper=fitted(spline_upper),bn=1:27))
-# pxws = plot_xWOBA_over_time_spline(spline_A)
-# pxws
-# # ggsave("plots_bsn/plot_xwoba19_spline.png", pxws)
 
 
 
-# ### plot trend over the course of a game for each outcome, on probability scale (spline ???)
-# prob_trend_df = get_prob_trend_df(fit)
-# prob_trend_df1 = prob_trend_df %>% filter(k!=1 & bn<=27)
-# prob_trend_df1$k = factor(prob_trend_df1$k, labels = category_strings[2:7])
-# 
-# plot_prob_trend_by_k(prob_trend_df1)
-# 
-# plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("BB","2B","HR")))
-# 
-# plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("1B")))
-# 
-# plot_prob_trend_by_k(prob_trend_df1 %>% filter(k %in% c("HBP","3B")))
 
 
 
