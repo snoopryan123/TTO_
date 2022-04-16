@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N rstan1 AJ
+#$ -N rstan1_AJ
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
