@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..1}
+for i in {2..2}
 do
    mv ./job_output/fit_rstan1-$i.R.rds    ../../../Dropbox/HPCC/fit_rstan1-$i.R.rds  
    boxup
