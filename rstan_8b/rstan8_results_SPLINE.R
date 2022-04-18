@@ -158,16 +158,6 @@ get_prob_tibble <- function(x, bat_seq_draws, eta_draws) {
 bat_seq_draws = get_bat_seq_draws(draws) #bat_seq_draws[[7]][1:10,1:10]
 eta_draws = get_eta_draws(fit)
 
-### confounder vector examples
-mean(D$BQ)
-mean(D$PQ)
-quantile(D$BQ,.95)
-quantile(D$PQ,.05)
-quantile(D$BQ,.05)
-quantile(D$PQ,.95)
-sd(D$EVENT_WOBA_19)
-
-
 x1 = c(logit(median(batters_woba$WOBA)/1000), logit(median(pitchers_woba$WOBA)/1000), 1, 0); subfolder = "x1/";
 # x1 = c(logit(quantile(batters_woba$WOBA,.95)/1000), logit(quantile(pitchers_woba$WOBA,.05)/1000), 1, 0);  subfolder = "x2/";
 # x1 = c(logit(quantile(batters_woba$WOBA,.05)/1000), logit(quantile(pitchers_woba$WOBA,.95)/1000), 1, 0);  subfolder = "x3/";
@@ -251,7 +241,7 @@ save_all_t1t2_plots <- function(probs) {
   ptto12 = get_avg_tto_diff_plot(1, 2, probs1)
   ptto23 = get_avg_tto_diff_plot(2, 3, probs1)
   ggsave(paste0("plots/prob_scale/",subfolder,"tto_diff_12.png"), ptto12, width=8, height=4)
-  ggsave(paste0("plots/prob_scale/",subfolder,"tto_diff_32.png"), ptto23, width=8, height=4)
+  ggsave(paste0("plots/prob_scale/",subfolder,"tto_diff_23.png"), ptto23, width=8, height=4)
 }
 
 
@@ -379,10 +369,47 @@ plot_xWOBA_over_time <- function(xw) {
 
 
 
+##########################################
+### Different X's ###
+##########################################
 
+quantiles = c(.05,0.25,0.5,0.75,0.95)
+nq = length(quantiles)
+PQs = quantile(pitchers_woba$WOBA, quantiles)
+PQs
+BQs = quantile(batters_woba$WOBA, quantiles)
+BQs
 
+XX = matrix(nrow=nq, ncol=nq)
+rownames(XX) = round(BQs,3)
+colnames(XX) = round(PQs,3)
+for (i in 1:nq) {
+  for (j in 1:nq) {
+    print(c("*****", i, j, "*****"))
+    x_ij = c(logit(BQs[i]/1000), logit(PQs[j]/1000), 1, 0)
+    probs_ij = get_prob_tibble(x_ij, bat_seq_draws, eta_draws)
+    xw_ij = xWOBA_dists(probs_ij)
+    XX[i,j] = (xw_ij %>% group_by(t) %>% summarise(xWOBA = mean(xWOBA)) %>% summarise(xWOBA = mean(xWOBA)))$xWOBA
+  }
+}
+XX
 
-
+##########################################
+hands = c(0,1)
+homes = c(0,1)
+HH = matrix(nrow=2,ncol=2)
+rownames(HH) = hands
+colnames(HH) = homes
+for (i in 1:2) {
+  for (j in 1:2) {
+    print(c("*****", i, j, "*****"))
+    x_ij = c(logit(median(batters_woba$WOBA)/1000), logit(median(pitchers_woba$WOBA)/1000), hands[i], homes[j])
+    probs_ij = get_prob_tibble(x_ij, bat_seq_draws, eta_draws)
+    xw_ij = xWOBA_dists(probs_ij)
+    HH[i,j] = (xw_ij %>% group_by(t) %>% summarise(xWOBA = mean(xWOBA)) %>% summarise(xWOBA = mean(xWOBA)))$xWOBA
+  }
+}
+HH
 
 
 

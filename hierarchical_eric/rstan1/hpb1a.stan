@@ -17,7 +17,7 @@ data {
   int<lower=1, upper=K> y[n];                // outcome vector
 }
 transformed data {
-  vector[1] zeros_alpha = rep_vector(0, 1);
+  ///vector[1] zeros_alpha = rep_vector(0, 1);
   vector[n] zeros_linpred = rep_vector(0, n);
   
   vector[d] zeros_beta = rep_vector(0, d);

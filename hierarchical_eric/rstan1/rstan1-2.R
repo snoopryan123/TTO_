@@ -7,11 +7,11 @@ D <- read_csv(input_file) ###%>% filter(!PIT_IS_BAT) # %>% drop_na()
 D <- D %>% filter(YEAR == 2019) %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1 ) %>% filter(BATTER_SEQ_NUM <= 3)
 # logit <- function(p) { log(p/(1-p)) }
 # X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND)) 
-OUTPUT_FILE = "rstan1-1.R"
+OUTPUT_FILE = "rstan1-2.R"
 
 ### rstan
 source("rstan1_main.R")
-fit = fit_model_hbp1(NA, model_type="1a") 
+fit = fit_model_hbp1(NA, model_type="1b") 
 saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 
 ### plot
@@ -21,7 +21,7 @@ saveRDS(fit, file = paste0(output_folder, "fit_", OUTPUT_FILE, ".rds"))
 # ggsave(paste0("./plot_",OUTPUT_FILE,".png"), p)
 
 
-
+# draws = as.matrix(fit)
 
 
 ###########################
