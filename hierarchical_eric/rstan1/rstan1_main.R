@@ -20,7 +20,7 @@ rstan_options(auto_write = TRUE)
 ####### uncomment these if working on HPCC ##########
 cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
-NUM_ITS = 5000 #1500 #2500 #5000 #10000
+NUM_ITS = 2500 #1500 #2500 #5000 #10000
 #####################################################
 
 #####################################
@@ -60,7 +60,7 @@ SPL = S %*% bbb # splined data matrix
 # O <- as.matrix(ORDER_CT_dummies)
 ### other-data-matrix X
 X0 = as.matrix(D %>% select(HAND_MATCH, BAT_HOME_IND)) ##mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% 
-X = cbind(S, X0) ###cbind(SPL, X0)
+X = cbind(SPL, X0) #cbind(S, X0) #cbind(SPL, X0)
 ### outcome vector y
 y_og <- D$EVENT_WOBA_19
 categories = sort(unique(y_og))
@@ -105,6 +105,7 @@ og_dir = getwd()
 if (CHANGE_DIR) { setwd("..") }
 model_hbp1b <- stan_model(file = "hpb1b.stan", model_name = "hpb1b.stan")
 model_hbp1c <- stan_model(file = "hpb1c.stan", model_name = "hpb1c.stan")
+###model_hbp1e <- stan_model(file = "hpb1e.stan", model_name = "hpb1e.stan")
 if (CHANGE_DIR) { setwd(og_dir) }
 
 fit_model_hbp1 <- function(fold_num=NA, model_type="1a") {
@@ -129,6 +130,8 @@ fit_model_hbp1 <- function(fold_num=NA, model_type="1a") {
     model_ = model_hbp1b
   } else if (model_type == "1c") {
     model_ = model_hbp1c
+  } else if (model_type == "1e") {
+    model_ = model_hbp1e
   }
   fit <- sampling(model_,
                   data = data_train,
