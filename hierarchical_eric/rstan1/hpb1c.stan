@@ -19,8 +19,9 @@ data {
 transformed data {
   ///vector[1] zeros_alpha = rep_vector(0, 1);
   vector[n] zeros_linpred = rep_vector(0, n);
-  
   vector[d] zeros_beta = rep_vector(0, d);
+  real zero_P1 = 0;
+  real zero_B1 = 0;
 }
 parameters {
   real mu_p;
@@ -28,10 +29,11 @@ parameters {
   real<lower=0> sigma_p;
   real<lower=0> sigma_b;
   
-  vector[num_pit] P;
-  vector[num_bat] B;
-  real<lower=0> tau_p[num_pit]; ///vector[num_pit] tau_p;
-  real<lower=0> tau_b[num_bat]; ///vector[num_bat] tau_b;
+  vector[num_pit-1] P_raw;
+  vector[num_bat-1] B_raw;
+  
+  real<lower=0> tau_p; 
+  real<lower=0> tau_b; 
   matrix[num_pit,num_pit_games] PQ;
   matrix[num_bat,num_bat_games] BQ;
   
@@ -42,8 +44,13 @@ parameters {
 transformed parameters {
   ///matrix[1,K] alpha; 
   matrix[d,K] beta;
+  vector[num_pit] P;
+  vector[num_bat] B;
   matrix[n, K-1] linpred_raw;
   matrix[n, K] linpred;
+  
+  P = append_row(zero_P1, P_raw);
+  B = append_row(zero_B1, B_raw);
 
   for (i in 1:n) {
     // linpred_raw[i] = PQ[p[i], pg[i]]; 
@@ -78,15 +85,17 @@ model {
   ///to_vector(alpha_raw) ~ normal(0,2);
 
   // 1st Level of the Hierarchy
-  to_vector(P) ~ normal(mu_p, sigma_p);
-  to_vector(B) ~ normal(mu_b, sigma_b);
-  to_vector(tau_p) ~ inv_gamma(0.5, 0.5);
-  to_vector(tau_b) ~ inv_gamma(0.5, 0.5);
+  to_vector(P_raw) ~ normal(mu_p, sigma_p);
+  to_vector(B_raw) ~ normal(mu_b, sigma_b);
+  // to_vector(tau_p) ~ inv_gamma(0.5, 0.5);
+  // to_vector(tau_b) ~ inv_gamma(0.5, 0.5);
+  tau_p ~ inv_gamma(0.5, 0.5);
+  tau_b ~ inv_gamma(0.5, 0.5);
   
   for (i in 1:n) {
     // 2nd Level of the Hierarchy
-    PQ[p[i], pg[i]] ~ normal( P[p[i]], tau_p[p[i]] );
-    BQ[b[i], bg[i]] ~ normal( B[b[i]], tau_b[b[i]] );
+    PQ[p[i], pg[i]] ~ normal( P[p[i]], tau_p );
+    BQ[b[i], bg[i]] ~ normal( B[b[i]], tau_b );
 
     // 3rd Level of the Hierarchy
     // linpred[i] = alpha + PQ[p[i], pg[i]] + BQ[b[i], bg[i]] + X[i]'*beta;

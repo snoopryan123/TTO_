@@ -20,7 +20,7 @@ rstan_options(auto_write = TRUE)
 ####### uncomment these if working on HPCC ##########
 cores=strtoi(Sys.getenv('OMP_NUM_THREADS')) ### for HPCC
 options(mc.cores = cores) ### for HPCC
-NUM_ITS = 2500 #1500 #5000
+NUM_ITS = 5000 #1500 #2500 #5000 #10000
 #####################################################
 
 #####################################
@@ -103,8 +103,8 @@ folds <- loo::kfold_split_random(K=kk,N=nrow(y))
 CHANGE_DIR = if (exists("IS_SIM")) { IS_SIM } else if (exists("IS_COMP")) { IS_COMP } else { FALSE }
 og_dir = getwd()
 if (CHANGE_DIR) { setwd("..") }
-model_hbp1a <- stan_model(file = "hpb1a.stan", model_name = "hpb1a.stan")
 model_hbp1b <- stan_model(file = "hpb1b.stan", model_name = "hpb1b.stan")
+model_hbp1c <- stan_model(file = "hpb1c.stan", model_name = "hpb1c.stan")
 if (CHANGE_DIR) { setwd(og_dir) }
 
 fit_model_hbp1 <- function(fold_num=NA, model_type="1a") {
@@ -127,11 +127,13 @@ fit_model_hbp1 <- function(fold_num=NA, model_type="1a") {
     model_ = model_hbp1a
   } else if (model_type == "1b") {
     model_ = model_hbp1b
+  } else if (model_type == "1c") {
+    model_ = model_hbp1c
   }
   fit <- sampling(model_,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
-                  pars=c("linpred","linpred_raw","beta_raw"), include=FALSE,
+                  pars=c("linpred","linpred_raw","beta_raw","P_raw","B_raw"), include=FALSE,
                   chains = cores, #1 #cores, 
                   cores = cores, # HPCC
                   seed = seed)
