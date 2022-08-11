@@ -6,3 +6,7 @@ data_wrangling/.Rhistory
 *.log
 *.RDataTmp 
 *.DS_Store
+
+*.jpg
+*.JPEG
+*.png
