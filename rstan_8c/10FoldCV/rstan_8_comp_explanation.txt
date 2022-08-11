@@ -1,0 +1,7 @@
+rstan_8_sim-x
+	dataset = TTO_dataset_510.csv
+
+8-1:10		comparison: BSN model, 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (logitBQ, logitPQ)
+8-11:20		comparison: UBI model, 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (logitBQ, logitPQ)
+8-21:30		comparison: spline model, 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (logitBQ, logitPQ)
+
