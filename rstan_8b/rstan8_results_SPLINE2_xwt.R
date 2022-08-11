@@ -15,7 +15,7 @@ output_folder = './job_output/'
 ### posterior samples of SPLINE model
 # fit <- readRDS("job_output/fit_rstan8-3.R.rds")
 # fit <- readRDS("job_output/fit_rstan8-3_noPitAsBat.R.rds")
-year = 2020 #2018 # 2020
+year = 2019 #2018 # 2020
 fit <- readRDS(paste0("job_output/fit_rstan8-",year-2000,".R.rds"))
 draws <- as.matrix(fit)
 
@@ -50,6 +50,7 @@ pitchers_woba = D %>% group_by(PIT_ID) %>%
   summarise(WOBA = unique(WOBA_FINAL_PIT_19)*1000, num_pa=n()) %>%
   filter(num_pa >= 100)
 pitchers_woba
+
 
 
 #########################

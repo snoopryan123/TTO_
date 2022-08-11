@@ -15,7 +15,7 @@ output_folder = './job_output/'
 ### posterior samples of SPLINE model
 # fit <- readRDS("job_output/fit_rstan8-3.R.rds")
 # fit <- readRDS("job_output/fit_rstan8-3_noPitAsBat.R.rds")
-year = 2018 # 2020
+year = 2016 #2018 # 2020
 fit <- readRDS(paste0("job_output/fit_rstan8-",year-2000,".R.rds"))
 draws <- as.matrix(fit)
 
@@ -56,19 +56,20 @@ names(D0_2018)
 ### understanding wOBA ###
 ##########################
 
-### game-by-game standard deviation in wOBA for each pitcher, then take median
+### between-game standard deviation in wOBA for each pitcher, then take median
 D %>% 
   group_by(PIT_ID,YEAR) %>%
   summarise(gameByGame_woba_sd = sd(EVENT_WOBA_19), .groups = "drop") %>%
-  summarise(med_gameByGame_woba_sd = median(gameByGame_woba_sd, na.rm=TRUE))
+  summarise(med_gameByGame_woba_sd = mean(gameByGame_woba_sd, na.rm=TRUE))
 
-D %>% group_by(PIT_ID,YEAR) %>%
-  summarise(gameByGame_woba_sd = sd(EVENT_WOBA_19), .groups = "drop")
+### within-game standard deviation in wOBA for each pitcher, then take median
+D %>% 
+  group_by(PIT_ID,GAME_ID) %>%
+  summarise(withinGame_woba_sd = sd(EVENT_WOBA_19), .groups = "drop") %>%
+  summarise(med_withinGame_woba_sd = mean(withinGame_woba_sd, na.rm=TRUE))
 
-data.frame(
-D %>% group_by(PIT_ID,YEAR) %>%
-  summarise(gameByGame_woba_mean = mean(EVENT_WOBA_19), .groups = "drop")
-)
+
+
 
 ### within-game sd in pitcher performance
 # D %>%
