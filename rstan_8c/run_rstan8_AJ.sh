@@ -3,8 +3,8 @@
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
-## this command is to ask for multiple cores for running RStan files: [4]
-#$ -pe openmp 1
+## this command is to ask for multiple cores for running RStan files: [4] [1]
+#$ -pe openmp 4
 
 ## ARRAY JOB
 #$ -t 10-19
