@@ -17,8 +17,7 @@ get_bat_seq_draws <- function(draws) {
   bat_seq_draws = list()
   for (k in 1:7) {
     alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
-    # bat_seq_draws_k = alpha_draws_k %*% t(bbb)
-    bat_seq_draws_k = alpha_draws_k ##%*% t(bbb)
+    bat_seq_draws_k = alpha_draws_k %*% t(bbb)
     bat_seq_draws[[length(bat_seq_draws) + 1]] = bat_seq_draws_k
   }
   bat_seq_draws
@@ -542,8 +541,6 @@ ggsave("plot_probScale_2018.png",
 
 
 ####################################################
-s_d1 = 7
-s_d2 = 4
 probs_allyrs1 = probs_allyrs %>%
   group_by(year, k,t) %>%
   summarise(
@@ -560,7 +557,25 @@ probs_allyrs1 = probs_allyrs %>%
     k == 5 ~ "2B",
     k == 6 ~ "3B",
     k == 7 ~ "HR"
-  )) 
+  )) %>%
+  mutate(TTO = 1+floor((t-1)/9) ) %>%
+  mutate(
+    # p_L2_t1 = ifelse(TTO == 1, p_L2, NA),
+    # p_L2_t2 = ifelse(TTO == 2, p_L2, NA),
+    # p_L2_t3 = ifelse(TTO == 3, p_L2, NA),
+    # p_L1_t1 = ifelse(TTO == 1, p_L1, NA),
+    # p_L1_t2 = ifelse(TTO == 2, p_L1, NA),
+    # p_L1_t3 = ifelse(TTO == 3, p_L1, NA),
+    p_M_t1 = ifelse(TTO == 1, p_M, NA),
+    p_M_t2 = ifelse(TTO == 2, p_M, NA),
+    p_M_t3 = ifelse(TTO == 3, p_M, NA),
+    # p_U1_t1 = ifelse(TTO == 1, p_U1, NA),
+    # p_U1_t2 = ifelse(TTO == 2, p_U1, NA),
+    # p_U1_t3 = ifelse(TTO == 3, p_U1, NA),
+    # p_U2_t1 = ifelse(TTO == 1, p_U2, NA),
+    # p_U2_t2 = ifelse(TTO == 2, p_U2, NA),
+    # p_U2_t3 = ifelse(TTO == 3, p_U2, NA),
+  )
 for (yr in unique(probs_allyrs1$year)) {
   print(yr)
   p_yr = 
@@ -568,11 +583,26 @@ for (yr in unique(probs_allyrs1$year)) {
     filter(year == yr) %>%
     ggplot(aes(x=t)) +
     facet_wrap(~label, nrow=3, scales = "free") +
-    geom_vline(aes(xintercept =  10), size=0.5, color="gray50") + #1.2
-    geom_vline(aes(xintercept = 19), size=0.5, color="gray50") +
+    geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+    geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
     geom_errorbar(aes(x=t, ymin = p_L2, ymax = p_U2), width = .4, size=0.5) +
     geom_errorbar(aes(x=t, ymin = p_L1, ymax = p_U1), width = .6, size=0.75) +
     geom_point(aes(y=p_M), color="dodgerblue2", fill="white") +
+    # geom_line(aes(x=t, y = p_L2_t1), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_L2_t2), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_L2_t3), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_L1_t1), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_L1_t2), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_L1_t3), color="dodgerblue2", size=0.5) +
+    geom_line(aes(x=t, y = p_M_t1), color="dodgerblue2", size=0.5) +
+    geom_line(aes(x=t, y = p_M_t2), color="dodgerblue2", size=0.5) +
+    geom_line(aes(x=t, y = p_M_t3), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_U1_t1), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_U1_t2), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_U1_t3), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_U2_t1), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_U2_t2), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_U2_t3), color="dodgerblue2", size=0.5) +
     # geom_line(aes(x=t, y = c(p_M[1:9], rep(NA,17))), color="dodgerblue2", size=0.5) +
     # geom_line(aes(x=t, y = c(rep(NA,9), p_M[10:18], rep(NA,8))), color="dodgerblue2", size=0.5) +
     # geom_line(aes(x=t, y = c(rep(NA,18), p_M[19:26])), color="dodgerblue2", size=0.5) +
