@@ -20,7 +20,7 @@ rstan_options(auto_write = TRUE)
 ####### uncomment these if working on HPCC ##########
 cores=1#strtoi(Sys.getenv('OMP_NUM_THREADS')) 
 options(mc.cores = cores) ### for HPCC
-NUM_ITS = 5000 #2500 #1500 #5000
+NUM_ITS = 2500 #2500 #1500 #5000
 #####################################################
 
 #####################################

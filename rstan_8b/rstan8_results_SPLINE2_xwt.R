@@ -398,7 +398,30 @@ xw1 = xWOBA_dists(probs1)
 
 plot_xwt = plot_xWOBA_over_time(xw1)
 plot_xwt
-ggsave(paste0("plots/xwoba_scale/",subfolder,"plot_xwoba_over_time_", year, ".png"), plot_xwt, width=9.44, height=4.89)
+# ggsave(paste0("plots/xwoba_scale/",subfolder,"plot_xwoba_over_time_", year, ".png"), plot_xwt, width=9.44, height=4.89)
+
+### plot probs over time
+probs1 %>% group_by(t,k) %>%
+  summarise(pL2 = quantile(p,.05),
+            pL1 = quantile(p,.25),
+            pU1 = quantile(p,.75),
+            pU2 = quantile(p,.95),
+            pM = mean(p)) %>% 
+  filter(t <= 26) %>%
+  ggplot(aes(x=t, y=pM)) +
+  facet_wrap(~k, scales="free") +
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_errorbar(aes(ymin = pL2, ymax = pU2), fill = "black", width = .4) +
+  geom_errorbar(aes(ymin = pL1, ymax = pU1), fill = "black", width = .6, size=1.25) +
+  geom_point(color="dodgerblue2", shape=21, size=2, fill="white") +
+  geom_line(aes(y=pM), color="dodgerblue2", size=0.5)
+
+
+
+
+
+
 
 # get_xwoba_diff_plot_2_batters(1,10,xw1)
 
