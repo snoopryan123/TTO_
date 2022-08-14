@@ -682,9 +682,9 @@ for (yr in unique(probs_multiyrs1$year)) {
     geom_errorbar(aes(x=t, ymin = p_L2, ymax = p_U2), width = .4, size=0.5) +
     geom_errorbar(aes(x=t, ymin = p_L1, ymax = p_U1), width = .6, size=0.75) +
     geom_point(aes(y=p_M), color="dodgerblue2", fill="white") +
-    geom_line(aes(x=t, y = p_M_t1), color="dodgerblue2", size=0.5) +
-    geom_line(aes(x=t, y = p_M_t2), color="dodgerblue2", size=0.5) +
-    geom_line(aes(x=t, y = p_M_t3), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_M_t1), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_M_t2), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = p_M_t3), color="dodgerblue2", size=0.5) +
     scale_x_continuous(name=TeX("Batter Sequence Number $t$"),
                        limits = c(0,26.5),
                        breaks = seq(3,24,by=3)) +
@@ -729,9 +729,9 @@ for (yr in unique(probs_multiyrs1$year)) {
     geom_errorbar(aes(x=t, ymin = xw_L2, ymax = xw_U2), width = .4, size=0.5) +
     geom_errorbar(aes(x=t, ymin = xw_L1, ymax = xw_U1), width = .6, size=0.75) +
     geom_point(aes(y=xw_M), color="dodgerblue2", fill="white") +
-    geom_line(aes(x=t, y = xw_M_t1), color="dodgerblue2", size=0.5) +
-    geom_line(aes(x=t, y = xw_M_t2), color="dodgerblue2", size=0.5) +
-    geom_line(aes(x=t, y = xw_M_t3), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = xw_M_t1), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = xw_M_t2), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = xw_M_t3), color="dodgerblue2", size=0.5) +
     scale_x_continuous(name=TeX("Batter Sequence Number $t$"),
                        limits = c(0,26.5),
                        breaks = seq(3,24,by=3)) +
@@ -741,7 +741,7 @@ for (yr in unique(probs_multiyrs1$year)) {
     ) +
     labs(title=yr) 
   
-  ggsave(paste0("plots/", "plot_3yr_xwobaScaleTrend_", yr, ".png"), p_yr, width=11, height=7)
+  ggsave(paste0("plots/", "plot_3yr_xwobaScaleTrend_", yr, ".png"), p_yr, width=11, height=6)
   
 }
 
