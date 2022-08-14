@@ -745,3 +745,69 @@ for (yr in unique(probs_multiyrs1$year)) {
   
 }
 
+
+
+
+
+
+
+####################################################
+s_d1 = 7
+s_d2 = 4
+
+for (yr in unique(xw_multiyrs1$year)) {
+  print(yr)
+  xw_yr = xw_multiyrs1 %>% filter(year == yr)
+  
+  {
+    xw_yr_smoothedMeans =
+      xw_yr %>%
+      rename(xWOBA = xw_M) %>%
+      mutate(
+        xwL2_s1 = smooth.spline(1:27, xw_L2, df=s_d1)$y,
+        xwL1_s1 = smooth.spline(1:27, xw_L1, df=s_d1)$y,
+        xWOBA_s1 = smooth.spline(1:27, xWOBA, df=s_d1)$y,
+        xwU1_s1 = smooth.spline(1:27, xw_U1, df=s_d1)$y,
+        xwU2_s1 = smooth.spline(1:27, xw_U2, df=s_d1)$y,
+      ) %>%
+      mutate(
+        xwL2_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_L2[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_L2[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_L2[19:27], df=s_d2)$y)),
+        xwL1_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_L1[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_L1[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_L1[19:27], df=s_d2)$y)),
+        xWOBA_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xWOBA[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xWOBA[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xWOBA[19:27], df=s_d2)$y)),
+        xwU1_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_U1[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_U1[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_U1[19:27], df=s_d2)$y)),
+        xwU2_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_U2[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_U2[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_U2[19:27], df=s_d2)$y))
+      ) %>%
+      rename(xwL2 = xw_L2,
+             xwL1 = xw_L1,
+             xwU1 = xw_U1,
+             xwU2 = xw_U2)
+  }
+  
+  plot_xwt_yr_0 = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="0")
+  plot_xwt_yr_1 = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="1")
+  plot_xwt_yr_1b = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="1b")
+  plot_xwt_yr_2 = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="2")
+  plot_xwt_yr_2b = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="2b")
+  
+  ggsave(paste0("plots/plot_xwt_", "0", "_", yr, ".png"), plot_xwt_yr_0, width=9, height=5)
+  ggsave(paste0("plots/plot_xwt_", "1", "_", yr, ".png"), plot_xwt_yr_1, width=9, height=5)
+  ggsave(paste0("plots/plot_xwt_", "1b", "_", yr, ".png"), plot_xwt_yr_1b, width=9, height=5)
+  ggsave(paste0("plots/plot_xwt_", "2", "_", yr, ".png"), plot_xwt_yr_2, width=9, height=5)
+  ggsave(paste0("plots/plot_xwt_", "2b", "_", yr, ".png"), plot_xwt_yr_2b, width=9, height=5)
+}
+

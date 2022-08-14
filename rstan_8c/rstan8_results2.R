@@ -745,3 +745,221 @@ for (yr in unique(probs_multiyrs1$year)) {
   
 }
 
+
+###############
+### RESULTS ###
+###############
+
+### load data
+# input_file = "../data/TTO_dataset_510.csv"  
+# D0 <- read_csv(input_file) #%>% drop_na() 
+
+probs_multiyrs = tibble()
+xw_multiyrs = tibble()
+idx_names = c("2017-2019", "2014-2016")
+yr_batches = list(2017:2019, 2014:2016)
+idxs = c(1,2)
+for (i in idxs) {
+  print(paste0("*** ", i, " ***"))
+  ### posterior samples of model
+  # year = 2019 #2018 # 2020
+  fit <- readRDS(paste0("job_output/fit_rstan8-",i,".R.rds"))
+  draws <- as.matrix(fit)
+  
+  ### load data
+  D <- D0 %>% filter(YEAR %in% yr_batches[[i]]) %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1 ) %>% filter(ORDER_CT <= 3)
+  logit <- function(p) { log(p/(1-p)) }
+  X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND)) 
+  source("rstan8_main.R")
+  
+  batters_woba = D %>% group_by(BAT_ID) %>% 
+    summarise(WOBA = unique(WOBA_FINAL_BAT_19)*1000, num_pa=n()) %>%
+    filter(num_pa >= 100)
+  batters_woba
+  pitchers_woba = D %>% group_by(PIT_ID) %>% 
+    summarise(WOBA = unique(WOBA_FINAL_PIT_19)*1000, num_pa=n()) %>%
+    filter(num_pa >= 100)
+  pitchers_woba
+  
+  ### batter sequence too draws 1,...,27
+  bat_seq_draws = get_bat_seq_draws(draws) #bat_seq_draws[[7]][1:10,1:10]
+  eta_draws = get_eta_draws(fit)
+  
+  x1 = c(logit(median(batters_woba$WOBA)/1000), logit(median(pitchers_woba$WOBA)/1000), 1, 0); subfolder = "x1/";
+  probs1 = get_prob_tibble(x1, bat_seq_draws, eta_draws)
+  probs1$year = idx_names[i]
+  
+  probs_multiyrs = bind_rows(probs_multiyrs, probs1)
+  
+  xw1 = xWOBA_dists(probs1)
+  xw1$year = idx_names[i]
+  xw_multiyrs = bind_rows(xw_multiyrs, xw1)
+}
+
+###########################################
+
+probs_multiyrs1 = probs_multiyrs %>%
+  group_by(year, k,t) %>%
+  summarise(
+    p_L2 = quantile(p, 0.05),
+    p_L1 = quantile(p, 0.25),
+    p_M = quantile(p, 0.5),
+    p_U1 = quantile(p, 0.75),
+    p_U2 = quantile(p, 0.95),
+    .groups = "drop"
+  ) %>% mutate(label = case_when(
+    k == 2 ~ "uBB",
+    k == 3 ~ "HBP",
+    k == 4 ~ "1B",
+    k == 5 ~ "2B",
+    k == 6 ~ "3B",
+    k == 7 ~ "HR"
+  )) %>%
+  mutate(TTO = 1+floor((t-1)/9) ) %>%
+  mutate(
+    p_M_t1 = ifelse(TTO == 1, p_M, NA),
+    p_M_t2 = ifelse(TTO == 2, p_M, NA),
+    p_M_t3 = ifelse(TTO == 3, p_M, NA),
+  )
+
+for (yr in unique(probs_multiyrs1$year)) {
+  print(yr)
+  p_yr = 
+    probs_multiyrs1 %>%
+    filter(year == yr) %>%
+    ggplot(aes(x=t)) +
+    facet_wrap(~label, nrow=3, scales = "free") +
+    geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+    geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+    geom_errorbar(aes(x=t, ymin = p_L2, ymax = p_U2), width = .4, size=0.5) +
+    geom_errorbar(aes(x=t, ymin = p_L1, ymax = p_U1), width = .6, size=0.75) +
+    geom_point(aes(y=p_M), color="dodgerblue2", fill="white") +
+    geom_line(aes(x=t, y = p_M_t1), color="dodgerblue2", size=0.5) +
+    geom_line(aes(x=t, y = p_M_t2), color="dodgerblue2", size=0.5) +
+    geom_line(aes(x=t, y = p_M_t3), color="dodgerblue2", size=0.5) +
+    scale_x_continuous(name=TeX("Batter Sequence Number $t$"),
+                       limits = c(0,26.5),
+                       breaks = seq(3,24,by=3)) +
+    scale_y_continuous(name="Probability",
+                       # limits = c(0,26.5),
+                       # breaks = seq(3,24,by=3)
+    ) +
+    labs(title=yr) 
+  
+  ggsave(paste0("plots/", "plot_3yr_probScaleTrend_", yr, ".png"), p_yr, width=11, height=7)
+  
+}
+
+###########################################
+
+xw_multiyrs1 = xw_multiyrs %>%
+  group_by(year,t) %>%
+  summarise(
+    xw_L2 = quantile(xWOBA, 0.05),
+    xw_L1 = quantile(xWOBA, 0.25),
+    xw_M = quantile(xWOBA, 0.5),
+    xw_U1 = quantile(xWOBA, 0.75),
+    xw_U2 = quantile(xWOBA, 0.95),
+    .groups = "drop"
+  ) %>%
+  mutate(TTO = 1+floor((t-1)/9) ) %>%
+  mutate(
+    xw_M_t1 = ifelse(TTO == 1, xw_M, NA),
+    xw_M_t2 = ifelse(TTO == 2, xw_M, NA),
+    xw_M_t3 = ifelse(TTO == 3, xw_M, NA),
+  )
+
+
+for (yr in unique(probs_multiyrs1$year)) {
+  print(yr)
+  p_yr = 
+    xw_multiyrs1 %>%
+    filter(year == yr) %>%
+    ggplot(aes(x=t)) +
+    geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+    geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+    geom_errorbar(aes(x=t, ymin = xw_L2, ymax = xw_U2), width = .4, size=0.5) +
+    geom_errorbar(aes(x=t, ymin = xw_L1, ymax = xw_U1), width = .6, size=0.75) +
+    geom_point(aes(y=xw_M), color="dodgerblue2", fill="white") +
+    # geom_line(aes(x=t, y = xw_M_t1), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = xw_M_t2), color="dodgerblue2", size=0.5) +
+    # geom_line(aes(x=t, y = xw_M_t3), color="dodgerblue2", size=0.5) +
+    scale_x_continuous(name=TeX("Batter Sequence Number $t$"),
+                       limits = c(0,26.5),
+                       breaks = seq(3,24,by=3)) +
+    scale_y_continuous(name="Expected wOBA",
+                       # limits = c(0,26.5),
+                       # breaks = seq(3,24,by=3)
+    ) +
+    labs(title=yr) 
+  
+  ggsave(paste0("plots/", "plot_3yr_xwobaScaleTrend_", yr, ".png"), p_yr, width=11, height=7)
+  
+}
+
+
+
+
+
+
+
+####################################################
+s_d1 = 7
+s_d2 = 4
+
+for (yr in unique(xw_multiyrs1$year)) {
+  print(yr)
+  xw_yr = xw_multiyrs1 %>% filter(year == yr)
+  
+  {
+    xw_yr_smoothedMeans =
+      xw_yr %>%
+      rename(xWOBA = xw_M) %>%
+      mutate(
+        xwL2_s1 = smooth.spline(1:27, xw_L2, df=s_d1)$y,
+        xwL1_s1 = smooth.spline(1:27, xw_L1, df=s_d1)$y,
+        xWOBA_s1 = smooth.spline(1:27, xWOBA, df=s_d1)$y,
+        xwU1_s1 = smooth.spline(1:27, xw_U1, df=s_d1)$y,
+        xwU2_s1 = smooth.spline(1:27, xw_U2, df=s_d1)$y,
+      ) %>%
+      mutate(
+        xwL2_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_L2[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_L2[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_L2[19:27], df=s_d2)$y)),
+        xwL1_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_L1[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_L1[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_L1[19:27], df=s_d2)$y)),
+        xWOBA_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xWOBA[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xWOBA[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xWOBA[19:27], df=s_d2)$y)),
+        xwU1_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_U1[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_U1[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_U1[19:27], df=s_d2)$y)),
+        xwU2_s2 = 
+          ifelse(1 <= t & t <= 9,   smooth.spline(1:9,   xw_U2[1:9], df=s_d2)$y,
+                 ifelse(10 <= t & t <= 18, smooth.spline(10:18, xw_U2[10:18], df=s_d2)$y,
+                        smooth.spline(19:27, xw_U2[19:27], df=s_d2)$y))
+      ) %>%
+      rename(xwL2 = xw_L2,
+             xwL1 = xw_L1,
+             xwU1 = xw_U1,
+             xwU2 = xw_U2)
+  }
+  
+  plot_xwt_yr_0 = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="0")
+  plot_xwt_yr_1 = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="1")
+  plot_xwt_yr_1b = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="1b")
+  plot_xwt_yr_2 = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="2")
+  plot_xwt_yr_2b = plot_xWOBA_over_time_smooth(xw_yr_smoothedMeans, v="2b")
+  
+  # ggsave(paste0("plots/plot_xwt_", "0", "_", yr, ".png"), plot_xwt_yr_0, width=9, height=5)
+  # ggsave(paste0("plots/plot_xwt_", "1", "_", yr, ".png"), plot_xwt_yr_1, width=9, height=5)
+  # ggsave(paste0("plots/plot_xwt_", "1b", "_", yr, ".png"), plot_xwt_yr_1b, width=9, height=5)
+  # ggsave(paste0("plots/plot_xwt_", "2", "_", yr, ".png"), plot_xwt_yr_2, width=9, height=5)
+  # ggsave(paste0("plots/plot_xwt_", "2b", "_", yr, ".png"), plot_xwt_yr_2b, width=9, height=5)
+}
+
