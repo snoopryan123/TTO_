@@ -19,8 +19,13 @@ output_folder = './job_output/'
 ### here, set a default value of YRS = 2018
 if (!exists("YRS")) { YRS = 2018 } 
   
+### load data D: get filename
+CHANGE_DIR = if (exists("IS_SIM")) { IS_SIM } else if (exists("IS_COMP")) { IS_COMP } else { FALSE }
+og_dir = getwd()
+if (CHANGE_DIR) { setwd("..") }
+input_file = "../data/TTO_dataset_510.csv"  
+if (CHANGE_DIR) { setwd(og_dir) }
 ### load data D
-input_file = "../../data/TTO_dataset_510.csv"  
 D <- read_csv(input_file) 
 D <- D %>% filter(YEAR %in% YRS) ### get YRS from config fig
 D <- D %>% filter(ORDER_CT <= 3) 
@@ -42,14 +47,20 @@ ORDER_CT_dummies <- ORDER_CT_dummies[,2:ncol(ORDER_CT_dummies)] ## remove interc
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 # BSN data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
+
 # SPLINE data matrices
-knots = c(rep(9.5,4), rep(18.5,4), rep(27.5,4))  
 aa = unique(D$BATTER_SEQ_NUM) 
-BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
+# ### spline model with discontinuities between each TTO
+# knots = c(rep(9.5,4), rep(18.5,4), rep(27.5,4))  
+# BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
+### one cubic spline over batters 1...27 with 4 df
+BB_ <- bs(aa, df=4)
 colnames(BB_) = paste0("B",1:ncol(BB_))
 BB = as_tibble(BB_)
 bbb = as.matrix(BB)
-SPL = S ##SPL = S %*% bbb 
+SPL = S %*% bbb ### spline model: spline basis with 4 degrees of freedom
+# SPL = S ### indicator model: 27 b.s.n. indicators
+
 # Batter Learning data matrix
 O <- as.matrix(ORDER_CT_dummies)
 # observed plate appearance outcomes
