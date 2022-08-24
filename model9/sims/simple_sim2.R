@@ -63,11 +63,17 @@ assess_eta_fit <- function(m, byCol=TRUE) {
 
 ### m1
 m1 <- multinom(y ~ S + X + 0)
+assess_eta_fit(m1)
+alpha_27_m1 = t( coefficients(m1)[,startsWith(colnames(coefficients(m1)), "S")] )
+rowMeans( abs(alpha_27_m1 - alpha_mat[,2:ncol(alpha_mat)]) )
+
+# print(m1); print(cbind(t(alpha_mat)[2:7,], t(eta_mat)[2:7,]))
+
+### m3b
+m3b <- multinom(y ~ SPL3 + X + 0)
 assess_eta_fit(m3b)
 alpha_27_m3b = t( coefficients(m3b)[,startsWith(colnames(coefficients(m3b)), "SPL")] %*% t(bbb3) )
 rowMeans( abs(alpha_27_m3b - alpha_mat[,2:ncol(alpha_mat)]) )
-
-
 
 
 
@@ -81,7 +87,6 @@ rowMeans( abs(alpha_27_m3b - alpha_mat[,2:ncol(alpha_mat)]) )
 m2 <- multinom(y ~ S + O + X + 0)
 
 m3 <- multinom(y ~ SPL3 + O + X + 0)
-m3b <- multinom(y ~ SPL3 + X + 0)
 
 m4 <- multinom(y ~ SPL4 + O + X + 0)
 m5 <- multinom(y ~ SPL5 + O + X + 0)
@@ -111,8 +116,4 @@ alpha_mat[,2:ncol(alpha_mat)]
 alpha_27_m3 = t( coefficients(m3)[,startsWith(colnames(coefficients(m3)), "SPL")] %*% t(bbb3) )
 rowMeans( abs(alpha_27_m3 - alpha_mat[,2:ncol(alpha_mat)]) )
 
-### assess m3b fit of batter_seq_num params
-assess_eta_fit(m3b)
-alpha_27_m3b = t( coefficients(m3b)[,startsWith(colnames(coefficients(m3b)), "SPL")] %*% t(bbb3) )
-rowMeans( abs(alpha_27_m3b - alpha_mat[,2:ncol(alpha_mat)]) )
 
