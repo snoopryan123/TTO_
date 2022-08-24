@@ -19,14 +19,13 @@ output_folder = './job_output/'
 ### here, set a default value of YRS = 2018
 if (!exists("YRS")) { YRS = 2018 } 
   
-### load data D: get filename
+### load data D
 CHANGE_DIR = if (exists("IS_SIM")) { IS_SIM } else if (exists("IS_COMP")) { IS_COMP } else { FALSE }
 og_dir = getwd()
 if (CHANGE_DIR) { setwd("..") }
 input_file = "../data/TTO_dataset_510.csv"  
-if (CHANGE_DIR) { setwd(og_dir) }
-### load data D
 D <- read_csv(input_file) 
+if (CHANGE_DIR) { setwd(og_dir) }
 D <- D %>% filter(YEAR %in% YRS) ### get YRS from config fig
 D <- D %>% filter(ORDER_CT <= 3) 
 D <- D %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1) 
