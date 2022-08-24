@@ -5,14 +5,14 @@
 library(rstan)
 rstan_options(auto_write = TRUE)
 ##### uncomment these if working on my computer #####
-cores = 1
-NUM_ITS = 10
+# cores = 1
+# NUM_ITS = 10
 # #### options(mc.cores = parallel::detectCores())
 #####################################################
 ####### uncomment these if working on HPCC ##########
-# cores=1#strtoi(Sys.getenv('OMP_NUM_THREADS')) 
-# options(mc.cores = cores) ### for HPCC
-# NUM_ITS = 2000 #2500 #1500 #5000
+cores=strtoi(Sys.getenv('OMP_NUM_THREADS'))
+options(mc.cores = cores) ### for HPCC
+NUM_ITS = 2000 #2500 #1500 #5000
 
 ###########################################
 ########### RSTAN MODEL: BSN_BL ###########
