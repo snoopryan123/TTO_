@@ -122,7 +122,8 @@ D0 <- read_csv(input_file) #%>% drop_na()
 
 probs_allyrs = tibble()
 xw_allyrs = tibble()
-for (year in 2010:2019) {
+# for (year in 2010:2019) {
+for (year in 2018) {
   print(paste0("*** ", year, " ***"))
   ### posterior samples of model
   # year = 2019 #2018 # 2020

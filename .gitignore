@@ -10,3 +10,8 @@ data_wrangling/.Rhistory
 *.jpg
 *.JPEG
 *.png
+
+!*prev_fit_for_sim.rds
+!*params_sim_alpha.csv
+!*params_sim_beta.csv
+!*params_sim_eta.csv
