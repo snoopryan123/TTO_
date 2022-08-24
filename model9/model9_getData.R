@@ -42,7 +42,7 @@ BATTER_SEQ_dummies <- D %>% modelr::model_matrix(~ factor(BATTER_SEQ_NUM) + 0)
 names(BATTER_SEQ_dummies) <- change_factor_names(names(BATTER_SEQ_dummies))
 # categorical dummies for ORDER_CT;; (plus INTERCEPT potentially)
 ORDER_CT_dummies <- D %>% modelr::model_matrix(~ factor(ORDER_CT))  # + 0)
-ORDER_CT_dummies <- ORDER_CT_dummies[,2:ncol(ORDER_CT_dummies)] ## remove intercept
+# ORDER_CT_dummies <- ORDER_CT_dummies[,2:ncol(ORDER_CT_dummies)] ## remove intercept
 names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 # BSN data matrices 
 S <- as.matrix(BATTER_SEQ_dummies)
