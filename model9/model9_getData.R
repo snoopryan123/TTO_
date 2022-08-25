@@ -58,10 +58,19 @@ colnames(BB_) = paste0("B",1:ncol(BB_))
 BB = as_tibble(BB_)
 bbb = as.matrix(BB)
 SPL = S %*% bbb ### spline model: spline basis with 4 degrees of freedom
+
+# bbb = as.matrix(as_tibble(bs(aa, df=4)))
+# colnames(bbb) = paste0("B",1:ncol(bbb))
+# SPL_1b = S %*% bbb
+
 # SPL = S ### indicator model: 27 b.s.n. indicators
 
 # Batter Learning data matrix
 O <- as.matrix(ORDER_CT_dummies)
+
+# intercept matrix (for BL_only model)
+Incpt <- matrix(1, nrow=nrow(D), ncol=1)
+
 # observed plate appearance outcomes
 y_og <- D$EVENT_WOBA_19
 categories = sort(unique(y_og))
