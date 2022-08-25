@@ -5,7 +5,7 @@ YRS=2018
 # YRS=2017:2019
 s=1
 
-OUTPUT_FILE = paste0("sim",SIM_NUM,"simple_model_bsnBL_", s) 
+OUTPUT_FILE = paste0("sim",SIM_NUM,"_simple_model_bsnBL_", s) 
 source("../model9_getData.R") ### get observed data 
 source("sim_simulateData.R") ### get simulated outcomes and "true" params
 

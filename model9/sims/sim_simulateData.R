@@ -39,7 +39,7 @@ get_outcome <- function(i) { # get the categorical outcome in {1,2,...,7} of row
 set.seed(s) 
 y = matrix( sapply(1:nrow(linpred), get_outcome), ncol=1)
 
-saveRDS(y, file = paste0(output_folder, "y_", OUTPUT_FILE, ".rds"))
+# saveRDS(y, file = paste0(output_folder, "y_", OUTPUT_FILE, ".rds"))
 #y <- readRDS("./job_output/y_sim_model_bsnBL_1.rds") 
 
 
