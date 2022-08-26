@@ -53,7 +53,8 @@ aa = unique(D$BATTER_SEQ_NUM)
 # knots = c(rep(9.5,4), rep(18.5,4), rep(27.5,4))  
 # BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
 ### one cubic spline over batters 1...27 with 4 df
-BB_ <- bs(aa, df=4)
+# BB_ <- bs(aa, df=4)
+BB_ <- bs(aa, df=4, intercept=TRUE)
 colnames(BB_) = paste0("B",1:ncol(BB_))
 BB = as_tibble(BB_)
 bbb = as.matrix(BB)
