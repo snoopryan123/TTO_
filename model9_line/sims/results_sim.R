@@ -226,7 +226,7 @@ beta_is_covered = beta_checkAll %>%
   gt()
 beta_is_covered 
 gtsave(beta_is_covered,
-       paste0("plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+       paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
        vwidth=1500, vheight=1500)
 
 
@@ -261,7 +261,7 @@ probs_check_plot = probs_checkAll %>%
   ylab("probability") + 
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 probs_check_plot
-ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_probs_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_probs_check", ".png"),
        probs_check_plot, width=12, height=12)
 
 
@@ -277,7 +277,7 @@ xwoba_check_plot = xwoba_checkAll %>%
   ylab("wOBA") + 
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot
-ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_xwoba_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check", ".png"),
        xwoba_check_plot, width=8, height=8)
 
 
@@ -301,7 +301,7 @@ if (SIM_NUM != 1) {
     geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
 }
 beta_check_plot
-ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
        beta_check_plot, width=9, height=5)
 
 
@@ -319,7 +319,7 @@ eta_check_plot = eta_checkAll %>%
   geom_point(aes(y=etaM), col="black", size=2, stroke=1, shape=21, fill="white") +
   geom_point(aes(y=eta_true), col="firebrick", size=4, shape=18) 
 eta_check_plot
-ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
        eta_check_plot, width=12, height=8)
 
 
