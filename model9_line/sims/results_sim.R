@@ -215,6 +215,8 @@ for (s in 1:10) {
 
 library(gt)
 
+sss = 2
+
 beta_is_covered = beta_checkAll %>% 
   group_by(tto,c) %>%
   summarise(
@@ -238,11 +240,7 @@ eta_is_covered = eta_checkAll %>%
   )
 data.frame(eta_is_covered)
 
-  
-
 #################### PLOTS #################### 
-
-sss = 2
 
 probs_check_plot = probs_checkAll %>%
   filter(s == sss) %>%
