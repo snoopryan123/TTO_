@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {4..7}
+for i in {3..7}
 do
    ####echo "moving $i"
    mv ./job_output/fit_obs_model_SingleSplOnlyyrs_18_df${i}_.rds           ../../Dropbox/HPCC/fit_obs_model_SingleSplOnlyyrs_18_df${i}_.rds

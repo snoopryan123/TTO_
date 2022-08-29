@@ -19,7 +19,7 @@ category_strings <- c("out","BB","HBP","1B","2B","3B","HR")
 ### Explore a previous fit to find a reasonable spline over b.s.n ####
 ######################################################################
 
-fit <- readRDS("prev_fit_for_sim.rds") 
+fit <- readRDS("prev_fit_for_sim.rds")
 draws <- as.matrix(fit)
 
 ### alpha means

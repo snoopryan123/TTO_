@@ -54,7 +54,8 @@ aa = unique(D$BATTER_SEQ_NUM)
 # BB_ <- bs(aa, knots=knots, degree=3, intercept = TRUE) # creating the B-splines
 
 ### one cubic spline over batters 1...27 with _ df
-bbb = as.matrix(as_tibble(bs(aa, df=5)))
+if (!exists("spl_df")) { spl_df = 5 }  ### set a default of 5 df
+bbb = as.matrix(as_tibble(bs(aa, df=spl_df)))
 colnames(bbb) = paste0("B",1:ncol(bbb))
 SPL = S %*% bbb
 
