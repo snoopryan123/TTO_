@@ -225,8 +225,7 @@ beta_is_covered = beta_checkAll %>%
     is_covered_95 = mean(is_covered_95),
     same_sign = mean(same_sign),
     .groups = "drop"
-  ) %>%
-  gt()
+  ) #%>% gt()
 beta_is_covered 
 # gtsave(beta_is_covered,
 #        paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
