@@ -49,7 +49,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 1
-for (s in 1:2) {
+for (s in 1:10) {
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
   ### import fit from rstan
   fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, ".rds"))
