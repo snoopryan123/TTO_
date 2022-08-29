@@ -17,7 +17,7 @@ fit_to_posterior_probs <- function(fit,S,O,X) {
     alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
     beta_draws_k = beta_draws[,endsWith(colnames(beta_draws), paste0(k,"]"))] 
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = (S%*%bbb) %*% t(alpha_draws_k) + O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
+    linpred_k = S%*%t(alpha_draws_k) + O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -61,7 +61,7 @@ for (s in 1:2) {
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
-  S_tilde = diag(27)
+  S_tilde = cbind(1, 1:27)
   O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
   X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
   probs_tilde = fit_to_posterior_probs(fit, S_tilde, O_tilde, X_tilde)
@@ -71,7 +71,7 @@ for (s in 1:2) {
     x_tilde = c(logit(0.315), logit(0.315), 1, 0)
     raw_probs_tilde_true = tibble()
     for (kk in 1:7) {
-      alpha_k = (alpha_tib %>% filter(k == kk))$alpha_spl
+      alpha_k = (alpha_tib %>% filter(k == kk))$alpha_line
       eta_k = (eta_tib %>% filter(k == kk))$eta
       beta_2k = (beta_tib %>% filter(k==kk & sim_num==SIM_NUM))$beta_2
       beta_3k = (beta_tib %>% filter(k==kk & sim_num==SIM_NUM))$beta_3
@@ -225,9 +225,9 @@ beta_is_covered = beta_checkAll %>%
   ) %>%
   gt()
 beta_is_covered 
-# gtsave(beta_is_covered, 
-#        paste0("plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
-#        vwidth=1500, vheight=1500)
+gtsave(beta_is_covered,
+       paste0("plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+       vwidth=1500, vheight=1500)
 
 
 eta_is_covered = eta_checkAll %>% 
@@ -301,8 +301,8 @@ if (SIM_NUM != 1) {
     geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
 }
 beta_check_plot
-# ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
-#        beta_check_plot, width=9, height=5)
+ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
+       beta_check_plot, width=9, height=5)
 
 
 eta_check_plot = eta_checkAll %>%
@@ -319,8 +319,9 @@ eta_check_plot = eta_checkAll %>%
   geom_point(aes(y=etaM), col="black", size=2, stroke=1, shape=21, fill="white") +
   geom_point(aes(y=eta_true), col="firebrick", size=4, shape=18) 
 eta_check_plot
-# ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
-#        eta_check_plot, width=12, height=8)
+ggsave(paste0("plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
+       eta_check_plot, width=12, height=8)
+
 
 
 
