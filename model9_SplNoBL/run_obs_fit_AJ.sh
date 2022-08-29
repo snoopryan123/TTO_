@@ -12,4 +12,4 @@
 ## MORE RAM
 ####$ -l m_mem_free=10G
 
-Rscript --vanilla run_obs_fit-$SGE_TASK_ID.R
+Rscript --vanilla obs_fit-$SGE_TASK_ID.R
