@@ -213,7 +213,8 @@ for (s in 1:10) {
 
 #################### summmary stats over all sims #################### 
 
-library(gt)
+# library(gt)
+library(gridExtra)
 
 sss = 2
 
@@ -227,9 +228,15 @@ beta_is_covered = beta_checkAll %>%
   ) %>%
   gt()
 beta_is_covered 
-gtsave(beta_is_covered,
-       paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
-       vwidth=1500, vheight=1500)
+# gtsave(beta_is_covered,
+#        paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+#        vwidth=1500, vheight=1500)
+
+png(paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+    height=1500, width=1500)
+p<-tableGrob(beta_is_covered)
+grid.arrange(p)
+dev.off()
 
 
 eta_is_covered = eta_checkAll %>% 
