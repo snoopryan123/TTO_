@@ -3,9 +3,15 @@
 ### get "true" simulation parameters ###
 ########################################
 
-alpha_tib = read_csv("param_creation/params_sim_alpha.csv")
-beta_tib = read_csv("param_creation/params_sim_beta.csv")
-eta_tib = read_csv("param_creation/params_sim_eta.csv")
+if (underlying == "line") {
+  param_creation_folder = "param_creation"
+} else if (underlying == "cubic") {
+  param_creation_folder = "param_creation_cubic"
+} 
+
+alpha_tib = read_csv(paste0(param_creation_folder, "/params_sim_alpha.csv"))
+beta_tib = read_csv(paste0(param_creation_folder,"/params_sim_beta.csv"))
+eta_tib = read_csv(paste0(param_creation_folder,"/params_sim_eta.csv"))
 
 alpha_mat = matrix(nrow=dim(S)[2], ncol=num_categories)
 for (kk in 1:7) {

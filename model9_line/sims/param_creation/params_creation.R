@@ -42,11 +42,9 @@ alpha_tib %>%
 ### alpha means: lined
 alpha_line = numeric()
 for (kk in 1:7) {
-  # alpha_line_k0 = t(bbb) %*% matrix((alpha_tib %>% filter(k==kk))$alpha)
-  # alpha_line_k = as.numeric( t(alpha_line_k0) %*% t(bbb) )
   alpha_line_k = lm(a~t, data=  tibble(t=1:27, a=(alpha_tib %>% filter(k==kk))$alpha) )
   alpha_line_k = predict(alpha_line_k, tibble(t=1:27))
-  alpha_line = c(alpha_line, alpha_line_k)
+  alpha_line = c(alpha_line, alpha_line_k)z
 }
 alpha_tib$alpha_line = alpha_line
 

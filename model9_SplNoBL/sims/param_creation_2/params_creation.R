@@ -20,7 +20,7 @@ category_strings <- c("out","BB","HBP","1B","2B","3B","HR")
 ######################################################################
 
 # fit <- readRDS("prev_fit_for_sim.rds")
-spl_df = 5 #FIXME
+spl_df = 3 #FIXME
 fit <- readRDS(paste0("fit_obs_model_SingleSplOnlyyrs_18_df", spl_df, "_.rds"))
 draws <- as.matrix(fit)
 
