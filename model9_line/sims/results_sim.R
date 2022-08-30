@@ -1,7 +1,7 @@
 
 ########################
 source("sim_config.R")
-for (SIM_NUM in 1:2) {
+# for (SIM_NUM in 1:2) {
 # SIM_NUM = 2 #1 #2
 # YRS = 2018
 ########################
@@ -53,7 +53,8 @@ probs_checkAll = tibble()
 for (s in 1:10) {
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
   ### import fit from rstan
-  fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, ".rds"))
+  # fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, ".rds"))
+  fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, "_underlying_", underlying,".rds"))
   draws <- as.matrix(fit)
   print("*****"); print(s); print("*****");
   
@@ -327,7 +328,7 @@ eta_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
        eta_check_plot, width=12, height=8)
 
-}
+# }
 
 
 
