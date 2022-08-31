@@ -2,7 +2,7 @@
 ########################
 source("sim_config.R")
 # for (SIM_NUM in 1:2) {
-# SIM_NUM = 2 #1 #2
+SIM_NUM = 1 #1 #2
 # YRS = 2018
 ########################
 source("../model9_getData.R") ### get observed data 
@@ -51,7 +51,13 @@ eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 1
 for (s in 1:10) {
+  print(paste0("sleeping ", s))
+  
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
+  
+  Sys.sleep(5)
+  
+  
   ### import fit from rstan
   # fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, ".rds"))
   fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, "_underlying_", underlying,".rds"))
@@ -193,6 +199,15 @@ for (s in 1:10) {
   eta_checkAll = bind_rows(eta_checkAll, eta_check)
 }
 
+write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_beta_checkAll.csv"))
+write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_eta_checkAll.csv"))
+write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_probs_checkAll.csv"))
+
+
+
+
+########################################
+
 {
   xwoba_checkAll = probs_checkAll %>%
     mutate(w = categories[k]) %>%
@@ -215,8 +230,8 @@ for (s in 1:10) {
 
 #################### summmary stats over all sims #################### 
 
-# library(gt)
-library(gridExtra)
+library(gt)
+# library(gridExtra)
 
 sss = 2
 
@@ -227,17 +242,17 @@ beta_is_covered = beta_checkAll %>%
     is_covered_95 = mean(is_covered_95),
     same_sign = mean(same_sign),
     .groups = "drop"
-  ) #%>% gt()
-beta_is_covered 
-# gtsave(beta_is_covered,
-#        paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
-#        vwidth=1500, vheight=1500)
+  ) %>% gt()
+# beta_is_covered 
+gtsave(beta_is_covered,
+       paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+       vwidth=1500, vheight=1500)
 
-png(paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
-    height=1500, width=1500)
-p<-tableGrob(beta_is_covered)
-grid.arrange(p)
-dev.off()
+# png(paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+#     height=1500, width=1500)
+# p<-tableGrob(beta_is_covered)
+# grid.arrange(p)
+# dev.off()
 
 
 eta_is_covered = eta_checkAll %>% 
@@ -245,8 +260,12 @@ eta_is_covered = eta_checkAll %>%
   summarise(
     is_covered_50 = mean(is_covered_50),
     is_covered_95 = mean(is_covered_95),
-  )
-data.frame(eta_is_covered)
+    .groups="drop"
+  ) %>% gt()
+# data.frame(eta_is_covered)
+gtsave(eta_is_covered,
+       paste0("plots/plot_etaStats_sim", SIM_NUM, "_s", sss, ".png"),
+       vwidth=1500, vheight=1500)
 
 #################### PLOTS #################### 
 

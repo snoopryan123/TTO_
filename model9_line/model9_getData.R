@@ -2,7 +2,7 @@
 ### load the observed data 
 
 library(tidyverse)
-library(ggthemes)
+# library(ggthemes)
 library(latex2exp)
 library(splines)
 theme_set(theme_bw())
