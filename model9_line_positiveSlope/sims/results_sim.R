@@ -2,23 +2,26 @@
 ########################
 source("sim_config.R")
 # for (SIM_NUM in 1:2) {
-SIM_NUM = 2 #1 #2
+SIM_NUM = 1 #1 #2
 # YRS = 2018
 ########################
 source("../model9_getData.R") ### get observed data 
 
-fit_to_posterior_probs <- function(fit,S,O,X) {
+fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
   draws=as.matrix(fit)
-  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+  alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
+  alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
   beta_draws = draws[,str_detect(colnames(draws), "^beta")] 
   eta_draws = draws[,str_detect(colnames(draws), "^eta")]
   linpreds = list()
   for (k in 1:7) {
     print(k)
-    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    alpha_incpt_draws_k = alpha_incpt_draws[,endsWith(colnames(alpha_incpt_draws), paste0(k,"]"))]
+    alpha_slope_draws_k = alpha_slope_draws[,endsWith(colnames(alpha_slope_draws), paste0(k,"]"))]
     beta_draws_k = beta_draws[,endsWith(colnames(beta_draws), paste0(k,"]"))] 
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = S%*%t(alpha_draws_k) + O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
+    linpred_k = INCPT%*%t(alpha_incpt_draws_k) + S%*%t(alpha_slope_draws_k) + 
+                O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -64,15 +67,17 @@ for (s in 1:10) {
   draws <- as.matrix(fit)
   print("*****"); print(s); print("*****");
   
-  alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
+  alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
+  alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
   beta_draws <- draws[,startsWith(colnames(draws), "beta")]
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
-  S_tilde = cbind(1, 1:27)
+  INCPT_tilde = cbind(rep(1,27))
+  S_tilde = cbind(1:27) ## cbind(1, 1:27)
   O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
   X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
-  probs_tilde = fit_to_posterior_probs(fit, S_tilde, O_tilde, X_tilde)
+  probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
   
   ### get true t -> P(y=k|t,x)
   {
@@ -295,7 +300,7 @@ gtsave(eta_is_covered,
 
 #################### PLOTS #################### 
 
-sss = 2 # 7 # 10 # 2
+sss = 5 # sim2: 7, 6, 9    # sim1: 5
 
 beta_check_plot = beta_checkAll %>%
   filter(s == sss) %>%

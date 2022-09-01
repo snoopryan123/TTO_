@@ -3,18 +3,21 @@
 library(tidyverse)
 ########################
 
-fit_to_posterior_probs <- function(fit,S,O,X) {
+fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
   draws=as.matrix(fit)
-  alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
+  alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
+  alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
   beta_draws = draws[,str_detect(colnames(draws), "^beta")] 
   eta_draws = draws[,str_detect(colnames(draws), "^eta")]
   linpreds = list()
   for (k in 1:7) {
     print(k)
-    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    alpha_incpt_draws_k = alpha_incpt_draws[,endsWith(colnames(alpha_incpt_draws), paste0(k,"]"))]
+    alpha_slope_draws_k = alpha_slope_draws[,endsWith(colnames(alpha_slope_draws), paste0(k,"]"))]
     beta_draws_k = beta_draws[,endsWith(colnames(beta_draws), paste0(k,"]"))] 
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = S%*%t(alpha_draws_k) + O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
+    linpred_k = INCPT%*%t(alpha_incpt_draws_k) + S%*%t(alpha_slope_draws_k) + 
+                O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -47,14 +50,14 @@ eta_checkAll = tibble()
 probs_checkAll = tibble()
 
 # for (s in 12:19) { # 12:19) {    # 18:18) {
-s = 14
+s = 15
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
   
   YRS = 2000 + s
   source("model9_getData.R") ### get observed data 
   
-  Sys.sleep(7) ###
+  Sys.sleep(5) ###
   
   ### import fit from rstan
   fit <- readRDS(paste0(output_folder, "fit_obs_model_lineyrs_",s,"_.rds"))
@@ -65,10 +68,11 @@ s = 14
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
-  S_tilde = cbind(1, 1:27)
+  INCPT_tilde = cbind(rep(1,27))
+  S_tilde = cbind(1:27) ## cbind(1, 1:27)  
   O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
   X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
-  probs_tilde = fit_to_posterior_probs(fit, S_tilde, O_tilde, X_tilde)
+  probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
   # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
   
   probs_check = probs_tilde %>%
@@ -175,37 +179,59 @@ sig_neg_color = "firebrick"
 
 #################### PLOTS #################### 
 
-beta_check_plot = beta_checkAll %>%
-  mutate(sig = ifelse(beta_L95 > 0, 1, 0),
-         sig_neg = ifelse(beta_U95 < 0, 1, 0)) %>%
-  mutate(beta_L95_sig = ifelse(sig, beta_L95, NA),
-         beta_U95_sig = ifelse(sig, beta_U95, NA),
-         beta_L50_sig = ifelse(sig, beta_L50, NA),
-         beta_U50_sig = ifelse(sig, beta_U50, NA),
-         betaM_sig = ifelse(sig, betaM, NA),
-         beta_L95_sig_neg = ifelse(sig_neg, beta_L95, NA),
-         beta_U95_sig_neg = ifelse(sig_neg, beta_U95, NA),
-         beta_L50_sig_neg = ifelse(sig_neg, beta_L50, NA),
-         beta_U50_sig_neg = ifelse(sig_neg, beta_U50, NA),
-         betaM_sig_neg = ifelse(sig_neg, betaM, NA)
-  ) %>%
-  filter(s == sss) %>%
-  mutate(tto = paste0(tto, "TTO")) %>%
-  ggplot(aes(x=fct_reorder(c, k))) +
-  facet_wrap(~tto, nrow=1) +
-  theme(panel.spacing = unit(2, "lines")) +
-  xlab("") + ylab(TeX("$\\beta$")) +
-  geom_hline(yintercept=0, size=0.5, col="grey") +
-  # geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5) +
-  geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5) +
-  geom_errorbar(aes(ymin=beta_L95_sig, ymax=beta_U95_sig), width = 0.5, color=sig_color) +
-  geom_errorbar(aes(ymin=beta_L95_sig_neg, ymax=beta_U95_sig_neg), width = 0.5, color=sig_neg_color) +
-  geom_errorbar(aes(ymin=beta_L50, ymax=beta_U50), width = 0.25, size=1) +
-  geom_errorbar(aes(ymin=beta_L50_sig, ymax=beta_U50_sig), width = 0.25, size=1, color=sig_color) +
-  geom_errorbar(aes(ymin=beta_L50_sig_neg, ymax=beta_U50_sig_neg), width = 0.25, size=1, color=sig_neg_color) +
-  geom_point(aes(y=betaM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_point(aes(y=betaM_sig), col=sig_color, size=2, stroke=1, shape=21, fill="white") +
-  geom_point(aes(y=betaM_sig_neg), col=sig_neg_color, size=2, stroke=1, shape=21, fill="white")
+{
+    beta_check_plot_df = beta_checkAll %>%
+      mutate(sig = ifelse(beta_L95 > 0, 1, 0),
+             sig_neg = ifelse(beta_U95 < 0, 1, 0)) %>%
+      mutate(beta_L95_sig = ifelse(sig, beta_L95, NA),
+             beta_U95_sig = ifelse(sig, beta_U95, NA),
+             beta_L50_sig = ifelse(sig, beta_L50, NA),
+             beta_U50_sig = ifelse(sig, beta_U50, NA),
+             betaM_sig = ifelse(sig, betaM, NA),
+             beta_L95_sig_neg = ifelse(sig_neg, beta_L95, NA),
+             beta_U95_sig_neg = ifelse(sig_neg, beta_U95, NA),
+             beta_L50_sig_neg = ifelse(sig_neg, beta_L50, NA),
+             beta_U50_sig_neg = ifelse(sig_neg, beta_U50, NA),
+             betaM_sig_neg = ifelse(sig_neg, betaM, NA)
+      ) %>%
+      filter(s == sss) %>%
+      mutate(tto = paste0(tto, "TTO"))
+    beta_check_plot = beta_check_plot_df %>%
+      ggplot(aes(x=fct_reorder(c, k))) +
+      facet_wrap(~tto, nrow=1) +
+      theme(panel.spacing = unit(2, "lines")) +
+      xlab("") + ylab(TeX("$\\beta$")) +
+      geom_hline(yintercept=0, size=0.5, col="grey") +
+      geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5)
+    if (!all(beta_check_plot_df$sig == 0)) {
+      beta_check_plot = beta_check_plot + 
+        geom_errorbar(aes(ymin=beta_L95_sig, ymax=beta_U95_sig), width = 0.5, color=sig_color) 
+    }
+    if (!all(beta_check_plot_df$sig_neg == 0)) {
+      beta_check_plot = beta_check_plot + 
+        geom_errorbar(aes(ymin=beta_L95_sig_neg, ymax=beta_U95_sig_neg), width = 0.5, color=sig_neg_color)
+    }
+    beta_check_plot = beta_check_plot + 
+      geom_errorbar(aes(ymin=beta_L50, ymax=beta_U50), width = 0.25, size=1) 
+    if (!all(beta_check_plot_df$sig == 0)) {
+      beta_check_plot = beta_check_plot + 
+        geom_errorbar(aes(ymin=beta_L50_sig, ymax=beta_U50_sig), width = 0.25, size=1, color=sig_color) 
+    }
+    if (!all(beta_check_plot_df$sig_neg == 0)) {
+      beta_check_plot = beta_check_plot + 
+        geom_errorbar(aes(ymin=beta_L50_sig_neg, ymax=beta_U50_sig_neg), width = 0.25, size=1, color=sig_neg_color)
+    }
+    beta_check_plot = beta_check_plot + 
+      geom_point(aes(y=betaM), col="black", size=2, stroke=1, shape=21, fill="white")
+    if (!all(beta_check_plot_df$sig == 0)) {
+      beta_check_plot = beta_check_plot + 
+        geom_point(aes(y=betaM_sig), col=sig_color, size=2, stroke=1, shape=21, fill="white") 
+    }
+    if (!all(beta_check_plot_df$sig_neg == 0)) {
+      beta_check_plot = beta_check_plot + 
+        geom_point(aes(y=betaM_sig_neg), col=sig_neg_color, size=2, stroke=1, shape=21, fill="white")
+    }
+}
 beta_check_plot
 ggsave(paste0("plots/beta_plots/plot_obs_results_", 2000+sss, "_beta_check", ".png"),
        beta_check_plot, width=9, height=5)
