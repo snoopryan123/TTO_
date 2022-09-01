@@ -1,8 +1,9 @@
-# SIM_NUM = 1 ## simulation: no batter learning
-SIM_NUM = 2 ## simulation: yes batter learning
+# SIM_NUM = 1 ### no TTOP batter learning bumps
+# SIM_NUM = 2 ### TTOP batter learning bumps consistent with Tango's effect size
+SIM_NUM = 3 ### absurdly huge 3TTOP batter learning bump
 
 underlying = "line" ## simulation: "true" pitcher fatigue is linear
-# underlying = "cubic" ## simulation: "true" pitcher fatigue is cubic
+### underlying = "cubic" ## simulation: "true" pitcher fatigue is cubic
 
-YRS = 2018 ### #2018 #2017:2019
+YRS = 2018
 IS_SIM = TRUE

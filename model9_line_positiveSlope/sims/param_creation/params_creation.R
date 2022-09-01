@@ -90,8 +90,11 @@ beta_tib = bind_rows(
   tibble(k = 1:7, sim_num = 2,
    beta_3 = c(0, 0.1, 0, 0.2, 0.1, 0, 0.1)/1.5, 
    beta_2 = c(0, 0.1, 0, 0.2, 0.1, 0, 0.1)/3.25
-    # beta_3 = c(0, 0, 0, 0.2, 0.1, 0, 0.1)/1.5, 
-    # beta_2 = c(0, 0, 0, 0.2, 0.1, 0, 0.1)/3.25
+  ),
+  tibble(k = 1:7, sim_num = 3,
+         # beta_3 = c(0, 0.1, 0, 0.2, 0.1, 0, 0.1), 
+         beta_3 = c(0, 0.1, 0.1, 0.3, 0.1, 0.1, 0.15), 
+         beta_2 = 0
   )
 ) %>% mutate(c = category_strings[k])
 beta_tib
@@ -103,8 +106,9 @@ write_csv(beta_tib, "params_sim_beta.csv")
 
 ### corresponding probability means
 # SIM_NUM = 1 ### no TTOP batter learning bumps
-# SIM_NUM = 2 ### yes TTOP batter learning bumps
-for (SIM_NUM in c(1,2)) {
+# SIM_NUM = 2 ### TTOP batter learning bumps consistent with Tango's effect size
+# SIM_NUM = 3 ### absurdly huge 3TTOP batter learning bump
+for (SIM_NUM in c(1,2,3)) {
   x_tilde = c(logit(0.315), logit(0.315), 1, 0)
   raw_p = tibble()
   for (kk in 1:7) {
