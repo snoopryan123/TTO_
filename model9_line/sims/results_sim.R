@@ -2,7 +2,7 @@
 ########################
 source("sim_config.R")
 # for (SIM_NUM in 1:2) {
-SIM_NUM = 1 #1 #2
+SIM_NUM = 2 #1 #2
 # YRS = 2018
 ########################
 source("../model9_getData.R") ### get observed data 
@@ -103,9 +103,11 @@ for (s in 1:10) {
     group_by(k,t) %>%
     summarise(
       p_L95 = quantile(p, 0.025),
+      p_L70 = quantile(p, 0.05),
       p_L50 = quantile(p, 0.25),
       pM = mean(p),
       p_U50 = quantile(p, 0.75),
+      p_U70 = quantile(p, 0.95),
       p_U95 = quantile(p, 0.975),
       .groups = "drop"
     ) %>%
@@ -115,10 +117,12 @@ for (s in 1:10) {
     left_join(probs_tilde_true) %>%
     relocate(p_true, .after = pM) %>%
     mutate(is_covered_50 = as.numeric(p_L50 <= p_true & p_true <= p_U50)) %>%
+    mutate(is_covered_95 = as.numeric(p_L70 <= p_true & p_true <= p_U70)) %>%
     mutate(is_covered_95 = as.numeric(p_L95 <= p_true & p_true <= p_U95)) %>%
     mutate(abs_diff = abs(p_true - pM)) %>%
     mutate(same_sign = ifelse(p_true != 0, as.numeric(p_true*pM > 0), NA)) %>%
     mutate(ci_50_length = p_U50 - p_L50) %>%
+    mutate(ci_70_length = p_U70 - p_L70) %>%
     mutate(ci_95_length = p_U95 - p_L95) %>%
     filter(k != 1) %>%
     mutate(s = s) %>% relocate(s, .before=k)
@@ -138,9 +142,11 @@ for (s in 1:10) {
     group_by(k, tto) %>%
     summarise(
       beta_L95 = quantile(beta, 0.025),
+      beta_L70 = quantile(beta, 0.05),
       beta_L50 = quantile(beta, 0.25),
       betaM = mean(beta),
       beta_U50 = quantile(beta, 0.75),
+      beta_U70 = quantile(beta, 0.95),
       beta_U95 = quantile(beta, 0.975),
       .groups = "drop"
     ) %>%
@@ -150,10 +156,12 @@ for (s in 1:10) {
     relocate(c, .after = k) %>%
     relocate(beta_true, .after = betaM) %>%
     mutate(is_covered_50 = as.numeric(beta_L50 <= beta_true & beta_true <= beta_U50)) %>%
+    mutate(is_covered_70 = as.numeric(beta_L70 <= beta_true & beta_true <= beta_U70)) %>%
     mutate(is_covered_95 = as.numeric(beta_L95 <= beta_true & beta_true <= beta_U95)) %>%
     mutate(abs_diff = abs(beta_true - betaM)) %>%
     mutate(same_sign = ifelse(beta_true != 0, as.numeric(beta_true*betaM > 0), NA)) %>%
     mutate(ci_50_length = beta_U50 - beta_L50) %>%
+    mutate(ci_70_length = beta_U70 - beta_L70) %>%
     mutate(ci_95_length = beta_U95 - beta_L95) %>%
     filter(k != 1) %>%
     mutate(s = s) %>% relocate(s, .before=k)
@@ -173,9 +181,11 @@ for (s in 1:10) {
     group_by(k, l) %>%
     summarise(
       eta_L95 = quantile(eta, 0.025),
+      eta_L70 = quantile(eta, 0.05),
       eta_L50 = quantile(eta, 0.25),
       etaM = mean(eta),
       eta_U50 = quantile(eta, 0.75),
+      eta_U70 = quantile(eta, 0.95),
       eta_U95 = quantile(eta, 0.975),
       .groups = "drop"
     ) %>%
@@ -185,10 +195,12 @@ for (s in 1:10) {
     relocate(c, .after = k) %>%
     relocate(eta_true, .after = etaM) %>%
     mutate(is_covered_50 = as.numeric(eta_L50 <= eta_true & eta_true <= eta_U50)) %>%
+    mutate(is_covered_70 = as.numeric(eta_L70 <= eta_true & eta_true <= eta_U70)) %>%
     mutate(is_covered_95 = as.numeric(eta_L95 <= eta_true & eta_true <= eta_U95)) %>%
     mutate(abs_diff = abs(eta_true - etaM)) %>%
     mutate(same_sign = ifelse(eta_true != 0, as.numeric(eta_true*etaM > 0), NA)) %>%
     mutate(ci_50_length = eta_U50 - eta_L50) %>%
+    mutate(ci_70_length = eta_U70 - eta_L70) %>%
     mutate(ci_95_length = eta_U95 - eta_L95) %>%
     filter(k != 1) %>%
     mutate(s = s) %>% relocate(s, .before=k) %>%
@@ -199,9 +211,9 @@ for (s in 1:10) {
   eta_checkAll = bind_rows(eta_checkAll, eta_check)
 }
 
-write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_beta_checkAll.csv"))
-write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_eta_checkAll.csv"))
-write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_probs_checkAll.csv"))
+write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_beta_checkAll.csv"))
+write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_eta_checkAll.csv"))
+write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_probs_checkAll.csv"))
 
 
 
@@ -214,17 +226,21 @@ write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_probs_checkAll.
     group_by(s,t) %>%
     summarise(
       xw_L95 = sum(p_L95*w*1000),
+      xw_L70 = sum(p_L70*w*1000),
       xw_L50 = sum(p_L50*w*1000),
       xwM = sum(pM*w*1000),
       xw_true = sum(p_true*w*1000),
       xw_U50 = sum(p_U50*w*1000),
+      xw_U70 = sum(p_U70*w*1000),
       xw_U95 = sum(p_U95*w*1000)
     ) %>%
     mutate(is_covered_50 = as.numeric(xw_L50 <= xw_true & xw_true <= xw_U50)) %>%
+    mutate(is_covered_70 = as.numeric(xw_L70 <= xw_true & xw_true <= xw_U70)) %>%
     mutate(is_covered_95 = as.numeric(xw_L95 <= xw_true & xw_true <= xw_U95)) %>%
     mutate(abs_diff = abs(xw_true - xwM)) %>%
     mutate(same_sign = ifelse(xw_true != 0, as.numeric(xw_true*xwM > 0), NA)) %>%
     mutate(ci_50_length = xw_U50 - xw_L50) %>%
+    mutate(ci_70_length = xw_U70 - xw_L70) %>%
     mutate(ci_95_length = xw_U95 - xw_L95) 
 }
 
@@ -233,19 +249,28 @@ write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_probs_checkAll.
 library(gt)
 # library(gridExtra)
 
-sss = 2
-
 beta_is_covered = beta_checkAll %>% 
+  mutate(
+    TTOP_found_95 = ifelse(beta_true > 0, as.numeric(beta_L95 > 0), NA),
+    no_TTOP_found_95 = ifelse(beta_true == 0, as.numeric(beta_L95 < 0 & 0 < beta_U95), NA),
+    TTOP_found_50 = ifelse(beta_true > 0, as.numeric(beta_L50 > 0), NA),
+    no_TTOP_found_50 = ifelse(beta_true == 0, as.numeric(beta_L50 < 0 & 0 < beta_U50), NA),
+  ) %>%
   group_by(tto,c) %>%
   summarise(
+    TTOP_found_95 = mean(TTOP_found_95),
+    no_TTOP_found_95 = mean(no_TTOP_found_95),
+    TTOP_found_50 = mean(TTOP_found_50),
+    no_TTOP_found_50 = mean(no_TTOP_found_50),
+    is_covered_50 = mean(is_covered_50),
     is_covered_50 = mean(is_covered_50),
     is_covered_95 = mean(is_covered_95),
     same_sign = mean(same_sign),
     .groups = "drop"
-  ) %>% gt()
-# beta_is_covered 
+  ) %>% gt() %>% fmt_missing(columns=everything(), missing_text = "")
+beta_is_covered
 gtsave(beta_is_covered,
-       paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+       paste0("plots/plot_betaStats_sim", SIM_NUM, ".png"),
        vwidth=1500, vheight=1500)
 
 # png(paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
@@ -259,22 +284,47 @@ eta_is_covered = eta_checkAll %>%
   group_by(c,l_) %>%
   summarise(
     is_covered_50 = mean(is_covered_50),
+    is_covered_70 = mean(is_covered_70),
     is_covered_95 = mean(is_covered_95),
     .groups="drop"
   ) %>% gt()
 # data.frame(eta_is_covered)
 gtsave(eta_is_covered,
-       paste0("plots/plot_etaStats_sim", SIM_NUM, "_s", sss, ".png"),
+       paste0("plots/plot_etaStats_sim", SIM_NUM, ".png"),
        vwidth=1500, vheight=1500)
 
 #################### PLOTS #################### 
+
+sss = 2 # 7 # 10 # 2
+
+beta_check_plot = beta_checkAll %>%
+  filter(s == sss) %>%
+  mutate(beta_true_zeros = ifelse(beta_true == 0, beta_true, NA),
+         beta_true_nonzeros = ifelse(beta_true != 0, beta_true, NA)) %>%
+  mutate(tto = paste0(tto, "TTO")) %>%
+  ggplot(aes(x=fct_reorder(c, k))) +
+  facet_wrap(~tto, nrow=1) +
+  theme(panel.spacing = unit(2, "lines")) +
+  xlab("") + ylab(TeX("$\\beta$")) +
+  geom_hline(yintercept=0, size=0.5, col="grey") + 
+  geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5) +
+  geom_errorbar(aes(ymin=beta_L50, ymax=beta_U50), width = 0.25, size=1) +
+  geom_point(aes(y=betaM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  geom_point(aes(y=beta_true_zeros), col="firebrick", size=5, shape=18)
+if (SIM_NUM != 1) {
+  beta_check_plot = beta_check_plot +
+    geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
+}
+beta_check_plot
+ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
+       beta_check_plot, width=9, height=5)
+
 
 probs_check_plot = probs_checkAll %>%
   filter(s == sss) %>%
   ggplot(aes(x=t)) +
   facet_wrap(~c, nrow=3, scales="free") +
   theme(panel.spacing = unit(2, "lines")) +
-  
   # xlab("") + ylab(TeX("$\\p$")) +
   # geom_hline(yintercept=0, size=0.5, col="grey") + 
   geom_errorbar(aes(ymin=p_L95, ymax=p_U95), width = 0.5) +
@@ -304,31 +354,6 @@ xwoba_check_plot = xwoba_checkAll %>%
 xwoba_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check", ".png"),
        xwoba_check_plot, width=8, height=8)
-
-
-
-beta_check_plot = beta_checkAll %>%
-  filter(s == sss) %>%
-  mutate(beta_true_zeros = ifelse(beta_true == 0, beta_true, NA),
-         beta_true_nonzeros = ifelse(beta_true != 0, beta_true, NA)) %>%
-  mutate(tto = paste0(tto, "TTO")) %>%
-  ggplot(aes(x=fct_reorder(c, k))) +
-  facet_wrap(~tto, nrow=1) +
-  theme(panel.spacing = unit(2, "lines")) +
-  xlab("") + ylab(TeX("$\\beta$")) +
-  geom_hline(yintercept=0, size=0.5, col="grey") + 
-  geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5) +
-  geom_errorbar(aes(ymin=beta_L50, ymax=beta_U50), width = 0.25, size=1) +
-  geom_point(aes(y=betaM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_point(aes(y=beta_true_zeros), col="firebrick", size=5, shape=18)
-if (SIM_NUM != 1) {
-  beta_check_plot = beta_check_plot +
-    geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
-}
-beta_check_plot
-ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
-       beta_check_plot, width=9, height=5)
-
 
 eta_check_plot = eta_checkAll %>%
   filter(s == sss) %>%
