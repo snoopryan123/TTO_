@@ -50,7 +50,7 @@ eta_checkAll = tibble()
 probs_checkAll = tibble()
 
 # for (s in 12:19) { # 12:19) {    # 18:18) {
-s = 18
+s = 17
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
   

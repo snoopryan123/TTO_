@@ -2,7 +2,7 @@
 ########################
 source("sim_config.R")
 # for (SIM_NUM in 1:2) {
-SIM_NUM = 1 #1 #2
+SIM_NUM = 2 #1 #2
 # YRS = 2018
 ########################
 source("../model9_getData.R") ### get observed data 
@@ -53,7 +53,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 1
-for (s in 1:10) {
+for (s in 1:2) {
   print(paste0("sleeping ", s))
   
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
@@ -216,9 +216,9 @@ for (s in 1:10) {
   eta_checkAll = bind_rows(eta_checkAll, eta_check)
 }
 
-write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_beta_checkAll.csv"))
-write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_eta_checkAll.csv"))
-write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_probs_checkAll.csv"))
+# write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_beta_checkAll.csv"))
+# write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_eta_checkAll.csv"))
+# write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_probs_checkAll.csv"))
 
 
 
@@ -263,16 +263,17 @@ beta_is_covered = beta_checkAll %>%
   ) %>%
   group_by(tto,c) %>%
   summarise(
-    TTOP_found_95 = mean(TTOP_found_95),
-    no_TTOP_found_95 = mean(no_TTOP_found_95),
-    TTOP_found_50 = mean(TTOP_found_50),
-    no_TTOP_found_50 = mean(no_TTOP_found_50),
+    # TTOP_found_95 = mean(TTOP_found_95),
+    # no_TTOP_found_95 = mean(no_TTOP_found_95),
+    # TTOP_found_50 = mean(TTOP_found_50),
+    # no_TTOP_found_50 = mean(no_TTOP_found_50),
     is_covered_50 = mean(is_covered_50),
     is_covered_50 = mean(is_covered_50),
     is_covered_95 = mean(is_covered_95),
     same_sign = mean(same_sign),
     .groups = "drop"
-  ) %>% gt() %>% fmt_missing(columns=everything(), missing_text = "")
+  ) %>% relocate(is_covered_95, .after=c) %>%
+  gt() %>% fmt_missing(columns=everything(), missing_text = "")
 beta_is_covered
 gtsave(beta_is_covered,
        paste0("plots/plot_betaStats_sim", SIM_NUM, ".png"),
@@ -300,7 +301,7 @@ gtsave(eta_is_covered,
 
 #################### PLOTS #################### 
 
-sss = 5 # sim2: 7, 6, 9    # sim1: 5
+sss = 1 # sim2: 7, 6, 9    # sim1: 5
 
 beta_check_plot = beta_checkAll %>%
   filter(s == sss) %>%
@@ -318,7 +319,8 @@ beta_check_plot = beta_checkAll %>%
   geom_point(aes(y=beta_true_zeros), col="firebrick", size=5, shape=18)
 if (SIM_NUM != 1) {
   beta_check_plot = beta_check_plot +
-    geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
+    # geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
+    geom_point(aes(y=beta_true_nonzeros), col="firebrick", size=5, shape=18)
 }
 beta_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
@@ -358,7 +360,7 @@ xwoba_check_plot = xwoba_checkAll %>%
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check", ".png"),
-       xwoba_check_plot, width=8, height=8)
+       xwoba_check_plot, width=8, height=6)
 
 eta_check_plot = eta_checkAll %>%
   filter(s == sss) %>%
