@@ -2,7 +2,7 @@
 ########################
 source("sim_config.R")
 # for (SIM_NUM in 1:2) {
-SIM_NUM = 2 #1 #2
+SIM_NUM = 1 #1 #2
 # YRS = 2018
 ########################
 source("../model9_getData.R") ### get observed data 
@@ -53,7 +53,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 1
-for (s in 1:2) {
+for (s in 1:1) {
   print(paste0("sleeping ", s))
   
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
@@ -360,7 +360,7 @@ xwoba_check_plot = xwoba_checkAll %>%
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check", ".png"),
-       xwoba_check_plot, width=8, height=6)
+       xwoba_check_plot, width=8, height=5)
 
 eta_check_plot = eta_checkAll %>%
   filter(s == sss) %>%
@@ -381,7 +381,40 @@ ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
 
 # }
 
+############################################
+############################################
 
+sss = 1
 
+xwoba_check_plot_true = xwoba_checkAll %>%
+  filter(s == sss) %>%
+  ggplot(aes(x=t)) +
+  # geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  # geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  # geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  ylab("wOBA") + 
+  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), limits = c(270,350))  +
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot_true
+ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check_true", ".png"),
+       xwoba_check_plot_true, width=8, height=5)
 
+xwoba_check_plot_post = xwoba_checkAll %>%
+  filter(s == sss) %>%
+  ggplot(aes(x=t)) +
+  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  ylab("wOBA") + 
+  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), limits = c(270,350))  +
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot
+ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check_post", ".png"),
+       xwoba_check_plot_post, width=8, height=5)
 
