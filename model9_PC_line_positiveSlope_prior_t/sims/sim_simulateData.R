@@ -13,10 +13,11 @@ alpha_tib = read_csv(paste0(param_creation_folder, "/params_sim_alpha.csv"))
 beta_tib = read_csv(paste0(param_creation_folder,"/params_sim_beta.csv"))
 eta_tib = read_csv(paste0(param_creation_folder,"/params_sim_eta.csv"))
 
-alpha_mat = matrix(nrow=dim(S)[2], ncol=num_categories)
-for (kk in 1:7) {
-  alpha_mat[,kk] = (alpha_tib %>% filter(k==kk))$alpha_line
-}
+alpha_mat = matrix(
+  c(alpha_tib$alpha_incpt,
+    alpha_tib$alpha_slope),
+  byrow = TRUE, nrow=2, ncol=num_categories
+)
 colnames(alpha_mat) = category_strings
 
 beta_mat = matrix(
@@ -37,7 +38,7 @@ colnames(eta_mat) = category_strings
 ##########################################
 
 ### generate categorical outcome vector y
-linpred = S %*% alpha_mat + O %*% beta_mat + X %*% eta_mat
+linpred = cbind(INCPT, SPL) %*% alpha_mat + O %*% beta_mat + X %*% eta_mat
 P = exp(linpred) / rowSums( exp(linpred) )
 get_outcome <- function(i) { # get the categorical outcome in {1,2,...,7} of row i
   which(rmultinom(1, 1, P[i,]) == 1)

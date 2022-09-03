@@ -15,7 +15,7 @@ num_categories = length(categories)
 category_strings <- c("out","BB","HBP","1B","2B","3B","HR")
 
 TOT_PITCHES = 108
-MAX_PITCHES = 200 #FIXME
+# MAX_PITCHES = 200 #FIXME
 ### mean number of pitches per batter: 4
 ### equivalently, 108 pitches over 27 batters
 ### equivalently, 36 pitches over each TTO
@@ -41,18 +41,18 @@ alpha_slope_draws_means = colMeans(alpha_slope_draws)
 alpha_slope_draws_means[2] = 0.001 # increase walk slope
 alpha_slope_draws_means[4] = 0.001 # increase single slope
 alpha_tib = tibble()
+alpha_tib_saveMe = tibble()
 for (k in 1:7) {
   a0k = alpha_incpt_draws_means[endsWith(colnames(alpha_incpt_draws), paste0(k,"]"))]
   a1k = alpha_slope_draws_means[endsWith(colnames(alpha_slope_draws), paste0(k,"]"))]
-  a_traj_k = unname(a0k + a1k*(1:MAX_PITCHES))
-  alpha_tib_k = tibble(alpha = a_traj_k, k=k, c=category_strings[k], pc=1:MAX_PITCHES)
+  a_traj_k = unname(a0k + a1k*(1:TOT_PITCHES))
+  alpha_tib_k = tibble(alpha = a_traj_k, k=k, c=category_strings[k], pc=1:TOT_PITCHES)
   alpha_tib = bind_rows(alpha_tib, alpha_tib_k)
+  alpha_tib_saveMe = bind_rows(alpha_tib_saveMe,
+    tibble(alpha_incpt = a0k, alpha_slope = a1k, k=k, c=category_strings[k]))
 }
 alpha_tib$alpha_line = alpha_tib$alpha
 alpha_tib
-
-alpha_tib_full = alpha_tib
-alpha_tib = alpha_tib %>% filter(pc <= TOT_PITCHES)
 
 # alpha_tib %>%
 #   filter(k!=1) %>%
@@ -107,7 +107,7 @@ beta_tib = bind_rows(
 beta_tib
 
 ### save simulation parameters
-write_csv(alpha_tib_full %>% select(-alpha), "params_sim_alpha.csv")
+write_csv(alpha_tib_saveMe, "params_sim_alpha.csv")
 write_csv(eta_tib, "params_sim_eta.csv")
 write_csv(beta_tib, "params_sim_beta.csv")
 
