@@ -123,8 +123,19 @@ s = 17
     mutate(s = s) %>% relocate(s, .before=k)
   beta_check
   
-  beta_checkAll = bind_rows(beta_checkAll, beta_check)
+  ### transform beta_3k into beta_3k minus beta_2k
+  beta_check_1 = beta_check %>%
+    arrange(s,k,tto) %>%
+    group_by(s,k) %>%
+    mutate(
+      beta_L95 = ifelse(tto==3, beta_L95[2] - beta_L95[1], beta_L95),
+      beta_L50 = ifelse(tto==3, beta_L50[2] - beta_L50[1], beta_L50),
+      betaM = ifelse(tto==3, betaM[2] - betaM[1], betaM),
+      beta_U50 = ifelse(tto==3, beta_U50[2] - beta_U50[1], beta_U50),
+      beta_U95 = ifelse(tto==3, beta_U95[2] - beta_U95[1], beta_U95),
+    ) %>% ungroup() %>% arrange(tto,k)
   
+  beta_checkAll = bind_rows(beta_checkAll, beta_check_1)
   
   #################### check whether ETA was recovered #################### 
   eta_draws_1 <- reshape2::melt(eta_draws) %>%

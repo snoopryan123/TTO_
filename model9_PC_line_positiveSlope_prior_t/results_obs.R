@@ -57,7 +57,7 @@ s = 17
   YRS = 2000 + s
   source("model9_getData.R") ### get observed data 
   
-  Sys.sleep(5) ###
+  # Sys.sleep(5) ###
   
   ### import fit from rstan
   fit <- readRDS(paste0(output_folder, "fit_obs_model_lineyrs_",s,"_.rds"))
@@ -128,7 +128,19 @@ s = 17
     mutate(s = s) %>% relocate(s, .before=k)
   beta_check
   
-  beta_checkAll = bind_rows(beta_checkAll, beta_check)
+  ### transform beta_3k into beta_3k minus beta_2k
+  beta_check_1 = beta_check %>%
+    arrange(s,k,tto) %>%
+    group_by(s,k) %>%
+    mutate(
+      beta_L95 = ifelse(tto==3, beta_L95[2] - beta_L95[1], beta_L95),
+      beta_L50 = ifelse(tto==3, beta_L50[2] - beta_L50[1], beta_L50),
+      betaM = ifelse(tto==3, betaM[2] - betaM[1], betaM),
+      beta_U50 = ifelse(tto==3, beta_U50[2] - beta_U50[1], beta_U50),
+      beta_U95 = ifelse(tto==3, beta_U95[2] - beta_U95[1], beta_U95),
+    ) %>% ungroup() %>% arrange(tto,k)
+  
+  beta_checkAll = bind_rows(beta_checkAll, beta_check_1)
   
   
   #################### check whether ETA was recovered #################### 
@@ -200,6 +212,8 @@ sig_neg_color = "firebrick"
 
 {
     beta_check_plot_df = beta_checkAll %>%
+      # mutate(tto = ifelse(tto==2, TeX("2TTO: $\\beta_2$"), 
+      #                     TeX("3TTO: $\\beta_3 - \\beta_2$"))) %>%
       mutate(sig = ifelse(beta_L95 > 0, 1, 0),
              sig_neg = ifelse(beta_U95 < 0, 1, 0)) %>%
       mutate(beta_L95_sig = ifelse(sig, beta_L95, NA),
@@ -219,7 +233,8 @@ sig_neg_color = "firebrick"
       ggplot(aes(x=fct_reorder(c, k))) +
       facet_wrap(~tto, nrow=1) +
       theme(panel.spacing = unit(2, "lines")) +
-      xlab("") + ylab(TeX("$\\beta$")) +
+      xlab("") + 
+      # ylab(TeX("$\\beta$")) +
       geom_hline(yintercept=0, size=0.5, col="grey") +
       geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5)
     if (!all(beta_check_plot_df$sig == 0)) {
