@@ -1,7 +1,0 @@
-rstan_5_sim-x
-	dataset = TTO_dataset_510.csv
-
-5-1:10		comparison: BSN model (*a), 2019 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
-5-11:20		comparison: BSN model (*c), 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)
-5-21:30		comparison: UBI model (*b), 2019 only, end of szn final avg woba (std_WOBA_FINAL_BAT_19, std_WOBA_FINAL_PIT_19)
-5-31:40		comparison: UBI model (*d), 2019 only, tau = 0.5, sigma = 0.05, running avg estimator (std_BQ, std_PQ)

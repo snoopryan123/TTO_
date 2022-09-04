@@ -17,7 +17,7 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
     beta_draws_k = beta_draws[,endsWith(colnames(beta_draws), paste0(k,"]"))] 
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
     linpred_k = INCPT%*%t(alpha_incpt_draws_k) + S%*%t(alpha_slope_draws_k) + 
-                O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
+      O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -35,8 +35,8 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
     probs_df_k0 = probs[[k]]
     probs_df_k = reshape2::melt(probs_df_k0) %>%
       as_tibble() %>%
-      rename(t = Var1, iter=Var2, p=value) %>%
-      arrange(t, iter) %>%
+      rename(pc = Var1, iter=Var2, p=value) %>%
+      arrange(pc, iter) %>%
       mutate(k = k) 
     probs_df = bind_rows(probs_df, probs_df_k)
   }
@@ -63,20 +63,25 @@ s = 17
   fit <- readRDS(paste0(output_folder, "fit_obs_model_lineyrs_",s,"_.rds"))
   draws <- as.matrix(fit)
   
-  alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
+  alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
+  alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
   beta_draws <- draws[,startsWith(colnames(draws), "beta")]
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
-  INCPT_tilde = cbind(rep(1,27))
-  S_tilde = cbind(1:27) ## cbind(1, 1:27)  
-  O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
-  X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  TOT_PITCHES = 108
+  tto_pitches = TOT_PITCHES/3
+  INCPT_tilde = cbind(rep(1,TOT_PITCHES))
+  S_tilde = cbind(0:(TOT_PITCHES-1))
+  O_tilde = matrix(c(rep(0,tto_pitches), rep(1,tto_pitches), rep(0,tto_pitches), 
+                     rep(0,tto_pitches), rep(0,tto_pitches), rep(1,tto_pitches)), 
+                   nrow=TOT_PITCHES)
+  X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), TOT_PITCHES),
+                    nrow=TOT_PITCHES, byrow = TRUE)
   probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
-  # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
   
   probs_check = probs_tilde %>%
-    group_by(k,t) %>%
+    group_by(k,pc) %>%
     summarise(
       p_L95 = quantile(p, 0.025),
       p_L50 = quantile(p, 0.25),
@@ -85,7 +90,7 @@ s = 17
       p_U95 = quantile(p, 0.975),
       .groups = "drop"
     ) %>%
-    arrange(t,k) %>%
+    arrange(pc,k) %>%
     mutate(c = category_strings[k]) %>%
     relocate(c, .after = k) %>%
     # mutate(ci_50_length = p_U50 - p_L50) %>%
@@ -159,7 +164,7 @@ s = 17
 
 xwoba_checkAll = probs_checkAll %>%
   mutate(w = categories[k]) %>%
-  group_by(s,t) %>%
+  group_by(s,pc) %>%
   summarise(
     xw_L95 = sum(p_L95*w*1000),
     xw_L50 = sum(p_L50*w*1000),
@@ -168,7 +173,7 @@ xwoba_checkAll = probs_checkAll %>%
     xw_U95 = sum(p_U95*w*1000)
   ) %>%
   mutate(
-    tto = ifelse(1 <= t & t <= 9, 1, ifelse(10 <= t & t <= 18, 2, 3)),
+    tto = ifelse(0 <= pc & pc <= (tto_pitches-1), 1, ifelse(tto_pitches <= pc & pc <= (2*tto_pitches-1), 2, 3)),
     tto1 = ifelse(tto == 1, 1, NA),
     tto2 = ifelse(tto == 2, 1, NA),
     tto3 = ifelse(tto == 3, 1, NA),
@@ -269,7 +274,7 @@ ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_eta_check", ".png"),
 
 probs_check_plot = probs_checkAll %>%
   filter(s == sss) %>%
-  ggplot(aes(x=t)) +
+  ggplot(aes(x=pc)) +
   facet_wrap(~c, nrow=3, scales="free") +
   theme(panel.spacing = unit(2, "lines")) +
   # xlab("") + ylab(TeX("$\\p$")) +
@@ -277,10 +282,10 @@ probs_check_plot = probs_checkAll %>%
   geom_errorbar(aes(ymin=p_L95, ymax=p_U95), width = 0.5) +
   geom_errorbar(aes(ymin=p_L50, ymax=p_U50), width = 0.25, size=1) +
   geom_point(aes(y=pM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_vline(aes(xintercept =  (tto_pitches-1) ), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = (2*tto_pitches-1) ), size=0.5, color="gray50") +
   ylab("probability") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  scale_x_continuous(name="pitch count", breaks=seq(0,108,12))
 probs_check_plot
 ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_probs_check", ".png"),
        probs_check_plot, width=12, height=12)
@@ -288,14 +293,14 @@ ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_probs_check", ".png"),
 ################
 xwoba_check_plot = xwoba_checkAll %>%
   filter(s == sss) %>%
-  ggplot(aes(x=t)) +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  ggplot(aes(x=pc)) +
+  geom_vline(aes(xintercept =  (tto_pitches-1)), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = (2*tto_pitches-1)), size=0.5, color="gray50") +
   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
   geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
   ylab("wOBA") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  scale_x_continuous(name="pitch count", breaks=seq(0,108,12))
 xwoba_check_plot
 ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check", ".png"),
        xwoba_check_plot, width=8, height=6)
@@ -322,42 +327,41 @@ xwoba_check_plot_1 = xwoba_checkAll %>%
     xw_tto_U50_tto3 = xw_tto_U50*tto3,
     xw_tto_U95_tto3 = xw_tto_U95*tto3,
   ) %>%
-  ggplot(aes(x=t)) +
+  ggplot(aes(x=pc)) +
   geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
   geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
   geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
   geom_line(aes(y = xw_tto_U50_tto1), linetype=3, size=0.75) +
   geom_line(aes(y = xw_tto_U95_tto1), linetype=3) +
-  geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=9,fill="black",alpha=0.01,) +
-  geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=9,fill=blue2,alpha=0.03,) +
+  geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=tto_pitches,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=tto_pitches,fill=blue2,alpha=0.03,) +
   
   geom_line(aes(y = xw_tto_L95_tto2), linetype=3) +
   geom_line(aes(y = xw_tto_L50_tto2), linetype=3, size=0.75) +
   geom_line(aes(y = xw_tto_M_tto2), size=1, color=blue1) +
   geom_line(aes(y = xw_tto_U50_tto2), linetype=3, size=0.75) +
   geom_line(aes(y = xw_tto_U95_tto2), linetype=3) +
-  geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=10,xmax=18,fill="black",alpha=0.01,) +
-  geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=10,xmax=18,fill=blue2,alpha=0.03,) +
+  geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=tto_pitches,xmax=tto_pitches*2,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=tto_pitches,xmax=tto_pitches*2,fill=blue2,alpha=0.03,) +
   
   geom_line(aes(y = xw_tto_L95_tto3), linetype=3) +
   geom_line(aes(y = xw_tto_L50_tto3), linetype=3, size=0.75) +
   geom_line(aes(y = xw_tto_M_tto3), size=1, color=blue1) +
   geom_line(aes(y = xw_tto_U50_tto3), linetype=3, size=0.75) +
   geom_line(aes(y = xw_tto_U95_tto3), linetype=3) +
-  geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=19,xmax=27,fill="black",alpha=0.01,) +
-  geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=19,xmax=27,fill=blue2,alpha=0.03,) +
+  geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=tto_pitches*2,xmax=tto_pitches*3,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=tto_pitches*2,xmax=tto_pitches*3,fill=blue2,alpha=0.03,) +
   
   # geom_hline(aes(yintercept = xw_tto_M*tto1), linetype="dashed") +
   # geom_hline(aes(yintercept = xw_tto_U50*tto1), linetype="dashed") +
   
-  
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_vline(aes(xintercept =  (tto_pitches)), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = (2*tto_pitches)), size=0.5, color="gray50") +
   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
   geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
   ylab("wOBA") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  scale_x_continuous(name="pitch count", breaks=seq(0,108,12))
 xwoba_check_plot_1
 ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check_1", ".png"),
        xwoba_check_plot_1, width=8, height=6)

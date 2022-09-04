@@ -1,1 +1,0 @@
-# model wOBA y_{ij} as Gaussian

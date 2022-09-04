@@ -1,1 +1,0 @@
-# ordinal logistic regression + gaussian noise" model wOBA y_{ij} as an ordinal variable

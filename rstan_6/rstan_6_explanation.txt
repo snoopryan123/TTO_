@@ -1,9 +1,0 @@
-rstan6-x
-	dataset = TTO_dataset_610.csv
-	LOGISTIC REGRESSION OBP MODEL
-
-6-1	BSN, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (logit(BQ), logit(PQ))
-6-2	UBI, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (logit(BQ), logit(PQ))
-
-
-

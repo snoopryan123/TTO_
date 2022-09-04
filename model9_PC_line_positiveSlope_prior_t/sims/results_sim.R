@@ -2,7 +2,7 @@
 ########################
 source("sim_config.R")
 # for (SIM_NUM in 1:2) {
-SIM_NUM = 1 #1 #2
+SIM_NUM = 2 #1 #2
 # YRS = 2018
 ########################
 source("../model9_getData.R") ### get observed data 
@@ -39,8 +39,8 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
     probs_df_k0 = probs[[k]]
     probs_df_k = reshape2::melt(probs_df_k0) %>%
       as_tibble() %>%
-      rename(t = Var1, iter=Var2, p=value) %>%
-      arrange(t, iter) %>%
+      rename(pc = Var1, iter=Var2, p=value) %>%
+      arrange(pc, iter) %>%
       mutate(k = k) 
     probs_df = bind_rows(probs_df, probs_df_k)
   }
@@ -53,7 +53,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 1
-for (s in 1:1) {
+for (s in 2:2) {
   print(paste0("sleeping ", s))
   
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
@@ -73,10 +73,15 @@ for (s in 1:1) {
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
-  INCPT_tilde = cbind(rep(1,27))
-  S_tilde = cbind(1:27) ## cbind(1, 1:27)
-  O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
-  X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  TOT_PITCHES = 108
+  tto_pitches = TOT_PITCHES/3
+  INCPT_tilde = cbind(rep(1,TOT_PITCHES))
+  S_tilde = cbind(0:(TOT_PITCHES-1))
+  O_tilde = matrix(c(rep(0,tto_pitches), rep(1,tto_pitches), rep(0,tto_pitches), 
+                     rep(0,tto_pitches), rep(0,tto_pitches), rep(1,tto_pitches)), 
+                   nrow=TOT_PITCHES)
+  X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), TOT_PITCHES),
+                    nrow=TOT_PITCHES, byrow = TRUE)
   probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
   
   ### get true t -> P(y=k|t,x)
@@ -84,28 +89,30 @@ for (s in 1:1) {
     x_tilde = c(logit(0.315), logit(0.315), 1, 0)
     raw_probs_tilde_true = tibble()
     for (kk in 1:7) {
-      alpha_k = (alpha_tib %>% filter(k == kk))$alpha_line
+      alpha_incpt_k = (alpha_tib %>% filter(k == kk))$alpha_incpt
+      alpha_slope_k = (alpha_tib %>% filter(k == kk))$alpha_slope
+      alpha_line_k = alpha_incpt_k + alpha_slope_k*(0:(TOT_PITCHES-1))
       eta_k = (eta_tib %>% filter(k == kk))$eta
       beta_2k = (beta_tib %>% filter(k==kk & sim_num==SIM_NUM))$beta_2
       beta_3k = (beta_tib %>% filter(k==kk & sim_num==SIM_NUM))$beta_3
-      beta_bumps = beta_2k * c(rep(0,9), rep(1,9), rep(0,9)) +
-        beta_3k * c(rep(0,9), rep(0,9), rep(1,9))
-      raw_p_k = unname(exp(alpha_k + 
+      beta_bumps = beta_2k * c(rep(0,tto_pitches), rep(1,tto_pitches), rep(0,tto_pitches)) +
+        beta_3k * c(rep(0,tto_pitches), rep(0,tto_pitches), rep(1,tto_pitches))
+      raw_p_k = unname(exp(alpha_line_k + 
                              pracma::dot(x_tilde, eta_k) +
                              beta_bumps))
       raw_probs_tilde_true = bind_rows(raw_probs_tilde_true,   
-                                       tibble(p = raw_p_k, k=kk, t=1:27)
+                                       tibble(p = raw_p_k, k=kk, pc=1:TOT_PITCHES)
       )
     }
     probs_tilde_true = raw_probs_tilde_true %>% 
       rename(p_true = p) %>%
-      group_by(t) %>% 
+      group_by(pc) %>% 
       mutate(p_true = p_true/sum(p_true)) %>% 
       ungroup()
   }
 
   probs_check = probs_tilde %>%
-    group_by(k,t) %>%
+    group_by(k,pc) %>%
     summarise(
       p_L95 = quantile(p, 0.025),
       p_L70 = quantile(p, 0.05),
@@ -116,7 +123,7 @@ for (s in 1:1) {
       p_U95 = quantile(p, 0.975),
       .groups = "drop"
     ) %>%
-    arrange(t,k) %>%
+    arrange(pc,k) %>%
     mutate(c = category_strings[k]) %>%
     relocate(c, .after = k) %>%
     left_join(probs_tilde_true) %>%
@@ -216,9 +223,9 @@ for (s in 1:1) {
   eta_checkAll = bind_rows(eta_checkAll, eta_check)
 }
 
-write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_beta_checkAll.csv"))
-write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_eta_checkAll.csv"))
-write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_probs_checkAll.csv"))
+# write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_beta_checkAll.csv"))
+# write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_eta_checkAll.csv"))
+# write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_probs_checkAll.csv"))
 
 
 
@@ -228,7 +235,7 @@ write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", u
 {
   xwoba_checkAll = probs_checkAll %>%
     mutate(w = categories[k]) %>%
-    group_by(s,t) %>%
+    group_by(s,pc) %>%
     summarise(
       xw_L95 = sum(p_L95*w*1000),
       xw_L70 = sum(p_L70*w*1000),
@@ -301,7 +308,7 @@ gtsave(eta_is_covered,
 
 #################### PLOTS #################### 
 
-sss = 1 # sim2: 7, 6, 9    # sim1: 5
+sss = 2 # sim2: 7, 6, 9    # sim1: 5
 
 beta_check_plot = beta_checkAll %>%
   filter(s == sss) %>%
@@ -329,7 +336,7 @@ ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
 
 probs_check_plot = probs_checkAll %>%
   filter(s == sss) %>%
-  ggplot(aes(x=t)) +
+  ggplot(aes(x=pc)) +
   facet_wrap(~c, nrow=3, scales="free") +
   theme(panel.spacing = unit(2, "lines")) +
   # xlab("") + ylab(TeX("$\\p$")) +
@@ -338,10 +345,10 @@ probs_check_plot = probs_checkAll %>%
   geom_errorbar(aes(ymin=p_L50, ymax=p_U50), width = 0.25, size=1) +
   geom_point(aes(y=pM), col="black", size=2, stroke=1, shape=21, fill="white") +
   geom_point(aes(y=p_true), col="firebrick", size=5, shape=18) +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_vline(aes(xintercept =  (tto_pitches-1) ), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = (2*tto_pitches-1) ), size=0.5, color="gray50") +
   ylab("probability") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  scale_x_continuous(name="pitch count", breaks=seq(0,108,12))
 probs_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_probs_check", ".png"),
        probs_check_plot, width=12, height=12)
@@ -349,15 +356,15 @@ ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_probs_check", ".png"),
 
 xwoba_check_plot = xwoba_checkAll %>%
   filter(s == sss) %>%
-  ggplot(aes(x=t)) +
+  ggplot(aes(x=pc)) +
   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
   geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_point(aes(y=xw_true), col="firebrick", size=3, shape=18) +
+  geom_vline(aes(xintercept =  (tto_pitches-1)), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = (2*tto_pitches-1)), size=0.5, color="gray50") +
   ylab("wOBA") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  scale_x_continuous(name="pitch count", breaks=seq(0,108,12))
 xwoba_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check", ".png"),
        xwoba_check_plot, width=8, height=5)
@@ -384,36 +391,34 @@ ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
 ############################################
 ############################################
 
-sss = 1
+sss = 2
 
 xwoba_check_plot_true = xwoba_checkAll %>%
   filter(s == sss) %>%
-  ggplot(aes(x=t)) +
+  ggplot(aes(x=pc)) +
   # geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
   # geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
   # geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-  ylab("wOBA") + 
-  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), limits = c(270,350))  +
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  geom_point(aes(y=xw_true), col="firebrick", size=3, shape=18) +
+  geom_vline(aes(xintercept =  (tto_pitches-1)), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = (2*tto_pitches-1)), size=0.5, color="gray50") +
+  ylab("wOBA") + ylim(c(260,370)) +
+  scale_x_continuous(name="pitch count", breaks=seq(0,109,12))
 xwoba_check_plot_true
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check_true", ".png"),
        xwoba_check_plot_true, width=8, height=5)
 
 xwoba_check_plot_post = xwoba_checkAll %>%
   filter(s == sss) %>%
-  ggplot(aes(x=t)) +
+  ggplot(aes(x=pc)) +
   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
   geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-  ylab("wOBA") + 
-  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), limits = c(270,350))  +
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  geom_point(aes(y=xw_true), col="firebrick", size=3, shape=18) +
+  geom_vline(aes(xintercept =  (tto_pitches-1)), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = (2*tto_pitches-1)), size=0.5, color="gray50") +
+  ylab("wOBA") + ylim(c(260,370)) +
+  scale_x_continuous(name="pitch count", breaks=seq(0,109,12))
 xwoba_check_plot
 ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check_post", ".png"),
        xwoba_check_plot_post, width=8, height=5)

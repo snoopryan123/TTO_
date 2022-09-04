@@ -1,5 +1,0 @@
-rstan8-x
-	dataset = TTO_dataset_510.csv
-	Multinomial logistic regression, K-1 param vectors: treat wOBA as categorical data
-
-

@@ -1,9 +1,0 @@
-rstan7-x
-	dataset = TTO_dataset_510.csv
-	Ordered logistic regression: treat wOBA as ordinal data + gaussian noise
-
-7-1	BSN, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (BQ,PQ)
-7-2	UBI, 2019 only, tau = 0.5, nu = 0.1, running avg estimator (BQ,PQ)
-
-
-
