@@ -3,11 +3,14 @@
 ### get "true" simulation parameters ###
 ########################################
 
-if (underlying == "line") {
+if (underlying == "line" & !SIM_NO_PF) {
   param_creation_folder = "param_creation"
-} else if (underlying == "cubic") {
-  param_creation_folder = "param_creation_cubic"
+} else if (underlying == "line" & SIM_NO_PF) {
+  param_creation_folder = "param_creation_A"
 } 
+# else if (underlying == "cubic") {
+#   param_creation_folder = "param_creation_cubic"
+# } 
 
 alpha_tib = read_csv(paste0(param_creation_folder, "/params_sim_alpha.csv"))
 beta_tib = read_csv(paste0(param_creation_folder,"/params_sim_beta.csv"))
