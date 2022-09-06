@@ -2,8 +2,11 @@
 ########################
 source("sim_config.R")
 # for (SIM_NUM in 1:2) {
-SIM_NUM = 1 #1 #2
+# SIM_NUM = 2 #1 #2
 # YRS = 2018
+sim_noPf_str = ifelse(SIM_NO_PF, "A", "")
+underlying = "line"
+IS_SIM = TRUE
 ########################
 source("../model9_getData.R") ### get observed data 
 
@@ -53,17 +56,16 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 1
-for (s in 1:1) {
+for (s in 2:2) {
   print(paste0("sleeping ", s))
   
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
   
   Sys.sleep(5)
   
-  
   ### import fit from rstan
-  # fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, ".rds"))
-  fit <- readRDS(paste0(output_folder,"fit_sim", SIM_NUM, "_model_bsnBL_", s, "_underlying_", underlying,".rds"))
+  OUTPUT_FILE = paste0("job_output/", "fit_sim",SIM_NUM,sim_noPf_str,"_model_bsnBL_", s, "_underlying_", underlying, ".rds") 
+  fit <- readRDS(OUTPUT_FILE)
   draws <- as.matrix(fit)
   print("*****"); print(s); print("*****");
   
@@ -216,11 +218,9 @@ for (s in 1:1) {
   eta_checkAll = bind_rows(eta_checkAll, eta_check)
 }
 
-write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_beta_checkAll.csv"))
-write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_eta_checkAll.csv"))
-write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_underlying_", underlying, "_probs_checkAll.csv"))
-
-
+# write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, sim_noPf_str, "_underlying_", underlying, "_beta_checkAll.csv"))
+# write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, sim_noPf_str, "_underlying_", underlying, "_eta_checkAll.csv"))
+# write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, sim_noPf_str, "_underlying_", underlying, "_probs_checkAll.csv"))
 
 
 ########################################
@@ -276,10 +276,10 @@ beta_is_covered = beta_checkAll %>%
   gt() %>% fmt_missing(columns=everything(), missing_text = "")
 beta_is_covered
 gtsave(beta_is_covered,
-       paste0("plots/plot_betaStats_sim", SIM_NUM, ".png"),
+       paste0("plots/plot_betaStats_sim", SIM_NUM, sim_noPf_str, ".png"),
        vwidth=1500, vheight=1500)
 
-# png(paste0("plots/plot_betaStats_sim", SIM_NUM, "_s", sss, ".png"),
+# png(paste0("plots/plot_betaStats_sim", SIM_NUM, sim_noPf_str, "_s", sss, ".png"),
 #     height=1500, width=1500)
 # p<-tableGrob(beta_is_covered)
 # grid.arrange(p)
@@ -296,17 +296,17 @@ eta_is_covered = eta_checkAll %>%
   ) %>% gt()
 # data.frame(eta_is_covered)
 gtsave(eta_is_covered,
-       paste0("plots/plot_etaStats_sim", SIM_NUM, ".png"),
+       paste0("plots/plot_etaStats_sim", SIM_NUM, sim_noPf_str, ".png"),
        vwidth=1500, vheight=1500)
 
 #################### PLOTS #################### 
 
-sss = 1 # sim2: 7, 6, 9    # sim1: 5
+sss = 2 # sim2: 7, 6, 9    # sim1: 5
 
 beta_check_plot = beta_checkAll %>%
   filter(s == sss) %>%
-  mutate(beta_true_zeros = ifelse(beta_true == 0, beta_true, NA),
-         beta_true_nonzeros = ifelse(beta_true != 0, beta_true, NA)) %>%
+  # mutate(beta_true_zeros = ifelse(beta_true == 0, beta_true, NA),
+  #        beta_true_nonzeros = ifelse(beta_true != 0, beta_true, NA)) %>%
   mutate(tto = paste0(tto, "TTO")) %>%
   ggplot(aes(x=fct_reorder(c, k))) +
   facet_wrap(~tto, nrow=1) +
@@ -316,14 +316,15 @@ beta_check_plot = beta_checkAll %>%
   geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5) +
   geom_errorbar(aes(ymin=beta_L50, ymax=beta_U50), width = 0.25, size=1) +
   geom_point(aes(y=betaM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_point(aes(y=beta_true_zeros), col="firebrick", size=5, shape=18)
-if (SIM_NUM != 1) {
-  beta_check_plot = beta_check_plot +
-    # geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
-    geom_point(aes(y=beta_true_nonzeros), col="firebrick", size=5, shape=18)
-}
+  geom_point(aes(y=beta_true), col="firebrick", size=5, shape=18)
+#   geom_point(aes(y=beta_true_zeros), col="firebrick", size=5, shape=18)
+# if (SIM_NUM != 1) {
+#   beta_check_plot = beta_check_plot +
+#     # geom_point(aes(y=beta_true_nonzeros), col="#56B4E9", size=5, shape=18)
+#     geom_point(aes(y=beta_true_nonzeros), col="firebrick", size=5, shape=18)
+# }
 beta_check_plot
-ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_beta_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_beta_check", ".png"),
        beta_check_plot, width=9, height=5)
 
 
@@ -343,7 +344,7 @@ probs_check_plot = probs_checkAll %>%
   ylab("probability") + 
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 probs_check_plot
-ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_probs_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_probs_check", ".png"),
        probs_check_plot, width=12, height=12)
 
 
@@ -359,7 +360,7 @@ xwoba_check_plot = xwoba_checkAll %>%
   ylab("wOBA") + 
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot
-ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check", ".png"),
        xwoba_check_plot, width=8, height=5)
 
 eta_check_plot = eta_checkAll %>%
@@ -376,7 +377,7 @@ eta_check_plot = eta_checkAll %>%
   geom_point(aes(y=etaM), col="black", size=2, stroke=1, shape=21, fill="white") +
   geom_point(aes(y=eta_true), col="firebrick", size=4, shape=18) 
 eta_check_plot
-ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_eta_check", ".png"),
        eta_check_plot, width=12, height=8)
 
 # }
@@ -384,7 +385,7 @@ ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_eta_check", ".png"),
 ############################################
 ############################################
 
-sss = 1
+# sss = s #2
 
 xwoba_check_plot_true = xwoba_checkAll %>%
   filter(s == sss) %>%
@@ -396,10 +397,11 @@ xwoba_check_plot_true = xwoba_checkAll %>%
   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
   ylab("wOBA") + 
-  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), limits = c(270,350))  +
+  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), 
+                     limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot_true
-ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check_true", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_true", ".png"),
        xwoba_check_plot_true, width=8, height=5)
 
 xwoba_check_plot_post = xwoba_checkAll %>%
@@ -412,9 +414,10 @@ xwoba_check_plot_post = xwoba_checkAll %>%
   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
   ylab("wOBA") + 
-  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), limits = c(270,350))  +
+  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), 
+                     limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot
-ggsave(paste0("plots/plot_sim", SIM_NUM, "_s", sss, "_xwoba_check_post", ".png"),
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post", ".png"),
        xwoba_check_plot_post, width=8, height=5)
 
