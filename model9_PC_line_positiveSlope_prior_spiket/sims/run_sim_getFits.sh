@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in {1..10}
+for i in {1..160}
 do
    #### echo "moving $i"
    ## mv ./job_output/fit_sim1_model_bsnBL_$i.rds    ../../../Dropbox/HPCC/fit_sim1_model_bsnBL_$i.rds
