@@ -1,6 +1,7 @@
 
 ########################
-source("sim_config.R")
+# source("sim_config_2a.R")
+source("sim_config_1.R")
 # for (SIM_NUM in 1:2) {
 # SIM_NUM = 2 #1 #2
 # YRS = 2018

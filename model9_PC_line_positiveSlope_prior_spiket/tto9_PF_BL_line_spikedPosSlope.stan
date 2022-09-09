@@ -20,17 +20,21 @@ transformed data {
 }
 parameters {
   matrix[1,K-1] alpha_incpt_raw;            // intercept parameters 
-  matrix<lower=0>[1,K-1] alpha_slope_raw_spike;   
+  // matrix<lower=0>[1,K-1] alpha_slope_raw_spike;   
+  matrix[1,K-1] alpha_slope_raw_spike;   
   matrix<lower=0>[1,K-1] alpha_slope_raw_slab; 
-  matrix<lower=0>[1,K-1] alpha_slope_raw;   // batter sequence number slope parameters 
+  // matrix<lower=0>[1,K-1] alpha_slope_raw;   // batter sequence number slope parameters 
+  matrix[1,K-1] alpha_slope_raw;   // batter sequence number slope parameters 
   matrix[p_o,K-1] beta_raw;                 // batter learning parameters 
   matrix[p_x,K-1] eta_raw;                  // adjustment parameters
 }
 transformed parameters {
   matrix[1,K] alpha_incpt;
-  matrix<lower=0>[1,K] alpha_slope_spike;
+  // matrix<lower=0>[1,K] alpha_slope_spike;
+  matrix[1,K] alpha_slope_spike;
   matrix<lower=0>[1,K] alpha_slope_slab;
-  matrix<lower=0>[1,K] alpha_slope;
+  // matrix<lower=0>[1,K] alpha_slope;
+  matrix[1,K] alpha_slope;
   matrix[p_o,K] beta;
   matrix[p_x,K] eta;
   matrix[n, K] linpred;
