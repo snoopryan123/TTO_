@@ -1,6 +1,7 @@
 
 ########################
-source("sim_config.R")
+source("sim_config_2.R")
+SIM_NO_PF = FALSE
 # for (SIM_NUM in 1:2) {
 # SIM_NUM = 2 #1 #2
 # YRS = 2018
@@ -56,7 +57,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 1
-for (s in 2:2) {
+for (s in 3:3) {
   print(paste0("sleeping ", s))
   
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
@@ -301,7 +302,7 @@ gtsave(eta_is_covered,
 
 #################### PLOTS #################### 
 
-sss = 2 # sim2: 7, 6, 9    # sim1: 5
+sss = 3 # sim2: 7, 6, 9    # sim1: 5
 
 beta_check_plot = beta_checkAll %>%
   filter(s == sss) %>%

@@ -49,15 +49,15 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-# for (s in 12:19) { # 12:19) {    # 18:18) {
-s = 17
+for (s in 12:19)  # 12:19) {    # 18:18) {
+# s = 18
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
   
   YRS = 2000 + s
   source("model9_getData.R") ### get observed data 
   
-  Sys.sleep(5) ###
+  # Sys.sleep(5) ###
   
   ### import fit from rstan
   fit <- readRDS(paste0(output_folder, "fit_obs_model_lineyrs_",s,"_.rds"))
@@ -133,39 +133,42 @@ s = 17
       betaM = ifelse(tto==3, betaM[2] - betaM[1], betaM),
       beta_U50 = ifelse(tto==3, beta_U50[2] - beta_U50[1], beta_U50),
       beta_U95 = ifelse(tto==3, beta_U95[2] - beta_U95[1], beta_U95),
-    ) %>% ungroup() %>% arrange(tto,k)
+    ) %>% ungroup() %>% arrange(tto,k) %>%
+    ### TTOP tests
+    mutate(TTOP_95 = as.numeric(beta_L95 > 0),
+           TTOP_50 = as.numeric(beta_L50 > 0))
   
   beta_checkAll = bind_rows(beta_checkAll, beta_check_1)
   
-  #################### check whether ETA was recovered #################### 
-  eta_draws_1 <- reshape2::melt(eta_draws) %>%
-    as_tibble() %>%
-    rename(i = iterations, eta=value) %>%
-    mutate(k = as.numeric(str_sub(parameters, 7, 7))) %>%
-    mutate(l = as.numeric(str_sub(parameters, 5, 5)))
-  
-  eta_check <- eta_draws_1 %>% 
-    group_by(k, l) %>%
-    summarise(
-      eta_L95 = quantile(eta, 0.025),
-      eta_L50 = quantile(eta, 0.25),
-      etaM = mean(eta),
-      eta_U50 = quantile(eta, 0.75),
-      eta_U95 = quantile(eta, 0.975),
-      .groups = "drop"
-    ) %>%
-    arrange(l,k) %>%
-    mutate(c = category_strings[k]) %>%
-    relocate(c, .after = k) %>%
-    # mutate(ci_50_length = eta_U50 - eta_L50) %>%
-    # mutate(ci_95_length = eta_U95 - eta_L95) %>%
-    filter(k != 1) %>%
-    mutate(s = s) %>% relocate(s, .before=k) %>%
-    # mutate(l_ = colnames(X)[l]) 
-    mutate(l_ = c("BQ", "PQ", "HAND", "HOME")[l])
-  data.frame(eta_check)
-  
-  eta_checkAll = bind_rows(eta_checkAll, eta_check)
+  # #################### get ETA #################### 
+  # eta_draws_1 <- reshape2::melt(eta_draws) %>%
+  #   as_tibble() %>%
+  #   rename(i = iterations, eta=value) %>%
+  #   mutate(k = as.numeric(str_sub(parameters, 7, 7))) %>%
+  #   mutate(l = as.numeric(str_sub(parameters, 5, 5)))
+  # 
+  # eta_check <- eta_draws_1 %>% 
+  #   group_by(k, l) %>%
+  #   summarise(
+  #     eta_L95 = quantile(eta, 0.025),
+  #     eta_L50 = quantile(eta, 0.25),
+  #     etaM = mean(eta),
+  #     eta_U50 = quantile(eta, 0.75),
+  #     eta_U95 = quantile(eta, 0.975),
+  #     .groups = "drop"
+  #   ) %>%
+  #   arrange(l,k) %>%
+  #   mutate(c = category_strings[k]) %>%
+  #   relocate(c, .after = k) %>%
+  #   # mutate(ci_50_length = eta_U50 - eta_L50) %>%
+  #   # mutate(ci_95_length = eta_U95 - eta_L95) %>%
+  #   filter(k != 1) %>%
+  #   mutate(s = s) %>% relocate(s, .before=k) %>%
+  #   # mutate(l_ = colnames(X)[l]) 
+  #   mutate(l_ = c("BQ", "PQ", "HAND", "HOME")[l])
+  # data.frame(eta_check)
+  # 
+  # eta_checkAll = bind_rows(eta_checkAll, eta_check)
 }
 
 xwoba_checkAll = probs_checkAll %>%
@@ -192,109 +195,108 @@ xwoba_checkAll = probs_checkAll %>%
     xw_tto_U50 = mean(xw_U50),
     xw_tto_U95 = mean(xw_U95),
   )
-# write_csv(beta_checkAll, paste0("plots/results_sim", SIM_NUM, "_beta_checkAll.csv"))
-# write_csv(eta_checkAll, paste0("plots/results_sim", SIM_NUM, "_eta_checkAll.csv"))
-# write_csv(probs_checkAll, paste0("plots/results_sim", SIM_NUM, "_probs_checkAll.csv"))
+
+### save beta csv to check for TTOP:
+write_csv(beta_checkAll, paste0("plots/beta_ttop_results_beta_checkAll.csv"))
 
 #################### summmary stats over all sims #################### 
 
-sss = s
+sss = 18 #s
 sig_color = "#56B4E9" # "firebrick" "#56B4E9"
 sig_neg_color = "firebrick"
 
 #################### PLOTS #################### 
 
-{
-    beta_check_plot_df = beta_checkAll %>%
-      mutate(sig = ifelse(beta_L95 > 0, 1, 0),
-             sig_neg = ifelse(beta_U95 < 0, 1, 0)) %>%
-      mutate(beta_L95_sig = ifelse(sig, beta_L95, NA),
-             beta_U95_sig = ifelse(sig, beta_U95, NA),
-             beta_L50_sig = ifelse(sig, beta_L50, NA),
-             beta_U50_sig = ifelse(sig, beta_U50, NA),
-             betaM_sig = ifelse(sig, betaM, NA),
-             beta_L95_sig_neg = ifelse(sig_neg, beta_L95, NA),
-             beta_U95_sig_neg = ifelse(sig_neg, beta_U95, NA),
-             beta_L50_sig_neg = ifelse(sig_neg, beta_L50, NA),
-             beta_U50_sig_neg = ifelse(sig_neg, beta_U50, NA),
-             betaM_sig_neg = ifelse(sig_neg, betaM, NA)
-      ) %>%
-      filter(s == sss) %>%
-      mutate(tto = paste0(tto, "TTO"))
-    beta_check_plot = beta_check_plot_df %>%
-      ggplot(aes(x=fct_reorder(c, k))) +
-      facet_wrap(~tto, nrow=1) +
-      theme(panel.spacing = unit(2, "lines")) +
-      xlab("") + ylab(TeX("$\\beta$")) +
-      geom_hline(yintercept=0, size=0.5, col="grey") +
-      geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5)
-    if (!all(beta_check_plot_df$sig == 0)) {
-      beta_check_plot = beta_check_plot + 
-        geom_errorbar(aes(ymin=beta_L95_sig, ymax=beta_U95_sig), width = 0.5, color=sig_color) 
-    }
-    if (!all(beta_check_plot_df$sig_neg == 0)) {
-      beta_check_plot = beta_check_plot + 
-        geom_errorbar(aes(ymin=beta_L95_sig_neg, ymax=beta_U95_sig_neg), width = 0.5, color=sig_neg_color)
-    }
-    beta_check_plot = beta_check_plot + 
-      geom_errorbar(aes(ymin=beta_L50, ymax=beta_U50), width = 0.25, size=1) 
-    if (!all(beta_check_plot_df$sig == 0)) {
-      beta_check_plot = beta_check_plot + 
-        geom_errorbar(aes(ymin=beta_L50_sig, ymax=beta_U50_sig), width = 0.25, size=1, color=sig_color) 
-    }
-    if (!all(beta_check_plot_df$sig_neg == 0)) {
-      beta_check_plot = beta_check_plot + 
-        geom_errorbar(aes(ymin=beta_L50_sig_neg, ymax=beta_U50_sig_neg), width = 0.25, size=1, color=sig_neg_color)
-    }
-    beta_check_plot = beta_check_plot + 
-      geom_point(aes(y=betaM), col="black", size=2, stroke=1, shape=21, fill="white")
-    if (!all(beta_check_plot_df$sig == 0)) {
-      beta_check_plot = beta_check_plot + 
-        geom_point(aes(y=betaM_sig), col=sig_color, size=2, stroke=1, shape=21, fill="white") 
-    }
-    if (!all(beta_check_plot_df$sig_neg == 0)) {
-      beta_check_plot = beta_check_plot + 
-        geom_point(aes(y=betaM_sig_neg), col=sig_neg_color, size=2, stroke=1, shape=21, fill="white")
-    }
-}
-beta_check_plot
-ggsave(paste0("plots/beta_plots/plot_obs_results_", 2000+sss, "_beta_check", ".png"),
-       beta_check_plot, width=9, height=5)
+# {
+#     beta_check_plot_df = beta_checkAll %>%
+#       mutate(sig = ifelse(beta_L95 > 0, 1, 0),
+#              sig_neg = ifelse(beta_U95 < 0, 1, 0)) %>%
+#       mutate(beta_L95_sig = ifelse(sig, beta_L95, NA),
+#              beta_U95_sig = ifelse(sig, beta_U95, NA),
+#              beta_L50_sig = ifelse(sig, beta_L50, NA),
+#              beta_U50_sig = ifelse(sig, beta_U50, NA),
+#              betaM_sig = ifelse(sig, betaM, NA),
+#              beta_L95_sig_neg = ifelse(sig_neg, beta_L95, NA),
+#              beta_U95_sig_neg = ifelse(sig_neg, beta_U95, NA),
+#              beta_L50_sig_neg = ifelse(sig_neg, beta_L50, NA),
+#              beta_U50_sig_neg = ifelse(sig_neg, beta_U50, NA),
+#              betaM_sig_neg = ifelse(sig_neg, betaM, NA)
+#       ) %>%
+#       filter(s == sss) %>%
+#       mutate(tto = paste0(tto, "TTO"))
+#     beta_check_plot = beta_check_plot_df %>%
+#       ggplot(aes(x=fct_reorder(c, k))) +
+#       facet_wrap(~tto, nrow=1) +
+#       theme(panel.spacing = unit(2, "lines")) +
+#       xlab("") + ylab(TeX("$\\beta$")) +
+#       geom_hline(yintercept=0, size=0.5, col="grey") +
+#       geom_errorbar(aes(ymin=beta_L95, ymax=beta_U95), width = 0.5)
+#     if (!all(beta_check_plot_df$sig == 0)) {
+#       beta_check_plot = beta_check_plot + 
+#         geom_errorbar(aes(ymin=beta_L95_sig, ymax=beta_U95_sig), width = 0.5, color=sig_color) 
+#     }
+#     if (!all(beta_check_plot_df$sig_neg == 0)) {
+#       beta_check_plot = beta_check_plot + 
+#         geom_errorbar(aes(ymin=beta_L95_sig_neg, ymax=beta_U95_sig_neg), width = 0.5, color=sig_neg_color)
+#     }
+#     beta_check_plot = beta_check_plot + 
+#       geom_errorbar(aes(ymin=beta_L50, ymax=beta_U50), width = 0.25, size=1) 
+#     if (!all(beta_check_plot_df$sig == 0)) {
+#       beta_check_plot = beta_check_plot + 
+#         geom_errorbar(aes(ymin=beta_L50_sig, ymax=beta_U50_sig), width = 0.25, size=1, color=sig_color) 
+#     }
+#     if (!all(beta_check_plot_df$sig_neg == 0)) {
+#       beta_check_plot = beta_check_plot + 
+#         geom_errorbar(aes(ymin=beta_L50_sig_neg, ymax=beta_U50_sig_neg), width = 0.25, size=1, color=sig_neg_color)
+#     }
+#     beta_check_plot = beta_check_plot + 
+#       geom_point(aes(y=betaM), col="black", size=2, stroke=1, shape=21, fill="white")
+#     if (!all(beta_check_plot_df$sig == 0)) {
+#       beta_check_plot = beta_check_plot + 
+#         geom_point(aes(y=betaM_sig), col=sig_color, size=2, stroke=1, shape=21, fill="white") 
+#     }
+#     if (!all(beta_check_plot_df$sig_neg == 0)) {
+#       beta_check_plot = beta_check_plot + 
+#         geom_point(aes(y=betaM_sig_neg), col=sig_neg_color, size=2, stroke=1, shape=21, fill="white")
+#     }
+# }
+# beta_check_plot
+# ggsave(paste0("plots/beta_plots/plot_obs_results_", 2000+sss, "_beta_check", ".png"),
+#        beta_check_plot, width=9, height=5)
 
+# eta_check_plot = eta_checkAll %>%
+#   filter(s == sss) %>%
+#   mutate(l_order = ifelse(l_ == "PQ", 1, ifelse(l_ == "BQ", 2, ifelse(l_ == "HAND", 3, 4)))) %>%
+#   ggplot(aes(x=fct_reorder(l_,  l_order ))) +
+#   # ggplot(aes(x=l_)) +
+#   facet_wrap(~c, nrow=2, scales="free") +
+#   theme(panel.spacing = unit(2, "lines")) +
+#   xlab("") + ylab(TeX("$\\eta$")) +
+#   # geom_hline(yintercept=0, size=0.5, col="grey") + 
+#   geom_errorbar(aes(ymin=eta_L95, ymax=eta_U95), width = 0.5) +
+#   geom_errorbar(aes(ymin=eta_L50, ymax=eta_U50), width = 0.25, size=1) +
+#   geom_point(aes(y=etaM), col="black", size=2, stroke=1, shape=21, fill="white")
+# eta_check_plot
+# ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_eta_check", ".png"),
+#        eta_check_plot, width=12, height=8)
 
-eta_check_plot = eta_checkAll %>%
-  filter(s == sss) %>%
-  mutate(l_order = ifelse(l_ == "PQ", 1, ifelse(l_ == "BQ", 2, ifelse(l_ == "HAND", 3, 4)))) %>%
-  ggplot(aes(x=fct_reorder(l_,  l_order ))) +
-  # ggplot(aes(x=l_)) +
-  facet_wrap(~c, nrow=2, scales="free") +
-  theme(panel.spacing = unit(2, "lines")) +
-  xlab("") + ylab(TeX("$\\eta$")) +
-  # geom_hline(yintercept=0, size=0.5, col="grey") + 
-  geom_errorbar(aes(ymin=eta_L95, ymax=eta_U95), width = 0.5) +
-  geom_errorbar(aes(ymin=eta_L50, ymax=eta_U50), width = 0.25, size=1) +
-  geom_point(aes(y=etaM), col="black", size=2, stroke=1, shape=21, fill="white")
-eta_check_plot
-ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_eta_check", ".png"),
-       eta_check_plot, width=12, height=8)
-
-probs_check_plot = probs_checkAll %>%
-  filter(s == sss) %>%
-  ggplot(aes(x=t)) +
-  facet_wrap(~c, nrow=3, scales="free") +
-  theme(panel.spacing = unit(2, "lines")) +
-  # xlab("") + ylab(TeX("$\\p$")) +
-  # geom_hline(yintercept=0, size=0.5, col="grey") + 
-  geom_errorbar(aes(ymin=p_L95, ymax=p_U95), width = 0.5) +
-  geom_errorbar(aes(ymin=p_L50, ymax=p_U50), width = 0.25, size=1) +
-  geom_point(aes(y=pM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-  ylab("probability") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-probs_check_plot
-ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_probs_check", ".png"),
-       probs_check_plot, width=12, height=12)
+# probs_check_plot = probs_checkAll %>%
+#   filter(s == sss) %>%
+#   ggplot(aes(x=t)) +
+#   facet_wrap(~c, nrow=3, scales="free") +
+#   theme(panel.spacing = unit(2, "lines")) +
+#   # xlab("") + ylab(TeX("$\\p$")) +
+#   # geom_hline(yintercept=0, size=0.5, col="grey") + 
+#   geom_errorbar(aes(ymin=p_L95, ymax=p_U95), width = 0.5) +
+#   geom_errorbar(aes(ymin=p_L50, ymax=p_U50), width = 0.25, size=1) +
+#   geom_point(aes(y=pM), col="black", size=2, stroke=1, shape=21, fill="white") +
+#   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+#   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+#   ylab("probability") + 
+#   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+# probs_check_plot
+# ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_probs_check", ".png"),
+#        probs_check_plot, width=12, height=12)
 
 ################
 xwoba_check_plot = xwoba_checkAll %>%
