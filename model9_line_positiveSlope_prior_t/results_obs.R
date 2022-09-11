@@ -49,8 +49,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-for (s in 12:19)  # 12:19) {    # 18:18) {
-# s = 18
+for (s in 18:18)  #12:19 #18:18
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
   
@@ -196,16 +195,108 @@ xwoba_checkAll = probs_checkAll %>%
     xw_tto_U95 = mean(xw_U95),
   )
 
-### save beta csv to check for TTOP:
+# ### save beta csv to check for TTOP:
 write_csv(beta_checkAll, paste0("plots/beta_ttop_results_beta_checkAll.csv"))
 
 #################### summmary stats over all sims #################### 
 
-sss = 18 #s
+### TTOP
+TTOP_proportions = beta_checkAll %>%
+  group_by(k,tto) %>%
+  summarise(TTOP_95 = mean(TTOP_95),
+            TTOP_50 = mean(TTOP_50),
+            .groups="drop") %>%
+  arrange(tto,k) %>%
+  mutate(c = category_strings[k]) %>% relocate(c,.after=k)
+TTOP_proportions
+### save TTOP csv to check for TTOP:
+write_csv(TTOP_proportions, paste0("plots/TTOP_proportions.csv"))
+
+
+sss = 18
 sig_color = "#56B4E9" # "firebrick" "#56B4E9"
 sig_neg_color = "firebrick"
 
 #################### PLOTS #################### 
+
+################
+xwoba_check_plot = xwoba_checkAll %>%
+  filter(s == sss) %>%
+  ggplot(aes(x=t)) +
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  ylab("wOBA") + 
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot
+ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check", ".png"),
+       xwoba_check_plot, width=8, height=5)
+
+blue1 = "dodgerblue2"
+blue2 = "#56B4E9" 
+
+xwoba_check_plot_1 = xwoba_checkAll %>%
+  filter(s == sss) %>%
+  mutate(
+    xw_tto_L95_tto1 = xw_tto_L95*tto1,
+    xw_tto_L50_tto1 = xw_tto_L50*tto1,
+    xw_tto_M_tto1 = xw_tto_M*tto1,
+    xw_tto_U50_tto1 = xw_tto_U50*tto1,
+    xw_tto_U95_tto1 = xw_tto_U95*tto1,
+    xw_tto_L95_tto2 = xw_tto_L95*tto2,
+    xw_tto_L50_tto2 = xw_tto_L50*tto2,
+    xw_tto_M_tto2 = xw_tto_M*tto2,
+    xw_tto_U50_tto2 = xw_tto_U50*tto2,
+    xw_tto_U95_tto2 = xw_tto_U95*tto2,
+    xw_tto_L95_tto3 = xw_tto_L95*tto3,
+    xw_tto_L50_tto3 = xw_tto_L50*tto3,
+    xw_tto_M_tto3 = xw_tto_M*tto3,
+    xw_tto_U50_tto3 = xw_tto_U50*tto3,
+    xw_tto_U95_tto3 = xw_tto_U95*tto3,
+  ) %>%
+  ggplot(aes(x=t)) +
+  geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
+  geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
+  geom_line(aes(y = xw_tto_U50_tto1), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_U95_tto1), linetype=3) +
+  geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=9,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=9,fill=blue2,alpha=0.03,) +
+  
+  geom_line(aes(y = xw_tto_L95_tto2), linetype=3) +
+  geom_line(aes(y = xw_tto_L50_tto2), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_M_tto2), size=1, color=blue1) +
+  geom_line(aes(y = xw_tto_U50_tto2), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_U95_tto2), linetype=3) +
+  geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=10,xmax=18,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=10,xmax=18,fill=blue2,alpha=0.03,) +
+  
+  geom_line(aes(y = xw_tto_L95_tto3), linetype=3) +
+  geom_line(aes(y = xw_tto_L50_tto3), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_M_tto3), size=1, color=blue1) +
+  geom_line(aes(y = xw_tto_U50_tto3), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_U95_tto3), linetype=3) +
+  geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=19,xmax=27,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=19,xmax=27,fill=blue2,alpha=0.03,) +
+  
+  # geom_hline(aes(yintercept = xw_tto_M*tto1), linetype="dashed") +
+  # geom_hline(aes(yintercept = xw_tto_U50*tto1), linetype="dashed") +
+  
+  
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  ylab("wOBA") + 
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot_1
+ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check_1", ".png"),
+       xwoba_check_plot_1, width=8, height=5)
+
+###############################################
 
 # {
 #     beta_check_plot_df = beta_checkAll %>%
@@ -298,82 +389,6 @@ sig_neg_color = "firebrick"
 # ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_probs_check", ".png"),
 #        probs_check_plot, width=12, height=12)
 
-################
-xwoba_check_plot = xwoba_checkAll %>%
-  filter(s == sss) %>%
-  ggplot(aes(x=t)) +
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
-  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
-  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  ylab("wOBA") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-xwoba_check_plot
-ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check", ".png"),
-       xwoba_check_plot, width=8, height=6)
-
-blue1 = "dodgerblue2"
-blue2 = "#56B4E9" 
-
-xwoba_check_plot_1 = xwoba_checkAll %>%
-  filter(s == sss) %>%
-  mutate(
-    xw_tto_L95_tto1 = xw_tto_L95*tto1,
-    xw_tto_L50_tto1 = xw_tto_L50*tto1,
-    xw_tto_M_tto1 = xw_tto_M*tto1,
-    xw_tto_U50_tto1 = xw_tto_U50*tto1,
-    xw_tto_U95_tto1 = xw_tto_U95*tto1,
-    xw_tto_L95_tto2 = xw_tto_L95*tto2,
-    xw_tto_L50_tto2 = xw_tto_L50*tto2,
-    xw_tto_M_tto2 = xw_tto_M*tto2,
-    xw_tto_U50_tto2 = xw_tto_U50*tto2,
-    xw_tto_U95_tto2 = xw_tto_U95*tto2,
-    xw_tto_L95_tto3 = xw_tto_L95*tto3,
-    xw_tto_L50_tto3 = xw_tto_L50*tto3,
-    xw_tto_M_tto3 = xw_tto_M*tto3,
-    xw_tto_U50_tto3 = xw_tto_U50*tto3,
-    xw_tto_U95_tto3 = xw_tto_U95*tto3,
-  ) %>%
-  ggplot(aes(x=t)) +
-  geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
-  geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
-  geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
-  geom_line(aes(y = xw_tto_U50_tto1), linetype=3, size=0.75) +
-  geom_line(aes(y = xw_tto_U95_tto1), linetype=3) +
-  geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=9,fill="black",alpha=0.01,) +
-  geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=9,fill=blue2,alpha=0.03,) +
-  
-  geom_line(aes(y = xw_tto_L95_tto2), linetype=3) +
-  geom_line(aes(y = xw_tto_L50_tto2), linetype=3, size=0.75) +
-  geom_line(aes(y = xw_tto_M_tto2), size=1, color=blue1) +
-  geom_line(aes(y = xw_tto_U50_tto2), linetype=3, size=0.75) +
-  geom_line(aes(y = xw_tto_U95_tto2), linetype=3) +
-  geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=10,xmax=18,fill="black",alpha=0.01,) +
-  geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=10,xmax=18,fill=blue2,alpha=0.03,) +
-  
-  geom_line(aes(y = xw_tto_L95_tto3), linetype=3) +
-  geom_line(aes(y = xw_tto_L50_tto3), linetype=3, size=0.75) +
-  geom_line(aes(y = xw_tto_M_tto3), size=1, color=blue1) +
-  geom_line(aes(y = xw_tto_U50_tto3), linetype=3, size=0.75) +
-  geom_line(aes(y = xw_tto_U95_tto3), linetype=3) +
-  geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=19,xmax=27,fill="black",alpha=0.01,) +
-  geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=19,xmax=27,fill=blue2,alpha=0.03,) +
-  
-  # geom_hline(aes(yintercept = xw_tto_M*tto1), linetype="dashed") +
-  # geom_hline(aes(yintercept = xw_tto_U50*tto1), linetype="dashed") +
-  
-  
-  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
-  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
-  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  ylab("wOBA") + 
-  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-xwoba_check_plot_1
-ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check_1", ".png"),
-       xwoba_check_plot_1, width=8, height=6)
 
 
 
