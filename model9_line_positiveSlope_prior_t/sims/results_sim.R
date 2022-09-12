@@ -118,7 +118,7 @@ for (s in 1:25) { # 3:3 # 1:25
     y_test = y[test_rows,]
     p_test = fit_to_posterior_probs(fit,INCPT_test,S_test,O_test,X_test,probs_as_list=TRUE)
     cel_test = cross_entropy_loss_posterior(p_test, y_test)
-    cel_model[s] = cel_model
+    cel_model[s] = cel_test
   }
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
