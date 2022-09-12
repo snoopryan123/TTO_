@@ -107,7 +107,7 @@ for (s in 1:25) { # 3:3 # 1:25
     y_test = y[test_rows,]
     p_test = fit_to_posterior_probs(fit,INCPT_test,S_test,O_test,X_test,probs_as_list=TRUE)
     cel_test = cross_entropy_loss_posterior(p_test, y_test)
-    write_csv(tibble(cel_test=cel_test), "plots/cel_test.csv")
+    write_csv(tibble(cel_test=cel_test), paste0("plots/cel_test_sim",SIM_NUM,".csv"))
   }
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
@@ -347,22 +347,22 @@ for (s in 1:25) { # 3:3 # 1:25
 beta_is_covered = beta_checkAll %>% 
   group_by(tto,c) %>%
   summarise(is_covered_95 = mean(is_covered_95), .groups = "drop") %>% relocate(is_covered_95, .after=c) 
-write_csv(beta_is_covered, "plots/beta_is_covered.csv")
+write_csv(beta_is_covered, paste0("plots/beta_is_covered",SIM_NUM,".csv"))
 
 eta_is_covered = eta_checkAll %>% 
   group_by(l_,c) %>%
   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(eta_is_covered, "plots/eta_is_covered.csv")
+write_csv(eta_is_covered, paste0("plots/eta_is_covered",SIM_NUM,".csv"))
 
 alpha_incpt_is_covered = alpha_incpt_checkAll %>% 
   group_by(c) %>%
   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(alpha_incpt_is_covered, "plots/alpha_incpt_is_covered.csv")
+write_csv(alpha_incpt_is_covered, paste0("plots/alpha_incpt_is_covered",SIM_NUM,".csv"))
 
 alpha_slope_is_covered = alpha_slope_checkAll %>% 
   group_by(c) %>%
   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(alpha_slope_is_covered, "plots/alpha_slope_is_covered.csv")
+write_csv(alpha_slope_is_covered, paste0("plots/alpha_slope_is_covered",SIM_NUM,".csv"))
 
 all_params_is_covered = bind_rows(
   beta_checkAll %>% select(s,c,is_covered_95) %>% mutate(param="beta"),
@@ -371,11 +371,7 @@ all_params_is_covered = bind_rows(
   alpha_slope_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_slope"),
 ) %>%
 summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(all_params_is_covered, "plots/all_params_is_covered.csv")
-
-#################### cross entropy loss #################### 
-
-
+write_csv(all_params_is_covered, paste0("plots/all_params_is_covered",SIM_NUM,".csv"))
 
 #################### PLOTS #################### 
 
