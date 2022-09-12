@@ -1,5 +1,5 @@
 library(tidyverse)
-library(lines)
+# library(lines)
 library(latex2exp)
 theme_set(theme_bw())
 theme_update(text = element_text(size=18))
@@ -66,6 +66,25 @@ plot_true_alphaLine = alpha_tib %>%
 plot_true_alphaLine
 ggsave(paste0("plot_sim", "_true_alphaLine_",".png"), plot_true_alphaLine, width=11, height=6)
 
+### 
+alpha_incpt_tib = tibble()
+alpha_slope_tib = tibble()
+for (kk in 1:7) {
+  alpha_line_k = lm(a~t, data=  tibble(t=1:27, a=(alpha_tib %>% filter(k==kk))$alpha) )
+  # if (kk==2) { 
+  #   ### make BB slope positive
+  #   alpha_line_k$coefficients[1] = alpha_line_k$coefficients[1] - 0.07
+  #   alpha_line_k$coefficients[2] = -1 * alpha_line_k$coefficients[2]
+  # }
+  # print(kk)
+  # print(  alpha_line_k$coefficients )
+  alpha_incpt_tib_k = tibble(alpha_incpt = alpha_line_k$coefficients[1], k=kk, c=category_strings[k])
+  alpha_incpt_tib = bind_rows(alpha_incpt_tib, alpha_incpt_tib_k)
+  
+  alpha_slope_tib_k = tibble(alpha_slope = alpha_line_k$coefficients[2], k=kk, c=category_strings[k])
+  alpha_slope_tib = bind_rows(alpha_slope_tib, alpha_slope_tib_k)
+}
+
 ### eta means
 eta_draws = draws[,str_detect(colnames(draws), "^eta")]
 eta_draws_means = colMeans(eta_draws)
@@ -101,6 +120,8 @@ beta_tib
 
 ### save simulation parameters
 write_csv(alpha_tib %>% select(-alpha), "params_sim_alpha.csv")
+write_csv(alpha_incpt_tib, "params_sim_alpha_incpt.csv")
+write_csv(alpha_slope_tib, "params_sim_alpha_slope.csv")
 write_csv(eta_tib, "params_sim_eta.csv")
 write_csv(beta_tib, "params_sim_beta.csv")
 

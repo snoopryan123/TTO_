@@ -13,14 +13,22 @@ if (underlying == "line" & !SIM_NO_PF) {
 # } 
 
 alpha_tib = read_csv(paste0(param_creation_folder, "/params_sim_alpha.csv"))
+alpha_incpt_tib = read_csv(paste0(param_creation_folder, "/params_sim_alpha_incpt.csv"))
+alpha_slope_tib = read_csv(paste0(param_creation_folder, "/params_sim_alpha_slope.csv"))
 beta_tib = read_csv(paste0(param_creation_folder,"/params_sim_beta.csv"))
 eta_tib = read_csv(paste0(param_creation_folder,"/params_sim_eta.csv"))
 
 alpha_mat = matrix(nrow=dim(S)[2], ncol=num_categories)
+alpha_incpt_mat = matrix(nrow=1, ncol=num_categories)
+alpha_slope_mat = matrix(nrow=1, ncol=num_categories)
 for (kk in 1:7) {
   alpha_mat[,kk] = (alpha_tib %>% filter(k==kk))$alpha_line
+  alpha_incpt_mat[1,kk] = (alpha_incpt_tib %>% filter(k==kk))$alpha_incpt
+  alpha_slope_mat[1,kk] = (alpha_slope_tib %>% filter(k==kk))$alpha_slope
 }
 colnames(alpha_mat) = category_strings
+colnames(alpha_incpt_mat) = category_strings
+colnames(alpha_slope_mat) = category_strings
 
 beta_mat = matrix(
   c((beta_tib %>% filter(sim_num == SIM_NUM))$beta_2,
