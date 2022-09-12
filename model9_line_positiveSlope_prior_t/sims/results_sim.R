@@ -11,7 +11,7 @@ IS_SIM = TRUE
 ########################
 source("../model9_getData.R") ### get observed data 
 
-fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
+fit_to_posterior_probs <- function(fit,INCPT,S,O,X,probs_as_list=FALSE) {
   draws=as.matrix(fit)
   alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
   alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
@@ -36,10 +36,14 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
   ## probs[[1]][1,1]+probs[[2]][1,1]+probs[[3]][1,1]+probs[[4]][1,1]+probs[[5]][1,1]+probs[[6]][1,1]+probs[[7]][1,1]
   ## probs[[1]][1:1000]
   ## dim(probs[[7]])
+  if(probs_as_list) {
+    return(probs)
+  }
   
   ### turn to tibble
   probs_df = tibble()
   for (k in 1:7) {
+    print(k)
     probs_df_k0 = probs[[k]]
     probs_df_k = reshape2::melt(probs_df_k0) %>%
       as_tibble() %>%
@@ -49,7 +53,21 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
     probs_df = bind_rows(probs_df, probs_df_k)
   }
   # probs_tilde_df %>% group_by(k) %>% summarise(count=n(), count2=n()/27) ## check
+  rm(probs)
   return(probs_df)
+}
+
+cross_entropy_loss_posterior <- function(probs,y_test) {
+  cross_entropy_losses = list()
+  for (i in 1:length(y_test)) {
+    entropy_i = as.matrix( probs[[y_test[i]]][i,] )
+    cross_entropy_losses[[length(cross_entropy_losses) + 1]] = entropy_i
+  }
+  cross_entropy_loss_M = t(do.call(cbind, cross_entropy_losses))
+  ## cross_entropy_loss_M[1:10,1:10]
+  cross_entropy_loss_M = -log(cross_entropy_loss_M)
+  cross_entropy_losses = rowMeans(cross_entropy_loss_M)
+  mean(cross_entropy_losses)
 }
 
 ########################
@@ -59,8 +77,10 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 # s = 3 #s=1
-for (s in 1:25) { # 3:3
-  print(paste0("sleeping ", s))
+for (s in 1:25) { # 3:3 # 1:25
+  print("*************************")
+  print(paste0("sim unmber ", s))
+  print("*************************")
   
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
   
@@ -76,6 +96,19 @@ for (s in 1:25) { # 3:3
   alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
   beta_draws <- draws[,startsWith(colnames(draws), "beta")]
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
+  
+  ### cross entropy loss
+  {
+    test_rows = which(folds != 1) #1:100 #1:1
+    INCPT_test = INCPT[test_rows,]
+    S_test = SPL[test_rows,]
+    O_test = O[test_rows,]
+    X_test = X[test_rows,]
+    y_test = y[test_rows,]
+    p_test = fit_to_posterior_probs(fit,INCPT_test,S_test,O_test,X_test,probs_as_list=TRUE)
+    cel_test = cross_entropy_loss_posterior(p_test, y_test)
+    write_csv(tibble(cel_test=cel_test), "plots/cel_test.csv")
+  }
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
   INCPT_tilde = cbind(rep(1,27))
@@ -309,7 +342,7 @@ for (s in 1:25) { # 3:3
     mutate(ci_95_length = xw_U95 - xw_L95) 
 }
 
-#################### summmary stats over all sims #################### 
+#################### parameter coverage stats over all sims #################### 
 
 beta_is_covered = beta_checkAll %>% 
   group_by(tto,c) %>%
@@ -330,6 +363,19 @@ alpha_slope_is_covered = alpha_slope_checkAll %>%
   group_by(c) %>%
   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
 write_csv(alpha_slope_is_covered, "plots/alpha_slope_is_covered.csv")
+
+all_params_is_covered = bind_rows(
+  beta_checkAll %>% select(s,c,is_covered_95) %>% mutate(param="beta"),
+  eta_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="eta"),
+  alpha_incpt_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_incpt"),
+  alpha_slope_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_slope"),
+) %>%
+summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
+write_csv(all_params_is_covered, "plots/all_params_is_covered.csv")
+
+#################### cross entropy loss #################### 
+
+
 
 #################### PLOTS #################### 
 
