@@ -355,8 +355,8 @@ for (s in 1:25) { # 3:3 # 1:25
 
 #################### parameter coverage stats over all sims #################### 
 
-write_csv(tibble(cel_model_test=mean(cel_model)), paste0("plots/cel_test_sim",SIM_NUM,".csv"))
-write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("plots/cel_test_sim",SIM_NUM,".csv"))
+write_csv(tibble(cel_model_test=mean(cel_model)), paste0("plots/cel_model_test_sim",SIM_NUM,".csv"))
+write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("plots/cel_base_rates_test_sim",SIM_NUM,".csv"))
 
 beta_is_covered = beta_checkAll %>% 
   group_by(tto,c) %>%
