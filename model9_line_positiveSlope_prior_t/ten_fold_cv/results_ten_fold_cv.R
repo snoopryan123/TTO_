@@ -101,6 +101,6 @@ for (fold_num in 1:NUM_FOLDS) {
   cel_model[fold_num] = cel_test
 }
 
-write_csv(tibble(cel_model_test=mean(cel_model)), paste0("results/cel_model_test_sim",SIM_NUM,".csv"))
-write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("results/cel_base_rates_test_sim",SIM_NUM,".csv"))
+write_csv(tibble(cel_model_test=mean(cel_model)), paste0("results/cel_model_ten_fold_cv.csv"))
+write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("results/cel_base_rates_ten_fold_cv.csv"))
 
