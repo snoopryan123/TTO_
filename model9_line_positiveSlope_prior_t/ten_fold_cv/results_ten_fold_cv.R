@@ -78,14 +78,13 @@ for (fold_num in 1:NUM_FOLDS) {
   y_test = y[test_rows,]
   base_rates = tibble(k=y_train) %>% group_by(k) %>% summarise(count=n()) %>% mutate(p=count/sum(count)) %>% select(-count)
   base_rate_CEL_test = tibble(k=y_test) %>% left_join(base_rates) %>% mutate(cel = -log(p)) %>% summarise(cel = mean(cel))
-  cel_base_rates[s] = base_rate_CEL_test$cel
+  cel_base_rates[fold_num] = base_rate_CEL_test$cel
   
   ### import fit from rstan
-  OUTPUT_FILE = paste0("job_output/", "fit_sim",SIM_NUM,sim_noPf_str,"_model_bsnBL_", s, "_underlying_", underlying, ".rds") 
+  OUTPUT_FILE = paste0("job_output/", "fit_ten_fold_cv_", fold_num, "_model_bsnBL.rds")
   fit <- readRDS(OUTPUT_FILE)
   draws <- as.matrix(fit)
-  print("*****"); print(s); print("*****");
-  
+
   alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
   alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
   beta_draws <- draws[,startsWith(colnames(draws), "beta")]
@@ -99,7 +98,7 @@ for (fold_num in 1:NUM_FOLDS) {
   y_test = y[test_rows,]
   p_test = fit_to_posterior_probs(fit,INCPT_test,S_test,O_test,X_test,probs_as_list=TRUE)
   cel_test = cross_entropy_loss_posterior(p_test, y_test)
-  cel_model[s] = cel_test
+  cel_model[fold_num] = cel_test
 }
 
 write_csv(tibble(cel_model_test=mean(cel_model)), paste0("results/cel_model_test_sim",SIM_NUM,".csv"))
