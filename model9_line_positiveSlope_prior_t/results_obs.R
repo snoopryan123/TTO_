@@ -49,8 +49,8 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-YRS = 15:19 #12:19 #18:18
-for (s in YRS)  
+YEEERS = 15:19 #12:19 #18:18
+for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
   
@@ -219,8 +219,10 @@ write_csv(TTOP_proportions, paste0("plots/TTOP_proportions.csv"))
 sig_color = "#56B4E9" # "firebrick" "#56B4E9"
 sig_neg_color = "firebrick"
 ### sss = 18
-for(sss in YRS) # 12:19 # 18:18
+for(sss in YEEERS) # 12:19 # 18:18
 {
+  print("*****"); print(paste0("xWOBA Plots: 20", sss)); print("*****");
+  
   ################
   xwoba_check_plot = xwoba_checkAll %>%
     filter(s == sss) %>%
@@ -233,7 +235,7 @@ for(sss in YRS) # 12:19 # 18:18
     ylab("wOBA") + 
     scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
   xwoba_check_plot
-  ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check", ".png"),
+  ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check", ".png"),
          xwoba_check_plot, width=8, height=5)
   
   blue1 = "dodgerblue2"
@@ -295,7 +297,7 @@ for(sss in YRS) # 12:19 # 18:18
     ylab("wOBA") + 
     scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
   xwoba_check_plot_1
-  ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_xwoba_check_1", ".png"),
+  ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check_1", ".png"),
          xwoba_check_plot_1, width=8, height=5)
 }
 
