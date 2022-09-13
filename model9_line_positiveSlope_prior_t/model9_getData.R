@@ -64,7 +64,8 @@ category_strings <- c("out","BB","HBP","1B","2B","3B","HR")
 # 10 Fold CV folds
 set.seed(12345) # make sure to have the same folds each time!
 kk = if (exists("IS_SIM")) { if (IS_SIM) 5 else 10 } else 10
-folds <- loo::kfold_split_random(K=kk,N=nrow(y))
+NUM_FOLDS = kk
+folds <- loo::kfold_split_random(K=NUM_FOLDS,N=nrow(y))
 
 
 
