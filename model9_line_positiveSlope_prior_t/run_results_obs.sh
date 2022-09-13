@@ -8,6 +8,6 @@
 
 #$ -o job_output/$JOB_NAME-$JOB_ID.log
 ## MORE RAM
-####$ -l m_mem_free=10G
+#$ -l m_mem_free=20G
 
 Rscript --vanilla results_obs.R
