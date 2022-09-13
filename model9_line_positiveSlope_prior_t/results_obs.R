@@ -49,7 +49,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-YRS = 12:19 #12:19 #18:18
+YRS = 15:19 #12:19 #18:18
 for (s in YRS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
