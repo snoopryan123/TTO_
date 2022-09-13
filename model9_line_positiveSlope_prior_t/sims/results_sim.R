@@ -1,6 +1,6 @@
 
 ########################
-source("sim_config_2.R")
+source("sim_config_1.R")
 SIM_NO_PF = FALSE
 # for (SIM_NUM in 1:2) {
 # SIM_NUM = 2 #1 #2
@@ -78,7 +78,7 @@ eta_checkAll = tibble()
 probs_checkAll = tibble()
 cel_model = numeric(25)
 cel_base_rates = numeric(25)
-# s = 3 #s=1
+# sss = 1
 for (s in 1:25) { # 3:3 # 1:25
   print("*************************")
   print(paste0("sim unmber ", s))
@@ -108,18 +108,18 @@ for (s in 1:25) { # 3:3 # 1:25
   beta_draws <- draws[,startsWith(colnames(draws), "beta")]
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
-  ### cross entropy loss
-  {
-    test_rows = which(folds == 1) #1:100 #1:1
-    INCPT_test = INCPT[test_rows,]
-    S_test = SPL[test_rows,]
-    O_test = O[test_rows,]
-    X_test = X[test_rows,]
-    y_test = y[test_rows,]
-    p_test = fit_to_posterior_probs(fit,INCPT_test,S_test,O_test,X_test,probs_as_list=TRUE)
-    cel_test = cross_entropy_loss_posterior(p_test, y_test)
-    cel_model[s] = cel_test
-  }
+  # ### cross entropy loss
+  # {
+  #   test_rows = which(folds == 1) #1:100 #1:1
+  #   INCPT_test = INCPT[test_rows,]
+  #   S_test = SPL[test_rows,]
+  #   O_test = O[test_rows,]
+  #   X_test = X[test_rows,]
+  #   y_test = y[test_rows,]
+  #   p_test = fit_to_posterior_probs(fit,INCPT_test,S_test,O_test,X_test,probs_as_list=TRUE)
+  #   cel_test = cross_entropy_loss_posterior(p_test, y_test)
+  #   cel_model[s] = cel_test
+  # }
   
   ############### check whether t -> P(y=k|t,x) was recovered ##############
   INCPT_tilde = cbind(rep(1,27))
@@ -355,79 +355,75 @@ for (s in 1:25) { # 3:3 # 1:25
 
 #################### parameter coverage stats over all sims #################### 
 
-write_csv(tibble(cel_model_test=mean(cel_model)), paste0("plots/cel_model_test_sim",SIM_NUM,".csv"))
-write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("plots/cel_base_rates_test_sim",SIM_NUM,".csv"))
-
-beta_is_covered = beta_checkAll %>% 
-  group_by(tto,c) %>%
-  summarise(is_covered_95 = mean(is_covered_95), .groups = "drop") %>% relocate(is_covered_95, .after=c) 
-write_csv(beta_is_covered, paste0("plots/beta_is_covered",SIM_NUM,".csv"))
-
-eta_is_covered = eta_checkAll %>% 
-  group_by(l_,c) %>%
-  summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(eta_is_covered, paste0("plots/eta_is_covered",SIM_NUM,".csv"))
-
-alpha_incpt_is_covered = alpha_incpt_checkAll %>% 
-  group_by(c) %>%
-  summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(alpha_incpt_is_covered, paste0("plots/alpha_incpt_is_covered",SIM_NUM,".csv"))
-
-alpha_slope_is_covered = alpha_slope_checkAll %>% 
-  group_by(c) %>%
-  summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(alpha_slope_is_covered, paste0("plots/alpha_slope_is_covered",SIM_NUM,".csv"))
-
-all_params_is_covered = bind_rows(
-  beta_checkAll %>% select(s,c,is_covered_95) %>% mutate(param="beta"),
-  eta_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="eta"),
-  alpha_incpt_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_incpt"),
-  alpha_slope_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_slope"),
-) %>%
-summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-write_csv(all_params_is_covered, paste0("plots/all_params_is_covered",SIM_NUM,".csv"))
+# write_csv(tibble(cel_model_test=mean(cel_model)), paste0("plots/cel_model_test_sim",SIM_NUM,".csv"))
+# write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("plots/cel_base_rates_test_sim",SIM_NUM,".csv"))
+# 
+# beta_is_covered = beta_checkAll %>% 
+#   group_by(tto,c) %>%
+#   summarise(is_covered_95 = mean(is_covered_95), .groups = "drop") %>% relocate(is_covered_95, .after=c) 
+# write_csv(beta_is_covered, paste0("plots/beta_is_covered",SIM_NUM,".csv"))
+# 
+# eta_is_covered = eta_checkAll %>% 
+#   group_by(l_,c) %>%
+#   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
+# write_csv(eta_is_covered, paste0("plots/eta_is_covered",SIM_NUM,".csv"))
+# 
+# alpha_incpt_is_covered = alpha_incpt_checkAll %>% 
+#   group_by(c) %>%
+#   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
+# write_csv(alpha_incpt_is_covered, paste0("plots/alpha_incpt_is_covered",SIM_NUM,".csv"))
+# 
+# alpha_slope_is_covered = alpha_slope_checkAll %>% 
+#   group_by(c) %>%
+#   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
+# write_csv(alpha_slope_is_covered, paste0("plots/alpha_slope_is_covered",SIM_NUM,".csv"))
+# 
+# all_params_is_covered = bind_rows(
+#   beta_checkAll %>% select(s,c,is_covered_95) %>% mutate(param="beta"),
+#   eta_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="eta"),
+#   alpha_incpt_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_incpt"),
+#   alpha_slope_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_slope"),
+# ) %>%
+# summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
+# write_csv(all_params_is_covered, paste0("plots/all_params_is_covered",SIM_NUM,".csv"))
 
 #################### PLOTS #################### 
 
-# sss = 3 # sim2: 7, 6, 9    # sim1: 5
-# 
-# xwoba_check_plot_true = xwoba_checkAll %>%
-#   filter(s == sss) %>%
-#   ggplot(aes(x=t)) +
-#   # geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
-#   # geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
-#   # geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-#   geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
-#   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-#   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-#   ylab("wOBA") + 
-#   scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), 
-#                      limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
-#   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-# xwoba_check_plot_true
-# ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_true", ".png"),
-#        xwoba_check_plot_true, width=8, height=5)
-# 
-# xwoba_check_plot_post = xwoba_checkAll %>%
-#   filter(s == sss) %>%
-#   ggplot(aes(x=t)) +
-#   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
-#   geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
-#   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-#   geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
-#   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-#   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-#   ylab("wOBA") + 
-#   scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20), 
-#                      limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
-#   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-# xwoba_check_plot
-# ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post", ".png"),
-#        xwoba_check_plot_post, width=8, height=5)
+# sss = 1 # sim2: 7, 6, 9    # sim1: 5
 
+xwoba_check_plot_true = xwoba_checkAll %>%
+  filter(s == sss) %>%
+  ggplot(aes(x=t)) +
+  # geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  # geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  # geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  ylab("wOBA") +
+  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20),
+                     limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot_true
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_true", ".png"),
+       xwoba_check_plot_true, width=8, height=5)
 
-
-
+xwoba_check_plot_post = xwoba_checkAll %>%
+  filter(s == sss) %>%
+  ggplot(aes(x=t)) +
+  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  ylab("wOBA") +
+  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20),
+                     limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot_post
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post", ".png"),
+       xwoba_check_plot_post, width=8, height=5)
 
 
 
