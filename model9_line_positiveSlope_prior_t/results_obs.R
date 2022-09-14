@@ -67,7 +67,7 @@ for (s in YEEERS)
   beta_draws <- draws[,startsWith(colnames(draws), "beta")]
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
-  ############### check whether t -> P(y=k|t,x) was recovered ##############
+  ############### get t -> P(y=k|t,x) ##############
   INCPT_tilde = cbind(rep(1,27))
   S_tilde = cbind(1:27) ## cbind(1, 1:27)  
   O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
