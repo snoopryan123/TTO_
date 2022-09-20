@@ -1,6 +1,6 @@
 
 ########################
-source("sim_config_1.R")
+source("sim_config_2.R")
 SIM_NO_PF = FALSE
 # for (SIM_NUM in 1:2) {
 # SIM_NUM = 2 #1 #2
@@ -79,7 +79,7 @@ probs_checkAll = tibble()
 cel_model = numeric(25)
 cel_base_rates = numeric(25)
 # sss = 1
-for (s in 1:25) { # 3:3 # 1:25
+for (s in 1:1) { # 3:3 # 1:25
   print("*************************")
   print(paste0("sim unmber ", s))
   print("*************************")
@@ -389,7 +389,7 @@ for (s in 1:25) { # 3:3 # 1:25
 
 #################### PLOTS #################### 
 
-# sss = 1 # sim2: 7, 6, 9    # sim1: 5
+sss = 1 # sim3: 6  sim1,2: 1
 
 xwoba_check_plot_true = xwoba_checkAll %>%
   filter(s == sss) %>%
@@ -401,7 +401,7 @@ xwoba_check_plot_true = xwoba_checkAll %>%
   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
   ylab("wOBA") +
-  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20),
+  scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20),
                      limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot_true
@@ -418,7 +418,7 @@ xwoba_check_plot_post = xwoba_checkAll %>%
   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
   ylab("wOBA") +
-  scale_y_continuous(name="wOBA", breaks=seq(270,350,by=20),
+  scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20),
                      limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot_post

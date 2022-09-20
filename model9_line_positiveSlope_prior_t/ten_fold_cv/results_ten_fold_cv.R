@@ -5,6 +5,11 @@ IS_SIM = TRUE ### even though this is 10 fold cv and not a sim, we need this to 
 source("../model9_getData.R") ### get observed data 
 ########################
 
+### observed base rates
+base_rates = tibble(k=y[,1]) %>% group_by(k) %>% summarise(count=n()) %>% mutate(p=count/sum(count)) %>% select(-count)
+base_rates
+write_csv(base_rates, "results/base_rates.csv")
+
 fit_to_posterior_probs <- function(fit,INCPT,S,O,X,probs_as_list=FALSE) {
   draws=as.matrix(fit)
   alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
