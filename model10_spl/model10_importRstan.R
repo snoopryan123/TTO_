@@ -5,14 +5,14 @@
 library(rstan)
 rstan_options(auto_write = TRUE)
 ##### uncomment these if working on my computer #####
-cores = 1
-NUM_ITS = 10
-#### options(mc.cores = parallel::detectCores())
+# cores = 1
+# NUM_ITS = 10
+# #### options(mc.cores = parallel::detectCores())
 #####################################################
 ####### uncomment these if working on HPCC ##########
-# cores=strtoi(Sys.getenv('OMP_NUM_THREADS'))
-# options(mc.cores = cores) ### for HPCC
-# NUM_ITS = 1500 #1500 #2000 #2500 #5000
+cores=strtoi(Sys.getenv('OMP_NUM_THREADS'))
+options(mc.cores = cores) ### for HPCC
+NUM_ITS = 1500 #1500 #2000 #2500 #5000
 
 #########################################################################
 ### RSTAN: pitcher fatigue with positive slop + batter learning bumps ###
