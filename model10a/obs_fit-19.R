@@ -1,6 +1,6 @@
 
 library(tidyverse)
-YRS = 2017
+YRS = 2019
 model = "spl"
 
 OUTPUT_FILE = paste0("obs","_model_", model, 
