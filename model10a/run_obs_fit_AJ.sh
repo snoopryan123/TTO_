@@ -7,9 +7,9 @@
 #$ -pe openmp 1
 
 ## ARRAY JOB
-#$ -t 15-19 #12-19
+#$ -t 15-19
 #$ -o job_output/$JOB_NAME-$JOB_ID-$TASK_ID.log
 ## MORE RAM
-####$ -l m_mem_free=10G
+####$ -l m_mem_free=15G
 
 Rscript --vanilla obs_fit-$SGE_TASK_ID.R

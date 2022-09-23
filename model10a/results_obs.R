@@ -3,7 +3,7 @@
 library(tidyverse)
 ########################
 
-fit_to_posterior_probs <- function(fit,SPL,X) {
+fit_to_posterior_probs <- function(fit,S,X) {
   draws=as.matrix(fit)
   alpha_draws = draws[,str_detect(colnames(draws), "^alpha")]
   eta_draws = draws[,str_detect(colnames(draws), "^eta")]
@@ -12,7 +12,7 @@ fit_to_posterior_probs <- function(fit,SPL,X) {
     print(k)
     alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = SPL%*%t(alpha_draws_k) + X%*%t(eta_draws_k)
+    linpred_k = S%*%t(alpha_draws_k) + X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -62,10 +62,10 @@ for (s in YEEERS)
   ############### get t -> P(y=k|t,x) ##############
   X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
   S_tilde = diag(27) ## cbind(1, 1:27)  
-  SPL_tilde = S_tilde %*% bbb
-  probs_tilde = fit_to_posterior_probs(fit, SPL_tilde, X_tilde)
+  probs_tilde = fit_to_posterior_probs(fit, S_tilde, X_tilde)
   # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
   
+  smoothing_spl_df_0 = 6 ###
   probs_check = probs_tilde %>%
     group_by(k,t) %>%
     summarise(
@@ -82,12 +82,21 @@ for (s in YEEERS)
     # mutate(ci_50_length = p_U50 - p_L50) %>%
     # mutate(ci_95_length = p_U95 - p_L95) %>%
     filter(k != 1) %>%
-    mutate(s = s) %>% relocate(s, .before=k)
+    mutate(s = s) %>% relocate(s, .before=k) %>%
+    ### smoothing spline
+    mutate(
+      p_L95_s = smooth.spline(p_L95, df=smoothing_spl_df_0)$y,
+      p_L50_s = smooth.spline(p_L50, df=smoothing_spl_df_0)$y,
+      pM_s = smooth.spline(pM, df=smoothing_spl_df_0)$y,
+      p_U50_s = smooth.spline(p_U50, df=smoothing_spl_df_0)$y,
+      p_U95_s = smooth.spline(p_U95, df=smoothing_spl_df_0)$y
+    )
   
   probs_check
   probs_checkAll = bind_rows(probs_checkAll, probs_check)
 }
 
+smoothing_spl_df = 7 ###
 xwoba_checkAll = probs_checkAll %>%
   mutate(w = categories[k]) %>%
   group_by(s,t) %>%
@@ -96,22 +105,23 @@ xwoba_checkAll = probs_checkAll %>%
     xw_L50 = sum(p_L50*w*1000),
     xwM = sum(pM*w*1000),
     xw_U50 = sum(p_U50*w*1000),
-    xw_U95 = sum(p_U95*w*1000)
-  ) %>% ungroup() # %>%
-  # mutate(
-  #   tto = ifelse(1 <= t & t <= 9, 1, ifelse(10 <= t & t <= 18, 2, 3)),
-  #   tto1 = ifelse(tto == 1, 1, NA),
-  #   tto2 = ifelse(tto == 2, 1, NA),
-  #   tto3 = ifelse(tto == 3, 1, NA),
-  # ) %>%
-  # group_by(s, tto) %>%
-  # mutate(
-  #   xw_tto_L95 = mean(xw_L95),
-  #   xw_tto_L50 = mean(xw_L50),
-  #   xw_tto_M = mean(xwM),
-  #   xw_tto_U50 = mean(xw_U50),
-  #   xw_tto_U95 = mean(xw_U95),
-  # )
+    xw_U95 = sum(p_U95*w*1000),
+    ### xwOBA on top of smoothed probs
+    xw_L95_sp = sum(p_L95_s*w*1000),
+    xw_L50_sp = sum(p_L50_s*w*1000),
+    xwM_sp = sum(pM_s*w*1000),
+    xw_U50_sp = sum(p_U50_s*w*1000),
+    xw_U95_sp = sum(p_U95_s*w*1000),
+  ) %>% ungroup() %>%
+  ### smoothing spline
+  mutate(
+    xw_L95_s = smooth.spline(xw_L95, df=smoothing_spl_df)$y,
+    xw_L50_s = smooth.spline(xw_L50, df=smoothing_spl_df)$y,
+    xw_s = smooth.spline(xwM, df=smoothing_spl_df)$y,
+    xw_U50_s = smooth.spline(xw_U50, df=smoothing_spl_df)$y,
+    xw_U95_s = smooth.spline(xw_U95, df=smoothing_spl_df)$y
+  ) 
+  
 
 #################### PLOTS #################### 
 
@@ -119,7 +129,7 @@ sig_color = "#56B4E9" # "firebrick" "#56B4E9"
 sig_neg_color = "firebrick"
 blue1 = "dodgerblue2"
 blue2 = "#56B4E9"
-### sss = 18
+### sss = 19
 for(sss in YEEERS) # 12:19 # 18:18
 {
   print("*****"); print(paste0("xWOBA Plots: 20", sss)); print("*****");
@@ -131,75 +141,33 @@ for(sss in YEEERS) # 12:19 # 18:18
     ggplot(aes(x=t)) +
     geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
     geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-    geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
-    geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
-    geom_line(aes(x=t, y = xwM), color=blue1, size=3) + 
-    geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+    geom_errorbar(aes(ymin=xw_L95_s, ymax=xw_U95_s), width = 0.5) +
+    geom_errorbar(aes(ymin=xw_L50_s, ymax=xw_U50_s), width = 0.25, size=1) +
+    geom_line(aes(x=t, y = xw_s), color=blue1, size=3) + 
+    geom_point(aes(y=xw_s), col="black", size=2, stroke=1, shape=21, fill="white") +
     scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3)) +
     scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20))
   xwoba_check_plot
   ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check", ".png"),
          xwoba_check_plot, width=8, height=5)
   
-  
+  # ################
   # xwoba_check_plot_1 = xwoba_checkAll %>%
+  #   filter(t < 26) %>%
   #   filter(s == sss) %>%
-  #   mutate(
-  #     xw_tto_L95_tto1 = xw_tto_L95*tto1,
-  #     xw_tto_L50_tto1 = xw_tto_L50*tto1,
-  #     xw_tto_M_tto1 = xw_tto_M*tto1,
-  #     xw_tto_U50_tto1 = xw_tto_U50*tto1,
-  #     xw_tto_U95_tto1 = xw_tto_U95*tto1,
-  #     xw_tto_L95_tto2 = xw_tto_L95*tto2,
-  #     xw_tto_L50_tto2 = xw_tto_L50*tto2,
-  #     xw_tto_M_tto2 = xw_tto_M*tto2,
-  #     xw_tto_U50_tto2 = xw_tto_U50*tto2,
-  #     xw_tto_U95_tto2 = xw_tto_U95*tto2,
-  #     xw_tto_L95_tto3 = xw_tto_L95*tto3,
-  #     xw_tto_L50_tto3 = xw_tto_L50*tto3,
-  #     xw_tto_M_tto3 = xw_tto_M*tto3,
-  #     xw_tto_U50_tto3 = xw_tto_U50*tto3,
-  #     xw_tto_U95_tto3 = xw_tto_U95*tto3,
-  #   ) %>%
   #   ggplot(aes(x=t)) +
-  #   geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
-  #   geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
-  #   geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
-  #   geom_line(aes(y = xw_tto_U50_tto1), linetype=3, size=0.75) +
-  #   geom_line(aes(y = xw_tto_U95_tto1), linetype=3) +
-  #   geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=9,fill="black",alpha=0.01,) +
-  #   geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=9,fill=blue2,alpha=0.03,) +
-  #   
-  #   geom_line(aes(y = xw_tto_L95_tto2), linetype=3) +
-  #   geom_line(aes(y = xw_tto_L50_tto2), linetype=3, size=0.75) +
-  #   geom_line(aes(y = xw_tto_M_tto2), size=1, color=blue1) +
-  #   geom_line(aes(y = xw_tto_U50_tto2), linetype=3, size=0.75) +
-  #   geom_line(aes(y = xw_tto_U95_tto2), linetype=3) +
-  #   geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=10,xmax=18,fill="black",alpha=0.01,) +
-  #   geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=10,xmax=18,fill=blue2,alpha=0.03,) +
-  #   
-  #   geom_line(aes(y = xw_tto_L95_tto3), linetype=3) +
-  #   geom_line(aes(y = xw_tto_L50_tto3), linetype=3, size=0.75) +
-  #   geom_line(aes(y = xw_tto_M_tto3), size=1, color=blue1) +
-  #   geom_line(aes(y = xw_tto_U50_tto3), linetype=3, size=0.75) +
-  #   geom_line(aes(y = xw_tto_U95_tto3), linetype=3) +
-  #   geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=19,xmax=27,fill="black",alpha=0.01,) +
-  #   geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=19,xmax=27,fill=blue2,alpha=0.03,) +
-  #   
-  #   # geom_hline(aes(yintercept = xw_tto_M*tto1), linetype="dashed") +
-  #   # geom_hline(aes(yintercept = xw_tto_U50*tto1), linetype="dashed") +
-  #   
-  #   
   #   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
   #   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-  #   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
-  #   geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
-  #   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-  #   ylab("wOBA") + 
-  #   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  #   geom_errorbar(aes(ymin=xw_L95_sp, ymax=xw_U95_sp), width = 0.5) +
+  #   geom_errorbar(aes(ymin=xw_L50_sp, ymax=xw_U50_sp), width = 0.25, size=1) +
+  #   geom_line(aes(x=t, y = xwM_sp), color=blue1, size=3) + 
+  #   geom_point(aes(y=xwM_sp), col="black", size=2, stroke=1, shape=21, fill="white") +
+  #   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3)) +
+  #   scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20))
   # xwoba_check_plot_1
-  # ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check_1", ".png"),
-  #        xwoba_check_plot_1, width=8, height=5)
+  # ggsave(paste0("plots/plot_obs_results1_20", sss, "_xwoba_check", ".png"),
+  #        xwoba_check_plot, width=8, height=5)
+
 }
 
 

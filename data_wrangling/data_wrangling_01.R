@@ -217,7 +217,7 @@ pbpText_to_pbpTbl <- function(E,rosters) {
 #######################################
 
 #1990-2020
-for (year in 2001:2020) { write_pbp_year(year) }
+for (year in 2022:2022) { write_pbp_year(year) }
 
 ################################################
 
