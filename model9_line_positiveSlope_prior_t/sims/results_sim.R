@@ -1,6 +1,6 @@
 
 ########################
-source("sim_config_2.R")
+source("sim_config_3.R")
 SIM_NO_PF = FALSE
 # for (SIM_NUM in 1:2) {
 # SIM_NUM = 2 #1 #2
@@ -79,7 +79,7 @@ probs_checkAll = tibble()
 cel_model = numeric(25)
 cel_base_rates = numeric(25)
 # sss = 1
-for (s in 1:1) { # 3:3 # 1:25
+for (s in 6:6) { # 3:3 # 1:25
   print("*************************")
   print(paste0("sim unmber ", s))
   print("*************************")
@@ -389,7 +389,7 @@ for (s in 1:1) { # 3:3 # 1:25
 
 #################### PLOTS #################### 
 
-sss = 1 # sim3: 6  sim1,2: 1
+sss = 6 # sim3: 6  sim1,2: 1
 
 xwoba_check_plot_true = xwoba_checkAll %>%
   filter(s == sss) %>%
@@ -406,7 +406,7 @@ xwoba_check_plot_true = xwoba_checkAll %>%
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot_true
 ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_true", ".png"),
-       xwoba_check_plot_true, width=8, height=5)
+       xwoba_check_plot_true, width=8, height=8)##5)
 
 xwoba_check_plot_post = xwoba_checkAll %>%
   filter(s == sss) %>%
@@ -423,7 +423,7 @@ xwoba_check_plot_post = xwoba_checkAll %>%
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot_post
 ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post", ".png"),
-       xwoba_check_plot_post, width=8, height=5)
+       xwoba_check_plot_post, width=8, height=8)##5)
 
 
 

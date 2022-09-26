@@ -45,11 +45,12 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
 }
 
 ########################
+beta_allDraws = tibble()
 beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-YEEERS = 15:19 #12:19 #18:18
+YEEERS = 18:18 #15:19  #12:19 #18:18
 for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
@@ -62,6 +63,20 @@ for (s in YEEERS)
   ### import fit from rstan
   fit <- readRDS(paste0(output_folder, "fit_obs_model_lineyrs_",s,"_.rds"))
   draws <- as.matrix(fit)
+  
+  ### Convergence Diagnostics
+  library(rstan)
+  
+  fit_summary <- summary(fit)
+  print(names(fit_summary))
+  fit_summary_s = fit_summary$summary
+  Rhats = na.omit(fit_summary_s[,"Rhat"])# fit_summary_s[,"Rhat"]
+  n_effs = na.omit(fit_summary_s[,"n_eff"])
+  print(paste0("R_hat ", c(min(Rhats), mean(Rhats), max(Rhats)) ))
+  print(paste0("n_eff ", c(min(n_effs), mean(n_effs), max(n_effs))))
+  print(get_elapsed_time(fit))
+  mean(rowSums(get_elapsed_time(fit))) / 3600
+  
   
   alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
   beta_draws <- draws[,startsWith(colnames(draws), "beta")]
@@ -103,6 +118,17 @@ for (s in YEEERS)
     rename(i = iterations, beta=value) %>%
     mutate(k = as.numeric(str_sub(parameters, 8, 8))) %>%
     mutate(tto = 1+as.numeric(str_sub(parameters, 6, 6)))
+  
+  beta_drawsAll = beta_draws_1 %>%
+    ### transform beta_3k into beta_3k minus beta_2k
+    filter(k != 1) %>%
+    arrange(i,k) %>%
+    group_by(i,k) %>%
+    mutate(
+      beta = ifelse(tto==3, beta[2] - beta[1], beta),
+    ) %>% ungroup() %>% arrange(tto,k) %>%
+    mutate(s=s)
+  beta_allDraws = bind_rows(beta_allDraws, beta_drawsAll)
   
   beta_check <- beta_draws_1 %>% 
     group_by(k, tto) %>%
@@ -218,10 +244,46 @@ write_csv(TTOP_proportions, paste0("plots/TTOP_proportions.csv"))
 
 sig_color = "#56B4E9" # "firebrick" "#56B4E9"
 sig_neg_color = "firebrick"
+blue1 = "dodgerblue2"
+blue2 = "#56B4E9" 
 ### sss = 18
 for(sss in YEEERS) # 12:19 # 18:18
 {
   print("*****"); print(paste0("xWOBA Plots: 20", sss)); print("*****");
+  
+  ################
+  ### beta params boxplot
+  beta_boxplot = beta_allDraws %>%
+    mutate(c = category_strings[k]) %>%
+    filter(s == sss) %>%
+    mutate(param = ifelse(tto==2, paste0("b",2,c),
+                          paste0("b",3,c,"-","b",2,c)),
+           ordering = paste0(tto,k),
+           param = fct_reorder(param, desc(ordering))
+    ) %>%
+    ggplot() +
+    geom_vline(aes(xintercept=0), color=blue1, size=1.5) +
+    geom_boxplot(aes(y=param, x=beta), 
+        
+    ) +
+    scale_y_discrete(labels = unname(TeX(rev(c(
+      "$\\beta_{2,BB}$",
+      "$\\beta_{2,HBP}$",
+      "$\\beta_{2,1B}$",
+      "$\\beta_{2,2B}$",
+      "$\\beta_{2,3B}$",
+      "$\\beta_{2,HR}$",
+      "$\\beta_{3,BB}-\\beta_{2,BB}$",
+      "$\\beta_{3,HBP}-\\beta_{2,HBP}$",
+      "$\\beta_{3,1B}-\\beta_{2,1B}$",
+      "$\\beta_{3,2B}-\\beta_{2,2B}$",
+      "$\\beta_{3,3B}-\\beta_{2,3B}$",
+      "$\\beta_{3,HR}-\\beta_{2,HR}$"
+    ))))) +
+    scale_x_continuous(breaks=seq(-5,5,by=0.2)) +
+    ylab("") + xlab("log odds") 
+  beta_boxplot
+  ggsave(paste0("plots/beta_boxplot_20",sss,".png"), beta_boxplot, width=10, height=5)
   
   ################
   xwoba_check_plot = xwoba_checkAll %>%
@@ -237,9 +299,6 @@ for(sss in YEEERS) # 12:19 # 18:18
   xwoba_check_plot
   ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check", ".png"),
          xwoba_check_plot, width=8, height=5)
-  
-  blue1 = "dodgerblue2"
-  blue2 = "#56B4E9" 
   
   xwoba_check_plot_1 = xwoba_checkAll %>%
     filter(s == sss) %>%
