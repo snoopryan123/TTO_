@@ -79,23 +79,23 @@ probs_checkAll = tibble()
 cel_model = numeric(25)
 cel_base_rates = numeric(25)
 # sss = 1
-for (s in 6:6) { # 3:3 # 1:25
+for (s in 6:6) { # 1:1  # 6:6 # 1:25
   print("*************************")
-  print(paste0("sim unmber ", s))
+  print(paste0("sim number ", s))
   print("*************************")
   
   source("sim_simulateData.R") ### get simulated outcomes and "true" params
   
   # Sys.sleep(5)
   
-  ### cross entropy loss using base rates
-  train_rows = which(folds != 1)
-  test_rows = which(folds == 1)
-  y_train = y[train_rows,]
-  y_test = y[test_rows,]
-  base_rates = tibble(k=y_train) %>% group_by(k) %>% summarise(count=n()) %>% mutate(p=count/sum(count)) %>% select(-count)
-  base_rate_CEL_test = tibble(k=y_test) %>% left_join(base_rates) %>% mutate(cel = -log(p)) %>% summarise(cel = mean(cel))
-  cel_base_rates[s] = base_rate_CEL_test$cel
+  # ### cross entropy loss using base rates
+  # train_rows = which(folds != 1)
+  # test_rows = which(folds == 1)
+  # y_train = y[train_rows,]
+  # y_test = y[test_rows,]
+  # base_rates = tibble(k=y_train) %>% group_by(k) %>% summarise(count=n()) %>% mutate(p=count/sum(count)) %>% select(-count)
+  # base_rate_CEL_test = tibble(k=y_test) %>% left_join(base_rates) %>% mutate(cel = -log(p)) %>% summarise(cel = mean(cel))
+  # cel_base_rates[s] = base_rate_CEL_test$cel
   
   ### import fit from rstan
   OUTPUT_FILE = paste0("job_output/", "fit_sim",SIM_NUM,sim_noPf_str,"_model_bsnBL_", s, "_underlying_", underlying, ".rds") 
@@ -408,6 +408,23 @@ xwoba_check_plot_true
 ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_true", ".png"),
        xwoba_check_plot_true, width=8, height=8)##5)
 
+# xwoba_check_plot_post = xwoba_checkAll %>%
+#   filter(s == sss) %>%
+#   ggplot(aes(x=t)) +
+#   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+#   geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+#   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+#   geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
+#   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+#   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+#   ylab("wOBA") +
+#   scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20),
+#                      limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
+#   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+# xwoba_check_plot_post
+# ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post", ".png"),
+#        xwoba_check_plot_post, width=8, height=8)
+
 xwoba_check_plot_post = xwoba_checkAll %>%
   filter(s == sss) %>%
   ggplot(aes(x=t)) +
@@ -418,12 +435,16 @@ xwoba_check_plot_post = xwoba_checkAll %>%
   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
   ylab("wOBA") +
-  scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20),
-                     limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
+  theme(axis.text = element_text(size = 37.5), 
+        axis.title = element_text(size = 45),
+        title = element_text(size = 45)) +
+  labs(title= paste(ifelse(SIM_NUM==1,"first", ifelse(SIM_NUM==2, "second", "third")), "simulation study") ) +
+scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20),
+                   limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
 xwoba_check_plot_post
-ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post", ".png"),
-       xwoba_check_plot_post, width=8, height=8)##5)
+ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post_paper", ".png"),
+       xwoba_check_plot_post, width=10, height=8) #5)
 
 
 
