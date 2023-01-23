@@ -1,4 +1,5 @@
 
+library(tidyverse)
 # YRS = 2018
 args <- commandArgs(trailingOnly = TRUE)
 YRS <- as.numeric(args[1]) 
@@ -6,7 +7,7 @@ YRS <- as.numeric(args[1])
 YRS = as.
 model = "line"
 OUTPUT_FILE = paste0("obs","_model_", model, 
-                     "yrs_", tidyverse::str_remove_all(paste0(YRS, collapse=''), "20"),
+                     "yrs_", str_remove_all(paste0(YRS, collapse=''), "20"),
                      "_") 
 
 source("A_getData.R") ### get observed data 
