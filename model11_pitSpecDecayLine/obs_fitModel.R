@@ -4,7 +4,6 @@ library(tidyverse)
 args <- commandArgs(trailingOnly = TRUE)
 YRS <- as.numeric(args[1]) 
 
-YRS = as.
 model = "line"
 OUTPUT_FILE = paste0("obs","_model_", model, 
                      "yrs_", str_remove_all(paste0(YRS, collapse=''), "20"),
