@@ -2,7 +2,7 @@
 library(tidyverse)
 # YRS = 2018
 args <- commandArgs(trailingOnly = TRUE)
-YRS <- as.numeric(args[1]) 
+YRS <- 2000+as.numeric(args[1]) 
 
 model = "line"
 OUTPUT_FILE = paste0("obs","_model_", model, 
