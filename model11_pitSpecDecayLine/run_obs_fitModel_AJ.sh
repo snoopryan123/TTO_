@@ -7,7 +7,7 @@
 #$ -pe openmp 1   #4
 
 ## ARRAY JOB
-#$ -t 18-18   #12-19
+#$ -t 12-19  ##18-18   #12-19
 #$ -o job_output/$JOB_NAME-$JOB_ID-$TASK_ID.log
 ## MORE RAM
 #$ -l m_mem_free=10G

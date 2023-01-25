@@ -28,7 +28,7 @@ parameters {
   vector[K-1] beta_3;                 // batter-specific batter learning parameters 
   
   vector<lower=0>[K-1] sig_sq_0;            // pitcher-specific intercept parameters 
-  vector<lower=0>[K-1] sig_sq_1;   // pitcher-specific slope parameters 
+  vector<lower=0>[K-1] sig_sq_1;            // pitcher-specific slope parameters 
   vector<lower=0>[K-1] sig_sq_2;                 // batter-specific batter learning parameters 
   vector<lower=0>[K-1] sig_sq_3;                 // batter-specific batter learning parameters 
   

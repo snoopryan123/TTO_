@@ -3,21 +3,38 @@
 library(tidyverse)
 ########################
 
-fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
+fit_to_posterior_probs <- function(fit,INCPT,BSN,O2,O3,X, j="prior", l="prior") {
+  # browser()
   draws=as.matrix(fit)
-  alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
-  alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
-  beta_draws = draws[,str_detect(colnames(draws), "^beta")] 
-  eta_draws = draws[,str_detect(colnames(draws), "^eta")]
+  if (j=="prior") {
+    alpha0_draws <- draws[,startsWith(colnames(draws), "alpha_0[")]
+    alpha1_draws <- draws[,startsWith(colnames(draws), "alpha_1[")]
+    alpha0_draws = cbind(0, alpha0_draws)
+    alpha1_draws = cbind(0, alpha1_draws)
+    colnames(alpha0_draws) = paste0("alpha_0[", 1:7, "]")
+    colnames(alpha1_draws) = paste0("alpha_1[", 1:7, "]")
+  }
+  if (l == "prior") {
+    beta2_draws <- draws[,startsWith(colnames(draws), "beta_2[")]
+    beta3_draws <- draws[,startsWith(colnames(draws), "beta_3[")]
+    beta2_draws = cbind(0, beta2_draws)
+    beta3_draws = cbind(0, beta3_draws)
+    colnames(beta2_draws) = paste0("beta_2[", 1:7, "]")
+    colnames(beta3_draws) = paste0("beta_3[", 1:7, "]")
+  }
+  eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   linpreds = list()
   for (k in 1:7) {
     print(k)
-    alpha_incpt_draws_k = alpha_incpt_draws[,endsWith(colnames(alpha_incpt_draws), paste0(k,"]"))]
-    alpha_slope_draws_k = alpha_slope_draws[,endsWith(colnames(alpha_slope_draws), paste0(k,"]"))]
-    beta_draws_k = beta_draws[,endsWith(colnames(beta_draws), paste0(k,"]"))] 
+    alpha0_draws_k = alpha0_draws[,endsWith(colnames(alpha0_draws), paste0(k,"]"))]
+    alpha1_draws_k = alpha1_draws[,endsWith(colnames(alpha1_draws), paste0(k,"]"))]
+    beta2_draws_k = beta2_draws[,endsWith(colnames(beta2_draws), paste0(k,"]"))]
+    beta3_draws_k = beta3_draws[,endsWith(colnames(beta3_draws), paste0(k,"]"))]
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = INCPT%*%t(alpha_incpt_draws_k) + S%*%t(alpha_slope_draws_k) + 
-                O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
+    
+    linpred_k = INCPT%*%t(alpha0_draws_k) + BSN%*%t(alpha1_draws_k) + 
+                O2%*%t(beta2_draws_k) + O3%*%t(beta3_draws_k) + 
+                X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -56,7 +73,7 @@ for (s in YEEERS)
   print("*****"); print(paste0("results: 20", s)); print("*****");
   
   YRS = 2000 + s
-  source("model9_getData.R") ### get observed data 
+  source("A_getData.R") ### get observed data 
   
   # Sys.sleep(5) ###
   
@@ -77,17 +94,33 @@ for (s in YEEERS)
   print(get_elapsed_time(fit))
   mean(rowSums(get_elapsed_time(fit))) / 3600
   
-  
-  alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
-  beta_draws <- draws[,startsWith(colnames(draws), "beta")]
+  j = "prior"; l="prior";
+  if (j=="prior") {
+    alpha0_draws <- draws[,startsWith(colnames(draws), "alpha_0[")]
+    alpha1_draws <- draws[,startsWith(colnames(draws), "alpha_1[")]
+    alpha0_draws = cbind(0, alpha0_draws)
+    alpha1_draws = cbind(0, alpha1_draws)
+    colnames(alpha0_draws) = paste0("alpha_0[", 1:7, "]")
+    colnames(alpha1_draws) = paste0("alpha_1[", 1:7, "]")
+  }
+  if (l == "prior") {
+    beta2_draws <- draws[,startsWith(colnames(draws), "beta_2[")]
+    beta3_draws <- draws[,startsWith(colnames(draws), "beta_3[")]
+    beta2_draws = cbind(0, beta2_draws)
+    beta3_draws = cbind(0, beta3_draws)
+    colnames(beta2_draws) = paste0("beta_2[", 1:7, "]")
+    colnames(beta3_draws) = paste0("beta_3[", 1:7, "]")
+  }
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ############### get t -> P(y=k|t,x) ##############
   INCPT_tilde = cbind(rep(1,27))
-  S_tilde = cbind(1:27) ## cbind(1, 1:27)  
-  O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
+  BSN_tilde = cbind(1:27) ## cbind(1, 1:27)  
+  # O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
+  O2_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9)), nrow=27)
+  O3_tilde = matrix(c(rep(0,9), rep(0,9), rep(1,9)), nrow=27)
   X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
-  probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
+  probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, BSN_tilde, O2_tilde, O3_tilde, X_tilde)
   # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
   
   probs_check = probs_tilde %>%
@@ -111,15 +144,17 @@ for (s in YEEERS)
   probs_check
   probs_checkAll = bind_rows(probs_checkAll, probs_check)
   
-  
   #################### check whether BETA was recovered #################### 
-  beta_draws_1 <- reshape2::melt(beta_draws) %>%
+  beta_draws_1 <- 
+    reshape2::melt(beta2_draws) %>%
+    bind_rows(reshape2::melt(beta3_draws)) %>%
     as_tibble() %>%
-    rename(i = iterations, beta=value) %>%
+    rename(i=Var1, parameters=Var2, beta=value) %>%
+    # rename(i = iterations, beta=value) %>%
     mutate(k = as.numeric(str_sub(parameters, 8, 8))) %>%
-    mutate(tto = 1+as.numeric(str_sub(parameters, 6, 6)))
+    mutate(tto = as.numeric(str_sub(parameters, 6, 6)))
   
-  beta_drawsAll = beta_draws_1 %>%
+  beta_draws_2 = beta_draws_1 %>%
     ### transform beta_3k into beta_3k minus beta_2k
     filter(k != 1) %>%
     arrange(i,k) %>%
@@ -128,9 +163,9 @@ for (s in YEEERS)
       beta = ifelse(tto==3, beta[2] - beta[1], beta),
     ) %>% ungroup() %>% arrange(tto,k) %>%
     mutate(s=s)
-  beta_allDraws = bind_rows(beta_allDraws, beta_drawsAll)
+  beta_allDraws = bind_rows(beta_allDraws, beta_draws_2)
   
-  beta_check <- beta_draws_1 %>% 
+  beta_check_1 = beta_draws_2 %>%
     group_by(k, tto) %>%
     summarise(
       beta_L95 = quantile(beta, 0.025),
@@ -143,27 +178,44 @@ for (s in YEEERS)
     arrange(tto,k) %>%
     mutate(c = category_strings[k]) %>%
     relocate(c, .after = k) %>%
-    # mutate(ci_50_length = beta_U50 - beta_L50) %>%
-    # mutate(ci_95_length = beta_U95 - beta_L95) %>%
     filter(k != 1) %>%
-    mutate(s = s) %>% relocate(s, .before=k)
-  beta_check
+    mutate(s = s) %>% relocate(s, .before=k) %>%
+    mutate(TTOP_95 = as.numeric(beta_L95 > 0)) ### TTOP tests
   
-  ### transform beta_3k into beta_3k minus beta_2k
-  beta_check_1 = beta_check %>%
-    arrange(s,k,tto) %>%
-    group_by(s,k) %>%
-    mutate(
-      beta_L95 = ifelse(tto==3, beta_L95[2] - beta_L95[1], beta_L95),
-      beta_L50 = ifelse(tto==3, beta_L50[2] - beta_L50[1], beta_L50),
-      betaM = ifelse(tto==3, betaM[2] - betaM[1], betaM),
-      beta_U50 = ifelse(tto==3, beta_U50[2] - beta_U50[1], beta_U50),
-      beta_U95 = ifelse(tto==3, beta_U95[2] - beta_U95[1], beta_U95),
-    ) %>% ungroup() %>% arrange(tto,k) %>%
-    ### TTOP tests
-    mutate(TTOP_95 = as.numeric(beta_L95 > 0),
-           # TTOP_50 = as.numeric(beta_L50 > 0)
-           )
+  # beta_check <- beta_draws_1 %>% 
+  #   group_by(k, tto) %>%
+  #   summarise(
+  #     beta_L95 = quantile(beta, 0.025),
+  #     beta_L50 = quantile(beta, 0.25),
+  #     betaM = mean(beta),
+  #     beta_U50 = quantile(beta, 0.75),
+  #     beta_U95 = quantile(beta, 0.975),
+  #     .groups = "drop"
+  #   ) %>%
+  #   arrange(tto,k) %>%
+  #   mutate(c = category_strings[k]) %>%
+  #   relocate(c, .after = k) %>%
+  #   # mutate(ci_50_length = beta_U50 - beta_L50) %>%
+  #   # mutate(ci_95_length = beta_U95 - beta_L95) %>%
+  #   filter(k != 1) %>%
+  #   mutate(s = s) %>% relocate(s, .before=k)
+  # beta_check
+  # 
+  # ### transform beta_3k into beta_3k minus beta_2k
+  # beta_check_1 = beta_check %>%
+  #   arrange(s,k,tto) %>%
+  #   group_by(s,k) %>%
+  #   mutate(
+  #     beta_L95 = ifelse(tto==3, beta_L95[2] - beta_L95[1], beta_L95),
+  #     beta_L50 = ifelse(tto==3, beta_L50[2] - beta_L50[1], beta_L50),
+  #     betaM = ifelse(tto==3, betaM[2] - betaM[1], betaM),
+  #     beta_U50 = ifelse(tto==3, beta_U50[2] - beta_U50[1], beta_U50),
+  #     beta_U95 = ifelse(tto==3, beta_U95[2] - beta_U95[1], beta_U95),
+  #   ) %>% ungroup() %>% arrange(tto,k) %>%
+  #   ### TTOP tests
+  #   mutate(TTOP_95 = as.numeric(beta_L95 > 0),
+  #          # TTOP_50 = as.numeric(beta_L50 > 0)
+  #          )
   
   beta_checkAll = bind_rows(beta_checkAll, beta_check_1)
   
@@ -282,7 +334,7 @@ for(sss in YEEERS) # 12:19 # 18:18
     ))))) +
     scale_x_continuous(breaks=seq(-5,5,by=0.2)) +
     ylab("") + xlab("log odds") 
-  beta_boxplot
+  # beta_boxplot
   ggsave(paste0("plots/beta_boxplot_20",sss,".png"), beta_boxplot, width=10, height=5)
   
   ################
@@ -296,70 +348,85 @@ for(sss in YEEERS) # 12:19 # 18:18
     geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
     ylab("wOBA") + 
     scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-  xwoba_check_plot
+  # xwoba_check_plot
   ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check", ".png"),
          xwoba_check_plot, width=8, height=5)
   
-  xwoba_check_plot_1 = xwoba_checkAll %>%
-    filter(s == sss) %>%
-    mutate(
-      xw_tto_L95_tto1 = xw_tto_L95*tto1,
-      xw_tto_L50_tto1 = xw_tto_L50*tto1,
-      xw_tto_M_tto1 = xw_tto_M*tto1,
-      xw_tto_U50_tto1 = xw_tto_U50*tto1,
-      xw_tto_U95_tto1 = xw_tto_U95*tto1,
-      xw_tto_L95_tto2 = xw_tto_L95*tto2,
-      xw_tto_L50_tto2 = xw_tto_L50*tto2,
-      xw_tto_M_tto2 = xw_tto_M*tto2,
-      xw_tto_U50_tto2 = xw_tto_U50*tto2,
-      xw_tto_U95_tto2 = xw_tto_U95*tto2,
-      xw_tto_L95_tto3 = xw_tto_L95*tto3,
-      xw_tto_L50_tto3 = xw_tto_L50*tto3,
-      xw_tto_M_tto3 = xw_tto_M*tto3,
-      xw_tto_U50_tto3 = xw_tto_U50*tto3,
-      xw_tto_U95_tto3 = xw_tto_U95*tto3,
-    ) %>%
-    ggplot(aes(x=t)) +
-    geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
-    geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
-    geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
-    geom_line(aes(y = xw_tto_U50_tto1), linetype=3, size=0.75) +
-    geom_line(aes(y = xw_tto_U95_tto1), linetype=3) +
-    geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=9,fill="black",alpha=0.01,) +
-    geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=9,fill=blue2,alpha=0.03,) +
-    
-    geom_line(aes(y = xw_tto_L95_tto2), linetype=3) +
-    geom_line(aes(y = xw_tto_L50_tto2), linetype=3, size=0.75) +
-    geom_line(aes(y = xw_tto_M_tto2), size=1, color=blue1) +
-    geom_line(aes(y = xw_tto_U50_tto2), linetype=3, size=0.75) +
-    geom_line(aes(y = xw_tto_U95_tto2), linetype=3) +
-    geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=10,xmax=18,fill="black",alpha=0.01,) +
-    geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=10,xmax=18,fill=blue2,alpha=0.03,) +
-    
-    geom_line(aes(y = xw_tto_L95_tto3), linetype=3) +
-    geom_line(aes(y = xw_tto_L50_tto3), linetype=3, size=0.75) +
-    geom_line(aes(y = xw_tto_M_tto3), size=1, color=blue1) +
-    geom_line(aes(y = xw_tto_U50_tto3), linetype=3, size=0.75) +
-    geom_line(aes(y = xw_tto_U95_tto3), linetype=3) +
-    geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=19,xmax=27,fill="black",alpha=0.01,) +
-    geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=19,xmax=27,fill=blue2,alpha=0.03,) +
-    
-    # geom_hline(aes(yintercept = xw_tto_M*tto1), linetype="dashed") +
-    # geom_hline(aes(yintercept = xw_tto_U50*tto1), linetype="dashed") +
-    
-    
-    geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-    geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-    geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
-    geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
-    geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
-    ylab("wOBA") + 
-    scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-  xwoba_check_plot_1
+  plot_xwoba_over_t <- function(yrs_facet=FALSE) {
+    xwoba_check_plot_1 = xwoba_checkAll %>%
+      filter(s == sss) %>%
+      mutate(year=s+2000) %>%
+      mutate(
+        xw_tto_L95_tto1 = xw_tto_L95*tto1,
+        xw_tto_L50_tto1 = xw_tto_L50*tto1,
+        xw_tto_M_tto1 = xw_tto_M*tto1,
+        xw_tto_U50_tto1 = xw_tto_U50*tto1,
+        xw_tto_U95_tto1 = xw_tto_U95*tto1,
+        xw_tto_L95_tto2 = xw_tto_L95*tto2,
+        xw_tto_L50_tto2 = xw_tto_L50*tto2,
+        xw_tto_M_tto2 = xw_tto_M*tto2,
+        xw_tto_U50_tto2 = xw_tto_U50*tto2,
+        xw_tto_U95_tto2 = xw_tto_U95*tto2,
+        xw_tto_L95_tto3 = xw_tto_L95*tto3,
+        xw_tto_L50_tto3 = xw_tto_L50*tto3,
+        xw_tto_M_tto3 = xw_tto_M*tto3,
+        xw_tto_U50_tto3 = xw_tto_U50*tto3,
+        xw_tto_U95_tto3 = xw_tto_U95*tto3,
+      ) %>%
+      ggplot(aes(x=t))
+    if (yrs_facet) {
+      xwoba_check_plot_1 = xwoba_check_plot_1 +
+        facet_wrap(~year)
+    }
+    xwoba_check_plot_1 = xwoba_check_plot_1 +
+      geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
+      geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
+      geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
+      geom_line(aes(y = xw_tto_U50_tto1), linetype=3, size=0.75) +
+      geom_line(aes(y = xw_tto_U95_tto1), linetype=3) +
+      geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=9,fill="black",alpha=0.01,) +
+      geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=9,fill=blue2,alpha=0.03,) +
+      
+      geom_line(aes(y = xw_tto_L95_tto2), linetype=3) +
+      geom_line(aes(y = xw_tto_L50_tto2), linetype=3, size=0.75) +
+      geom_line(aes(y = xw_tto_M_tto2), size=1, color=blue1) +
+      geom_line(aes(y = xw_tto_U50_tto2), linetype=3, size=0.75) +
+      geom_line(aes(y = xw_tto_U95_tto2), linetype=3) +
+      geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=10,xmax=18,fill="black",alpha=0.01,) +
+      geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=10,xmax=18,fill=blue2,alpha=0.03,) +
+      
+      geom_line(aes(y = xw_tto_L95_tto3), linetype=3) +
+      geom_line(aes(y = xw_tto_L50_tto3), linetype=3, size=0.75) +
+      geom_line(aes(y = xw_tto_M_tto3), size=1, color=blue1) +
+      geom_line(aes(y = xw_tto_U50_tto3), linetype=3, size=0.75) +
+      geom_line(aes(y = xw_tto_U95_tto3), linetype=3) +
+      geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=19,xmax=27,fill="black",alpha=0.01,) +
+      geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=19,xmax=27,fill=blue2,alpha=0.03,) +
+      
+      # geom_hline(aes(yintercept = xw_tto_M*tto1), linetype="dashed") +
+      # geom_hline(aes(yintercept = xw_tto_U50*tto1), linetype="dashed") +
+      
+      
+      geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+      geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+      geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+      geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+      geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+      ylab("wOBA") + 
+      scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+    xwoba_check_plot_1
+  }
+  
+  xwoba_check_plot_1 = plot_xwoba_over_t()
+  # xwoba_check_plot_1
   ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check_1", ".png"),
          xwoba_check_plot_1, width=8, height=5)
+  if (sss == last(YEEERS)) {
+    xwoba_check_plot_2 = plot_xwoba_over_t(yrs_facet=T)
+    ggsave(paste0("plots/plot_obs_results", "_xwoba_check_allYrs", ".png"),
+           xwoba_check_plot_1, width=8, height=5)
+  }
 }
-
 
 ###############################################
 
