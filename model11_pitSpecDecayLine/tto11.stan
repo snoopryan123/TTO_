@@ -68,24 +68,24 @@ transformed parameters {
 }
 model {
   // diffuse prior on top-level means
-  to_vector(alpha_0) ~ normal(0, 25); 
-  to_vector(alpha_1) ~ normal(0, 25);
-  to_vector(beta_2) ~ normal(0, 25);
-  to_vector(beta_3) ~ normal(0, 25);
+  alpha_0 ~ normal(0, 25); 
+  alpha_1 ~ normal(0, 25);
+  beta_2 ~ normal(0, 25);
+  beta_3 ~ normal(0, 25);
   // half std. normal prior on top-level variances
-  to_vector(sig_sq_0) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
-  to_vector(sig_sq_1) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
-  to_vector(sig_sq_2) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
-  to_vector(sig_sq_3) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
+  sig_sq_0 ~ std_normal();  //inv_gamma(0.5, 0.5);
+  sig_sq_1 ~ std_normal();
+  sig_sq_2 ~ std_normal();
+  sig_sq_3 ~ std_normal();
   
   // prior for adjustments vector
   to_vector(eta_raw) ~ normal(0, 25);
   
   // std. normal draws
-  to_vector(Z_alpha_0j_raw) ~ normal(0,1);   // Z is a MATRIX not a vector
-  to_vector(Z_alpha_1j_raw) ~ normal(0,1); 
-  to_vector(Z_beta_2l_raw) ~ normal(0,1);
-  to_vector(Z_beta_3l_raw) ~ normal(0,1);
+  to_vector(Z_alpha_0j_raw) ~ std_normal();   // Z is a MATRIX not a vector
+  to_vector(Z_alpha_1j_raw) ~ std_normal();
+  to_vector(Z_beta_2l_raw) ~ std_normal();
+  to_vector(Z_beta_3l_raw) ~ std_normal();
 
   for (i in 1:n) {
     // likelihood
