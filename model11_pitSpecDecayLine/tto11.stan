@@ -26,16 +26,16 @@ parameters {
   vector<lower=0>[K-1] alpha_1;   // pitcher-specific slope parameters 
   vector[K-1] beta_2;                 // batter-specific batter learning parameters 
   vector[K-1] beta_3;                 // batter-specific batter learning parameters 
-  vector<lower=0>[K-1] sig_sq_0_v;            // pitcher-specific intercept parameters 
-  vector<lower=0>[K-1] sig_sq_1_v;   // pitcher-specific slope parameters 
-  vector<lower=0>[K-1] sig_sq_2_v;                 // batter-specific batter learning parameters 
-  vector<lower=0>[K-1] sig_sq_3_v;                 // batter-specific batter learning parameters 
   
-  matrix[num_pit,K-1] alpha_0j_raw;            // pitcher-specific intercept parameters 
-  // matrix<lower=0>[num_pit,K-1] alpha_1j_raw;   // pitcher-specific slope parameters 
-  matrix[num_pit,K-1] alpha_1j_raw;   // pitcher-specific slope parameters 
-  matrix[num_bat,K-1] beta_2l_raw;                 // batter-specific batter learning parameters 
-  matrix[num_bat,K-1] beta_3l_raw;                 // batter-specific batter learning parameters 
+  vector<lower=0>[K-1] sig_sq_0;            // pitcher-specific intercept parameters 
+  vector<lower=0>[K-1] sig_sq_1;   // pitcher-specific slope parameters 
+  vector<lower=0>[K-1] sig_sq_2;                 // batter-specific batter learning parameters 
+  vector<lower=0>[K-1] sig_sq_3;                 // batter-specific batter learning parameters 
+  
+  matrix[num_pit,K-1] Z_alpha_0j_raw;            
+  matrix[num_pit,K-1] Z_alpha_1j_raw;   
+  matrix[num_bat,K-1] Z_beta_2l_raw;                 
+  matrix[num_bat,K-1] Z_beta_3l_raw;                 
 
   matrix[p_x,K-1] eta_raw;                  // adjustment parameters
 }
@@ -44,51 +44,53 @@ transformed parameters {
   matrix[num_pit,K] alpha_1j;
   matrix[num_bat,K] beta_2l;
   matrix[num_bat,K] beta_3l;
-  // matrix[p_x,K] eta;
-  matrix[n, K] linpred;
   
-  matrix[K-1,K-1] sig_sq_0 = diag_matrix(sig_sq_0_v);
-  matrix[K-1,K-1] sig_sq_1 = diag_matrix(sig_sq_1_v);
-  matrix[K-1,K-1] sig_sq_2 = diag_matrix(sig_sq_2_v);
-  matrix[K-1,K-1] sig_sq_3 = diag_matrix(sig_sq_3_v);
+  matrix[num_pit,K-1] alpha_0j_raw;                // pitcher-specific intercept parameters 
+  matrix[num_pit,K-1] alpha_1j_raw;                // pitcher-specific slope parameters 
+  matrix[num_bat,K-1] beta_2l_raw;                 // batter-specific batter learning parameters 
+  matrix[num_bat,K-1] beta_3l_raw;                 // batter-specific batter learning parameters 
+  
+  matrix[p_x,K] eta;
+  matrix[n, K] linpred;
 
-  matrix[p_x,K] eta = append_col(zeros_eta, eta_raw);       // category 1 (out) (col 1) is base category
+  alpha_0j_raw = rep_matrix(alpha_0', num_pit)  + diag_post_multiply(Z_alpha_0j_raw, sig_sq_0);
+  alpha_1j_raw = rep_matrix(alpha_1', num_pit)  + diag_post_multiply(Z_alpha_1j_raw, sig_sq_1);
+  beta_2l_raw = rep_matrix(beta_2', num_bat)  + diag_post_multiply(Z_beta_2l_raw, sig_sq_2);
+  beta_3l_raw = rep_matrix(beta_3', num_bat)  + diag_post_multiply(Z_beta_3l_raw, sig_sq_3);
+
   alpha_0j = append_col(zeros_alpha_0j, alpha_0j_raw);  // category 1 (out) (col 1) is base category
   alpha_1j = append_col(zeros_alpha_1j, alpha_1j_raw);  // category 1 (out) (col 1) is base category
   beta_2l =  append_col(zeros_beta_2l, beta_2l_raw);    // category 1 (out) (col 1) is base category
   beta_3l =  append_col(zeros_beta_3l, beta_3l_raw);    // category 1 (out) (col 1) is base category
-  // linpred = INCPT*alpha_0j + S*alpha_1j + O2*beta_2l + O3*beta_3l + X*eta; 
+
+  eta = append_col(zeros_eta, eta_raw);                 // category 1 (out) (col 1) is base category
   linpred = alpha_0j[pit_idxs] + diag_pre_multiply(t, alpha_1j[pit_idxs]) + diag_pre_multiply(O2, beta_2l[bat_idxs]) + diag_pre_multiply(O3, beta_3l[bat_idxs]) + X*eta; 
 }
 model {
-  // priors for top level of hierarchy
-  to_vector(alpha_0) ~ normal(0, 5);
-  to_vector(alpha_1) ~ normal(0, 5);
-  to_vector(beta_2) ~ normal(0, 5);
-  to_vector(beta_3) ~ normal(0, 5);
-  to_vector(sig_sq_0_v) ~ inv_gamma(0.5, 0.5);
-  to_vector(sig_sq_1_v) ~ inv_gamma(0.5, 0.5);
-  to_vector(sig_sq_2_v) ~ inv_gamma(0.5, 0.5);
-  to_vector(sig_sq_3_v) ~ inv_gamma(0.5, 0.5);
+  // diffuse prior on top-level means
+  to_vector(alpha_0) ~ normal(0, 25); 
+  to_vector(alpha_1) ~ normal(0, 25);
+  to_vector(beta_2) ~ normal(0, 25);
+  to_vector(beta_3) ~ normal(0, 25);
+  // half std. normal prior on top-level variances
+  to_vector(sig_sq_0) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
+  to_vector(sig_sq_1) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
+  to_vector(sig_sq_2) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
+  to_vector(sig_sq_3) ~ normal(0, 1);  //inv_gamma(0.5, 0.5);
   
   // prior for adjustments vector
-  to_vector(eta_raw) ~ normal(0, 5);
+  to_vector(eta_raw) ~ normal(0, 25);
   
-  for (i in 1:n) {
-    // batter_i = bat_idxs[i];
-    // pitcher_i = pit_idxs[i];
-    
-    // priors for alphas and betas
-    alpha_0j_raw[pit_idxs[i]] ~ multi_normal(alpha_0, sig_sq_0);
-    alpha_1j_raw[pit_idxs[i]] ~ multi_normal(alpha_1, sig_sq_1);
-    // to_vector(alpha_slope_raw) ~ student_t(7,0,1);
-    beta_2l_raw[bat_idxs[i]] ~ multi_normal(beta_2, sig_sq_2);
-    beta_3l_raw[bat_idxs[i]] ~ multi_normal(beta_3, sig_sq_3);
+  // std. normal draws
+  to_vector(Z_alpha_0j_raw) ~ normal(0,1);   // Z is a MATRIX not a vector
+  to_vector(Z_alpha_1j_raw) ~ normal(0,1); 
+  to_vector(Z_beta_2l_raw) ~ normal(0,1);
+  to_vector(Z_beta_3l_raw) ~ normal(0,1);
 
+  for (i in 1:n) {
     // likelihood
     y[i] ~ categorical_logit(linpred[i]');
   }
-
 }
 
 

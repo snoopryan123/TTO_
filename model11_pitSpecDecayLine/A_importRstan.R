@@ -53,8 +53,9 @@ fit_MODEL <- function(fold_num=NA) {
                   iter = NUM_ITERS_IN_CHAIN,
                   pars=c(
                     "alpha_0j_raw", "alpha_1j_raw", "beta_2l_raw", "beta_3l_raw",
+                    "Z_alpha_0j_raw", "Z_alpha_1j_raw", "Z_beta_2l_raw", "Z_beta_3l_raw",
                     # "alpha_0j", "alpha_1j", "beta_2l", "beta_3l",
-                    "sig_sq_0", "sig_sq_1", "sig_sq_2", "sig_sq_3", 
+                    # "sig_sq_0", "sig_sq_1", "sig_sq_2", "sig_sq_3", 
                     "linpred", "eta_raw"
                   ), 
                   include=FALSE,
@@ -64,7 +65,7 @@ fit_MODEL <- function(fold_num=NA) {
   fit
 }
 
-fit = fit_MODEL() ### fit the model
+# fit = fit_MODEL() ### fit the model
 
 
 
