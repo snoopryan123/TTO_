@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N obs_fit
+#$ -N obs_fit_positiveSlopePrior
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
