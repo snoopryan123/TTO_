@@ -20,18 +20,18 @@ NUM_ITS = 1500 #1500 #2000 #2500 #5000
 
 ### rstan model with pitcher fatigue spline and batter learning bumps
 
-file_bsnBL = "tto9_PF_BL_linePosSlope.stan"
+filename = "tto9_PF_BL_linePosSlope.stan"
 CHANGE_DIR = if (exists("IS_SIM")) { IS_SIM } else if (exists("IS_COMP")) { IS_COMP } else { FALSE }
 og_dir = getwd()
 if (CHANGE_DIR) { setwd("..") }
-model_bsnBL <- stan_model(file = file_bsnBL, model_name = file_bsnBL)
+MODEL <- stan_model(file = filename, model_name = filename)
 if (CHANGE_DIR) { setwd(og_dir) }
 
-fit_model_bsnBL <- function(fold_num=NA) {
+fit_MODEL <- function(fold_num=NA) {
   # training data - exclude FOLD_NUM, unless FOLD_NUM is NA
   train_rows = if (is.na(fold_num)) TRUE else which(folds != fold_num)
   y_train = y[train_rows,]
-  S_train = matrix(SPL[train_rows,], ncol=1) ### SPL, not S
+  S_train = matrix(BSN[train_rows,], ncol=1) ### SPL, not S
   O_train = O[train_rows,]
   X_train = X[train_rows,]
   INCPT_train = matrix(INCPT[train_rows,], ncol=1)
@@ -44,16 +44,20 @@ fit_model_bsnBL <- function(fold_num=NA) {
   seed = 12345
   set.seed(seed)
   NUM_ITERS_IN_CHAIN = NUM_ITS
-  fit <- sampling(model_bsnBL,
+  fit <- sampling(MODEL,
                   data = data_train,
                   iter = NUM_ITERS_IN_CHAIN,
-                  pars=c("linpred","alpha_incpt_raw","alpha_slope_raw","beta_raw","eta_raw"), include=FALSE,
+                  pars=c(
+                    "linpred","alpha_incpt_raw","alpha_slope_raw","beta_raw","eta_raw"
+                  ), 
+                  include=FALSE,
                   chains = cores, #1 #cores,
                   cores = cores, # HPCC
                   seed = seed)
   fit
 }
 
+# fit = fit_MODEL() ### fit the model
 
 
 

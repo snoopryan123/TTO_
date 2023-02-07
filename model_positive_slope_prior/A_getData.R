@@ -48,11 +48,14 @@ names(ORDER_CT_dummies) <- change_factor_names(names(ORDER_CT_dummies))
 S <- as.matrix(BATTER_SEQ_dummies)
 
 ### LINE, not SPLINE data matrix
-SPL = matrix(D$BATTER_SEQ_NUM, ncol=1)
+# SPL = matrix(D$BATTER_SEQ_NUM, ncol=1)
+BSN = matrix(D$BATTER_SEQ_NUM, ncol=1)
 INCPT = matrix(1, ncol=1, nrow=length(D$BATTER_SEQ_NUM))
 
 # Batter Learning data matrix
 O <- as.matrix(ORDER_CT_dummies)
+O2 = O[,"ORDER_CT2"]
+O3 = O[,"ORDER_CT3"]
 
 # observed plate appearance outcomes
 y_og <- D$EVENT_WOBA_19
@@ -66,6 +69,29 @@ set.seed(12345) # make sure to have the same folds each time!
 kk = if (exists("IS_SIM")) { if (IS_SIM) 5 else 10 } else 10
 NUM_FOLDS = kk
 folds <- loo::kfold_split_random(K=NUM_FOLDS,N=nrow(y))
+
+### pit vector p, pit_games vector pg, bat vector b, bat_games vector bg
+pit_game_indices <- D %>% select(GAME_ID,PIT_ID) %>% distinct() %>% #arrange(PIT_ID,GAME_ID) %>% 
+  group_by(PIT_ID) %>% mutate(pit_game_idx = row_number()) %>% ungroup()
+pit_indices <- pit_game_indices %>% group_by(PIT_ID) %>% slice_tail() %>% select(-GAME_ID) %>% ungroup() %>% 
+  arrange(PIT_ID) %>% mutate(pit_idx = row_number()) %>% rename(num_games = pit_game_idx)
+#####
+num_pit = nrow(pit_indices)
+pit_idxs = (D %>% select(PIT_ID) %>% left_join(pit_indices))$pit_idx
+#####
+num_pit_games = max(pit_indices$num_games)
+pg = (D %>% select(GAME_ID,PIT_ID) %>% left_join(pit_game_indices))$pit_game_idx
+#####
+bat_game_indices <- D %>% select(GAME_ID,BAT_ID) %>% distinct() %>% #arrange(BAT_ID,GAME_ID) %>% 
+  group_by(BAT_ID) %>% mutate(bat_game_idx = row_number()) %>% ungroup()
+bat_indices <- bat_game_indices %>% group_by(BAT_ID) %>% slice_tail() %>% select(-GAME_ID) %>% ungroup() %>% 
+  arrange(BAT_ID) %>% mutate(bat_idx = row_number()) %>% rename(num_games = bat_game_idx)
+#####
+num_bat = nrow(bat_indices)
+bat_idxs = (D %>% select(BAT_ID) %>% left_join(bat_indices))$bat_idx
+#####
+num_bat_games = max(bat_indices$num_games)
+bg = (D %>% select(GAME_ID,BAT_ID) %>% left_join(bat_game_indices))$bat_game_idx
 
 
 
