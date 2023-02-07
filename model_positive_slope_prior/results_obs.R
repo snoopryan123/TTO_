@@ -46,6 +46,7 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
 
 ########################
 beta_allDraws = tibble()
+probs_allDraws = tibble()
 beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
@@ -56,7 +57,7 @@ for (s in YEEERS)
   print("*****"); print(paste0("results: 20", s)); print("*****");
   
   YRS = 2000 + s
-  source("model9_getData.R") ### get observed data 
+  source("A_getData.R") ### get observed data
   
   # Sys.sleep(5) ###
   
@@ -129,6 +130,18 @@ for (s in YEEERS)
     ) %>% ungroup() %>% arrange(tto,k) %>%
     mutate(s=s)
   beta_allDraws = bind_rows(beta_allDraws, beta_drawsAll)
+  
+  probs_drawsAll = probs_tilde %>%
+    mutate(tto = floor( (t-1)/9 )+1 ) %>%
+    rename(i = iter) %>%
+    filter(k != 1) %>%
+    arrange(i,k) %>%
+    group_by(i,k) %>%
+    mutate(
+      p = ifelse(tto==3, p[2] - p[1], p),
+    ) %>% ungroup() %>% arrange(tto,k) %>%
+    mutate(s=s)
+  probs_allDraws = bind_rows(probs_allDraws, probs_drawsAll)
   
   beta_check <- beta_draws_1 %>% 
     group_by(k, tto) %>%
@@ -223,6 +236,10 @@ xwoba_checkAll = probs_checkAll %>%
     xw_tto_U95 = mean(xw_U95),
   )
 
+xwoba_allDraws = probs_allDraws %>%
+  mutate(w = categories[k]) %>%
+  mutate(xw = p*w*1000)
+
 # ### save beta csv to check for TTOP:
 write_csv(beta_checkAll, paste0("plots/beta_ttop_results_beta_checkAll.csv"))
 
@@ -258,32 +275,62 @@ for(sss in YEEERS) # 12:19 # 18:18
     filter(s == sss) %>%
     mutate(param = ifelse(tto==2, paste0("b",2,c),
                           paste0("b",3,c,"-","b",2,c)),
-           ordering = paste0(tto,k),
+           ordering = paste0(k,tto), #paste0(tto,k),
            param = fct_reorder(param, desc(ordering))
     ) %>%
     ggplot() +
     geom_vline(aes(xintercept=0), color=blue1, size=1.5) +
-    geom_boxplot(aes(y=param, x=beta), 
-        
-    ) +
+    geom_boxplot(aes(y=param, x=beta)) +
     scale_y_discrete(labels = unname(TeX(rev(c(
       "$\\beta_{2,BB}$",
-      "$\\beta_{2,HBP}$",
-      "$\\beta_{2,1B}$",
-      "$\\beta_{2,2B}$",
-      "$\\beta_{2,3B}$",
-      "$\\beta_{2,HR}$",
       "$\\beta_{3,BB}-\\beta_{2,BB}$",
+      "$\\beta_{2,HBP}$",
       "$\\beta_{3,HBP}-\\beta_{2,HBP}$",
+      "$\\beta_{2,1B}$",
       "$\\beta_{3,1B}-\\beta_{2,1B}$",
+      "$\\beta_{2,2B}$",
       "$\\beta_{3,2B}-\\beta_{2,2B}$",
+      "$\\beta_{2,3B}$",
       "$\\beta_{3,3B}-\\beta_{2,3B}$",
+      "$\\beta_{2,HR}$",
       "$\\beta_{3,HR}-\\beta_{2,HR}$"
     ))))) +
     scale_x_continuous(breaks=seq(-5,5,by=0.2)) +
     ylab("") + xlab("log odds") 
   beta_boxplot
   ggsave(paste0("plots/beta_boxplot_20",sss,".png"), beta_boxplot, width=10, height=5)
+  
+  # ################
+  # ### xwoba params boxplot
+  # xwoba_boxplot = xwoba_allDraws %>%
+  #   mutate(c = category_strings[k]) %>%
+  #   filter(s == sss) %>%
+  #   mutate(param = ifelse(tto==2, paste0("b",2,c),
+  #                         paste0("b",3,c,"-","b",2,c)),
+  #          ordering = paste0(k,tto), #paste0(tto,k),
+  #          param = fct_reorder(param, desc(ordering))
+  #   ) %>%
+  #   ggplot() +
+  #   geom_vline(aes(xintercept=0), color=blue1, size=1.5) +
+  #   geom_boxplot(aes(y=param, x=xw)) +
+  #   scale_y_discrete(labels = unname(TeX(rev(c(
+  #     "$\\xwoba_{2,BB}$",
+  #     "$\\xwoba_{3,BB}-\\xwoba_{2,BB}$",
+  #     "$\\xwoba_{2,HBP}$",
+  #     "$\\xwoba_{3,HBP}-\\xwoba_{2,HBP}$",
+  #     "$\\xwoba_{2,1B}$",
+  #     "$\\xwoba_{3,1B}-\\xwoba_{2,1B}$",
+  #     "$\\xwoba_{2,2B}$",
+  #     "$\\xwoba_{3,2B}-\\xwoba_{2,2B}$",
+  #     "$\\xwoba_{2,3B}$",
+  #     "$\\xwoba_{3,3B}-\\xwoba_{2,3B}$",
+  #     "$\\xwoba_{2,HR}$",
+  #     "$\\xwoba_{3,HR}-\\xwoba_{2,HR}$"
+  #   ))))) +
+  #   scale_x_continuous(breaks=seq(-5,5,by=0.2)) +
+  #   ylab("") + xlab("log odds") 
+  # xwoba_boxplot
+  # ggsave(paste0("plots/xwoba_boxplot_20",sss,".png"), xwoba_boxplot, width=10, height=5)
   
   ################
   xwoba_check_plot = xwoba_checkAll %>%

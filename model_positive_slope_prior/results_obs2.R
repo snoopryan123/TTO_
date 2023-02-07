@@ -51,7 +51,7 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
 
 ########################
 YRS = 2018
-source("model9_getData.R") ### get observed data
+source("A_getData.R") ### get observed data
 
 ### import fit from rstan
 fit <- readRDS(paste0(output_folder, "fit_obs_model_lineyrs_",YRS-2000,"_.rds"))
@@ -70,29 +70,37 @@ probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde
 
 ###
 probs_tilde_TTOavg = probs_tilde %>%
+  mutate(
+    w = categories[k],
+    xw = p*w*1000,
+  ) %>%
   group_by(iter, c, tto) %>%
-  summarise(p = mean(p)) %>%
+  summarise(p = mean(p),
+            xw = mean(xw)) %>%
   group_by(iter,c) %>%
   mutate(diff_12 = p[2] - p[1],
-         diff_23 = p[3] - p[2]) %>%
+         diff_23 = p[3] - p[2],
+         diff_12_xw = xw[2] - xw[1],
+         diff_23_xw = xw[3] - xw[2]) %>%
   filter(tto == 1 | tto == 2) %>% 
   rename(diff = tto) %>%
-  ungroup()
+  ungroup() 
 probs_tilde_TTOavg 
 
-plot_category_prob_hists <- function(p_diff_df, l=-0.006, u=0.015) {
+plot_category_prob_hists <- function(p_diff_df, l, u, xw=FALSE) {
   p_diff_df2 = p_diff_df %>% group_by(c) %>% summarise(mean_p=mean(diff))
+  
   p_diff_df %>% ggplot() +
     # facet_wrap(~c,scales = "free") +
     facet_wrap(~c) +
     geom_histogram(aes(x=diff, y=..density..), fill="black", bins=50) +
     geom_vline(aes(xintercept=0), color="dodgerblue2", size=0.5) +
     geom_vline(data=p_diff_df2, aes(xintercept=mean_p), color="firebrick", size=0.5) +
-    scale_x_continuous(name="difference in probability",
-    breaks=seq(-0.02,0.02,by=0.01),
-    limits=c(l-0.002, u+0.002)
+    scale_x_continuous(
+    breaks= if (xw) seq(-50,50,by=4) else seq(-0.02,0.02,by=0.01),
+    # limits=c(l-0.002, u+0.002)
     ) +
-    xlab("difference in probability") +
+    xlab(if (xw) "difference in expected wOBA points" else "difference in probability") +
     # theme_update(text = element_text(size=12)) +
     theme(panel.spacing = unit(2, "lines")) +
     theme(axis.text.y = element_blank(),
@@ -119,9 +127,35 @@ plot_probs_avgTTOdiff23 = plot_category_prob_hists(
 )
 plot_probs_avgTTOdiff23
 
+plot_xw_avgTTOdiff12 = plot_category_prob_hists(
+  p_diff_df = probs_tilde_TTOavg %>% 
+    filter(diff == 1 & c != "out") %>%
+    select(c, diff_12_xw) %>%
+    rename(diff=diff_12_xw),
+  # u = 0.0125,
+  # l = -0.005
+  # l = -7,
+  # u = 14,
+  xw=TRUE,
+)
+plot_xw_avgTTOdiff12
+
+plot_xw_avgTTOdiff23 = plot_category_prob_hists(
+  p_diff_df = probs_tilde_TTOavg %>% 
+    filter(diff == 2 & c != "out") %>%
+    select(c, diff_23_xw) %>%
+    rename(diff=diff_23_xw),
+  xw=TRUE,
+)
+plot_xw_avgTTOdiff23
+
 ggsave(paste0("plots/tto_p_diff_12.png"), plot_probs_avgTTOdiff12, width=10, height=4)
 ggsave(paste0("plots/tto_p_diff_23.png"), plot_probs_avgTTOdiff23, width=10, height=4)
+ggsave(paste0("plots/tto_xw_diff_12.png"), plot_xw_avgTTOdiff12, width=10, height=4)
+ggsave(paste0("plots/tto_xw_diff_23.png"), plot_xw_avgTTOdiff23, width=10, height=4)
 
+
+############### get t -> xWOBA(t,x) ##############
 
 
 
