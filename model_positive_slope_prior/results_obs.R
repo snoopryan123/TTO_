@@ -51,7 +51,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-YEEERS = 18:18 #15:19  #12:19 #18:18
+YEEERS = 14:19 #18:18 #14:19  #12:19 #18:18
 for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
@@ -504,8 +504,82 @@ for(sss in YEEERS) # 12:19 # 18:18
 
 
 
+################
+xwoba_check_plot_ALLYRS = xwoba_checkAll %>%
+  mutate(year = s+2000) %>%
+  ggplot(aes(x=t)) +
+  facet_wrap(~year) +
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  ylab("wOBA") + 
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot_ALLYRS
+ggsave(paste0("plots/plot_obs_results", "_xwoba_check_ALLYR", ".png"),
+       xwoba_check_plot_ALLYRS, width=11, height=5)
 
 
+xwoba_check_plot_ALLYRS_1 = xwoba_checkAll %>%
+  mutate(year = s+2000) %>%
+  mutate(
+    xw_tto_L95_tto1 = xw_tto_L95*tto1,
+    xw_tto_L50_tto1 = xw_tto_L50*tto1,
+    xw_tto_M_tto1 = xw_tto_M*tto1,
+    xw_tto_U50_tto1 = xw_tto_U50*tto1,
+    xw_tto_U95_tto1 = xw_tto_U95*tto1,
+    xw_tto_L95_tto2 = xw_tto_L95*tto2,
+    xw_tto_L50_tto2 = xw_tto_L50*tto2,
+    xw_tto_M_tto2 = xw_tto_M*tto2,
+    xw_tto_U50_tto2 = xw_tto_U50*tto2,
+    xw_tto_U95_tto2 = xw_tto_U95*tto2,
+    xw_tto_L95_tto3 = xw_tto_L95*tto3,
+    xw_tto_L50_tto3 = xw_tto_L50*tto3,
+    xw_tto_M_tto3 = xw_tto_M*tto3,
+    xw_tto_U50_tto3 = xw_tto_U50*tto3,
+    xw_tto_U95_tto3 = xw_tto_U95*tto3,
+  ) %>%
+  ggplot(aes(x=t)) +
+  facet_wrap(~year) +
+  geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
+  geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
+  geom_line(aes(y = xw_tto_U50_tto1), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_U95_tto1), linetype=3) +
+  geom_rect(aes(ymin=xw_tto_L95_tto1, ymax=xw_tto_U95_tto1),xmin=1,xmax=9,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto1, ymax=xw_tto_U50_tto1),xmin=1,xmax=9,fill=blue2,alpha=0.03,) +
+  
+  geom_line(aes(y = xw_tto_L95_tto2), linetype=3) +
+  geom_line(aes(y = xw_tto_L50_tto2), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_M_tto2), size=1, color=blue1) +
+  geom_line(aes(y = xw_tto_U50_tto2), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_U95_tto2), linetype=3) +
+  geom_rect(aes(ymin=xw_tto_L95_tto2, ymax=xw_tto_U95_tto2),xmin=10,xmax=18,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto2, ymax=xw_tto_U50_tto2),xmin=10,xmax=18,fill=blue2,alpha=0.03,) +
+  
+  geom_line(aes(y = xw_tto_L95_tto3), linetype=3) +
+  geom_line(aes(y = xw_tto_L50_tto3), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_M_tto3), size=1, color=blue1) +
+  geom_line(aes(y = xw_tto_U50_tto3), linetype=3, size=0.75) +
+  geom_line(aes(y = xw_tto_U95_tto3), linetype=3) +
+  geom_rect(aes(ymin=xw_tto_L95_tto3, ymax=xw_tto_U95_tto3),xmin=19,xmax=27,fill="black",alpha=0.01,) +
+  geom_rect(aes(ymin=xw_tto_L50_tto3, ymax=xw_tto_U50_tto3),xmin=19,xmax=27,fill=blue2,alpha=0.03,) +
+  
+  # geom_hline(aes(yintercept = xw_tto_M*tto1), linetype="dashed") +
+  # geom_hline(aes(yintercept = xw_tto_U50*tto1), linetype="dashed") +
+  
+  
+  geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+  geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+  geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+  geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+  geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+  ylab("wOBA") + 
+  scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+xwoba_check_plot_ALLYRS_1
+ggsave(paste0("plots/plot_obs_results", "_xwoba_check_ALLYRS_1", ".png"),
+       xwoba_check_plot_ALLYRS_1, width=11, height=5)
 
 
 

@@ -42,18 +42,18 @@ fit_to_posterior_probs <- function(fit,S,X) {
 ########################
 probs_checkAll = tibble()
 
-YEEERS = 17:17 #12:19 #18:18
+YEEERS = 18:18 #12:19 #18:18
 for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
   
   YRS = 2000 + s
-  source("model10_getData.R") ### get observed data 
+  source("A_getData.R") ### get observed data 
   
   # Sys.sleep(5) ###
   
   ### import fit from rstan
-  fit <- readRDS(paste0(output_folder, "fit_obs_model_splyrs_",s,"_.rds"))
+  fit <- readRDS(paste0(output_folder, "fit_obs_model_indicators_yrs_",s,"_.rds"))
   draws <- as.matrix(fit)
   
   alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
@@ -129,7 +129,7 @@ sig_color = "#56B4E9" # "firebrick" "#56B4E9"
 sig_neg_color = "firebrick"
 blue1 = "dodgerblue2"
 blue2 = "#56B4E9"
-### sss = 19
+### sss = 18
 for(sss in YEEERS) # 12:19 # 18:18
 {
   print("*****"); print(paste0("xWOBA Plots: 20", sss)); print("*****");
@@ -141,32 +141,44 @@ for(sss in YEEERS) # 12:19 # 18:18
     ggplot(aes(x=t)) +
     geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
     geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-    geom_errorbar(aes(ymin=xw_L95_s, ymax=xw_U95_s), width = 0.5) +
-    geom_errorbar(aes(ymin=xw_L50_s, ymax=xw_U50_s), width = 0.25, size=1) +
-    geom_line(aes(x=t, y = xw_s), color=blue1, size=3) + 
-    geom_point(aes(y=xw_s), col="black", size=2, stroke=1, shape=21, fill="white") +
+    
+    # geom_line(aes(x=t, y = xw_s), color=blue1, size=3) +
+    
+    # geom_errorbar(aes(ymin=xw_L95_s, ymax=xw_U95_s), width = 0.5) +
+    # geom_errorbar(aes(ymin=xw_L50_s, ymax=xw_U50_s), width = 0.25, size=1) +
+    # geom_point(aes(y=xw_s), col="black", size=2, stroke=1, shape=21, fill="white") +
+    geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+    geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+    # geom_line(aes(x=t, y = xwM), color=blue1, size=3) + 
+    geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
     scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3)) +
     scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20))
   xwoba_check_plot
-  ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check", ".png"),
+  ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check_indicator", ".png"),
          xwoba_check_plot, width=8, height=5)
   
-  # ################
-  # xwoba_check_plot_1 = xwoba_checkAll %>%
-  #   filter(t < 26) %>%
-  #   filter(s == sss) %>%
-  #   ggplot(aes(x=t)) +
-  #   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
-  #   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
-  #   geom_errorbar(aes(ymin=xw_L95_sp, ymax=xw_U95_sp), width = 0.5) +
-  #   geom_errorbar(aes(ymin=xw_L50_sp, ymax=xw_U50_sp), width = 0.25, size=1) +
-  #   geom_line(aes(x=t, y = xwM_sp), color=blue1, size=3) + 
-  #   geom_point(aes(y=xwM_sp), col="black", size=2, stroke=1, shape=21, fill="white") +
-  #   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3)) +
-  #   scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20))
-  # xwoba_check_plot_1
-  # ggsave(paste0("plots/plot_obs_results1_20", sss, "_xwoba_check", ".png"),
-  #        xwoba_check_plot, width=8, height=5)
+  ################
+  xwoba_check_plot_1 = xwoba_checkAll %>%
+    filter(t < 26) %>%
+    filter(s == sss) %>%
+    ggplot(aes(x=t)) +
+    geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+    geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+    
+    geom_line(aes(x=t, y = xw_s), color=blue1, size=3) +
+    
+    # geom_errorbar(aes(ymin=xw_L95_s, ymax=xw_U95_s), width = 0.5) +
+    # geom_errorbar(aes(ymin=xw_L50_s, ymax=xw_U50_s), width = 0.25, size=1) +
+    # geom_point(aes(y=xw_s), col="black", size=2, stroke=1, shape=21, fill="white") +
+    geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+    geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+    # geom_line(aes(x=t, y = xwM), color=blue1, size=3) + 
+    geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+    scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3)) +
+    scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20))
+  xwoba_check_plot_1
+  ggsave(paste0("plots/plot_obs_results_20", sss, "_xwoba_check_1_indicator", ".png"),
+         xwoba_check_plot_1, width=8, height=5)
 
 }
 
