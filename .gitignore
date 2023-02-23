@@ -19,3 +19,4 @@ OLD/
 !*params_sim_alpha_slope.csv
 !*params_sim_beta.csv
 !*params_sim_eta.csv
+!xgb_selection_model.xgb

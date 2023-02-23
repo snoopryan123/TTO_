@@ -104,7 +104,18 @@ D$pi = predict_probs_xgb(
   xgb_propensity_model, 
   D %>% group_by(GAME_ID,PIT_ID) %>% mutate(mean_game_woba = mean(EVENT_WOBA_19)) %>% ungroup()
 )
-row_weights = 1/(D$pi)
+
+if (exists("USE_ROW_WEIGHTS")) { 
+  if (USE_ROW_WEIGHTS) {
+    row_weights = 1/(D$pi)
+  } else {
+    row_weights = rep(1, nrow(D))
+  }
+} else {
+  row_weights = rep(1, nrow(D))
+}
+
+
 
 # ####### visualize the row weights ####### 
 # tibble(row_weights) %>%

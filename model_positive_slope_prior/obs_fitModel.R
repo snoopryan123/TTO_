@@ -3,11 +3,13 @@ library(tidyverse)
 # YRS = 2018
 args <- commandArgs(trailingOnly = TRUE)
 YRS <- 2000+as.numeric(args[1]) 
+USE_ROW_WEIGHTS <- as.logical(args[2])
 
 model = "line"
 OUTPUT_FILE = paste0("obs","_model_", model, 
                      "yrs_", str_remove_all(paste0(YRS, collapse=''), "20"),
-                     "_") 
+                     "_",
+                     if (USE_ROW_WEIGHTS) "InvPropWeights_" else "") 
 
 source("A_getData.R") ### get observed data 
 source("A_importRstan.R") ### import the RStan model

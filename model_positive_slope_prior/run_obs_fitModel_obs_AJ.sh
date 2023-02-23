@@ -12,4 +12,4 @@
 ## MORE RAM
 #$ -l m_mem_free=10G
 
-Rscript  --vanilla obs_fitModel.R ${SGE_TASK_ID}
+Rscript  --vanilla obs_fitModel.R ${SGE_TASK_ID} FALSE
