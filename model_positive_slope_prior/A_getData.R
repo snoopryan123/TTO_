@@ -24,9 +24,9 @@ CHANGE_DIR = if (exists("IS_SIM")) { IS_SIM } else if (exists("IS_COMP")) { IS_C
 og_dir = getwd()
 if (CHANGE_DIR) { setwd("..") }
 input_file = "../data/TTO_dataset_510.csv"  
-D <- read_csv(input_file) 
+D0 <- read_csv(input_file) 
 if (CHANGE_DIR) { setwd(og_dir) }
-D <- D %>% filter(YEAR %in% YRS) ### get YRS from config fig
+D <- D0 %>% filter(YEAR %in% YRS) ### get YRS from config fig
 D <- D %>% filter(ORDER_CT <= 3) 
 D <- D %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1) 
 # only filter PIT_IS_BAT if not a SIM
@@ -94,6 +94,29 @@ num_bat_games = max(bat_indices$num_games)
 bg = (D %>% select(GAME_ID,BAT_ID) %>% left_join(bat_game_indices))$bat_game_idx
 
 
+#####################################
+#### LOAD PROPENSITY SCORE MODEL ####
+#####################################
 
+xgb_propensity_model = xgb.load("xgb_selection_model.xgb")
+source("A_selection_model_functions.R")
+D$pi = predict_probs_xgb(
+  xgb_propensity_model, 
+  D %>% group_by(GAME_ID,PIT_ID) %>% mutate(mean_game_woba = mean(EVENT_WOBA_19)) %>% ungroup()
+)
+row_weights = 1/(D$pi)
 
-
+# ####### visualize the row weights ####### 
+# tibble(row_weights) %>%
+#   ggplot() +
+#   geom_histogram(aes(x=row_weights), binwidth=0.01)
+# ### visualize the row weights
+# tibble(row_weights) %>%
+#   filter(row_weights<3) %>%
+#   ggplot() +
+#   geom_histogram(aes(x=row_weights), binwidth=0.01)
+###
+# sum(row_weights > 3)
+# sum(row_weights > 5)
+# sum(row_weights > 20)
+# dim(D)[1]
