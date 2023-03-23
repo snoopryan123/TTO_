@@ -35,12 +35,11 @@ fit_MODEL <- function(fold_num=NA) {
   O_train = O[train_rows,]
   X_train = X[train_rows,]
   INCPT_train = matrix(INCPT[train_rows,], ncol=1)
-  row_weights_train = row_weights[train_rows]
 
   data_train <- list(
     y=y_train,S=S_train,O=O_train,X=X_train,INCPT=INCPT_train,
     p_o=ncol(O_train),p_x=ncol(X_train),
-    n=nrow(X_train),K=num_categories, row_weights=row_weights_train
+    n=nrow(X_train),K=num_categories
   )
   # Train the model
   seed = 12345
