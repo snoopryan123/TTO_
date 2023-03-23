@@ -51,7 +51,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-YEEERS = 14:19 #18:18 #14:19  #12:19 #18:18
+YEEERS = 12:19 #18:18 #14:19  #12:19 #18:18
 for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
@@ -87,7 +87,8 @@ for (s in YEEERS)
   INCPT_tilde = cbind(rep(1,27))
   S_tilde = cbind(1:27) ## cbind(1, 1:27)  
   O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
-  X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  # X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
   probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
   # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
   
@@ -508,7 +509,7 @@ for(sss in YEEERS) # 12:19 # 18:18
 xwoba_check_plot_ALLYRS = xwoba_checkAll %>%
   mutate(year = s+2000) %>%
   ggplot(aes(x=t)) +
-  facet_wrap(~year) +
+  facet_wrap(~year, nrow=2) +
   geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
   geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
   geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
@@ -516,9 +517,9 @@ xwoba_check_plot_ALLYRS = xwoba_checkAll %>%
   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
   ylab("wOBA") + 
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-xwoba_check_plot_ALLYRS
+# xwoba_check_plot_ALLYRS
 ggsave(paste0("plots/plot_obs_results", "_xwoba_check_ALLYR", ".png"),
-       xwoba_check_plot_ALLYRS, width=11, height=5)
+       xwoba_check_plot_ALLYRS, width=15, height=6)
 
 
 xwoba_check_plot_ALLYRS_1 = xwoba_checkAll %>%
@@ -541,7 +542,7 @@ xwoba_check_plot_ALLYRS_1 = xwoba_checkAll %>%
     xw_tto_U95_tto3 = xw_tto_U95*tto3,
   ) %>%
   ggplot(aes(x=t)) +
-  facet_wrap(~year) +
+  facet_wrap(~year, nrow=2) +
   geom_line(aes(y = xw_tto_L95_tto1), linetype=3) +
   geom_line(aes(y = xw_tto_L50_tto1), linetype=3, size=0.75) +
   geom_line(aes(y = xw_tto_M_tto1), size=1, color=blue1) +
@@ -577,9 +578,41 @@ xwoba_check_plot_ALLYRS_1 = xwoba_checkAll %>%
   geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
   ylab("wOBA") + 
   scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
-xwoba_check_plot_ALLYRS_1
+# xwoba_check_plot_ALLYRS_1
 ggsave(paste0("plots/plot_obs_results", "_xwoba_check_ALLYRS_1", ".png"),
-       xwoba_check_plot_ALLYRS_1, width=11, height=5)
+       xwoba_check_plot_ALLYRS_1, width=15, height=6)
+
+
+beta_boxplot_ALLYRS = beta_allDraws %>%
+  mutate(year=2000+s) %>%
+  mutate(c = category_strings[k]) %>%
+  mutate(param = ifelse(tto==2, paste0("b",2,c),
+                        paste0("b",3,c,"-","b",2,c)),
+         ordering = paste0(k,tto), #paste0(tto,k),
+         param = fct_reorder(param, desc(ordering))
+  ) %>%
+  ggplot() +
+  facet_wrap(~year, nrow=2) +
+  geom_vline(aes(xintercept=0), color=blue1, size=1.5) +
+  geom_boxplot(aes(y=param, x=beta)) +
+  scale_y_discrete(labels = unname(TeX(rev(c(
+    "$\\beta_{2,BB}$",
+    "$\\beta_{3,BB}-\\beta_{2,BB}$",
+    "$\\beta_{2,HBP}$",
+    "$\\beta_{3,HBP}-\\beta_{2,HBP}$",
+    "$\\beta_{2,1B}$",
+    "$\\beta_{3,1B}-\\beta_{2,1B}$",
+    "$\\beta_{2,2B}$",
+    "$\\beta_{3,2B}-\\beta_{2,2B}$",
+    "$\\beta_{2,3B}$",
+    "$\\beta_{3,3B}-\\beta_{2,3B}$",
+    "$\\beta_{2,HR}$",
+    "$\\beta_{3,HR}-\\beta_{2,HR}$"
+  ))))) +
+  scale_x_continuous(breaks=seq(-5,5,by=0.2)) +
+  ylab("") + xlab("log odds") 
+# beta_boxplot_ALLYRS
+ggsave(paste0("plots/beta_boxplot_ALLYRS.png"), beta_boxplot_ALLYRS, width=18, height=8)
 
 
 

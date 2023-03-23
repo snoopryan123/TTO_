@@ -42,7 +42,7 @@ fit_to_posterior_probs <- function(fit,S,X) {
 ########################
 probs_checkAll = tibble()
 
-YEEERS = 18:18 #12:19 #18:18
+YEEERS = 12:19 #12:19 #18:18
 for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
@@ -61,6 +61,7 @@ for (s in YEEERS)
   
   ############### get t -> P(y=k|t,x) ##############
   X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  # X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
   S_tilde = diag(27) ## cbind(1, 1:27)  
   probs_tilde = fit_to_posterior_probs(fit, S_tilde, X_tilde)
   # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
