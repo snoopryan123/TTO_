@@ -9,7 +9,7 @@ data {
   matrix[n,p_o] O;            // batter learning (order count) matrix
   matrix[n,p_x] X;            // adjustments matrix
   int<lower=1, upper=K> y[n]; // outcome vector
-  real<lower=0> row_weights[n];  // row weights
+ ///// real<lower=0> row_weights[n];  // row weights
 }
 transformed data {
   vector[1] zeros_alpha_incpt = rep_vector(0, 1);
@@ -49,8 +49,8 @@ model {
   
   for (i in 1:n) {
     // likelihood
-    // y[i] ~ categorical_logit(linpred[i]');
-    target += categorical_logit_lpmf(y[i] | linpred[i]') * row_weights[i];
+    y[i] ~ categorical_logit(linpred[i]');
+    /////target += categorical_logit_lpmf(y[i] | linpred[i]') * row_weights[i];
   }
 }
 // generated quantities {
