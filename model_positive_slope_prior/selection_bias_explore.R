@@ -4,7 +4,8 @@ source("A_getData.R") ### get observed data
 ##############################################################
 
 ###
-df.exits.0 = D0 %>%
+# df.exits.0 = D0 %>%
+df.exits.0 = D %>%
   group_by(GAME_ID, PIT_ID) %>%
   mutate(
     last = row_number() == n(),

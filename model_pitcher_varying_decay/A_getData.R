@@ -32,9 +32,23 @@ D <- D %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1)
 # only filter PIT_IS_BAT if not a SIM
 if (exists("IS_SIM")) { if (!IS_SIM) { D <- D %>% filter(!PIT_IS_BAT) } } else { D <- D %>% filter(!PIT_IS_BAT) }
 
+### Remove Games in which the pitcher is pulled in 2TTO
+games_in_which_pit_makes_it_to_3tto = D %>%
+  group_by(GAME_ID, PIT_ID) %>%
+  # slice_tail() %>%
+  select(GAME_ID, PIT_ID, BATTER_SEQ_NUM) %>%
+  slice_tail() %>%
+  rename(last_bsn = BATTER_SEQ_NUM) %>%
+  ungroup() %>%
+  filter(last_bsn >= 18)
+nrow(D %>% distinct(GAME_ID, PIT_ID))
+nrow(games_in_which_pit_makes_it_to_3tto)
+D = games_in_which_pit_makes_it_to_3tto %>% left_join(D)
+
 # confounders matrix X 
-logit <- function(p) { log(p/(1-p)) }
-X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND))
+##### logit <- function(p) { log(p/(1-p)) }
+##### X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND))
+X <- as.matrix(D %>% select(BQ, PQ, HAND_MATCH, BAT_HOME_IND))
 # NO INTERCEPT and INCLUDE FIRST COLUMN
 change_factor_names <- function(s) { str_remove_all(str_remove_all(str_remove(s, "factor"), "\\("), "\\)") }
 # categorical dummies for BATTER_SEQ_NUM
