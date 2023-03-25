@@ -67,7 +67,7 @@ beta_checkAll = tibble()
 eta_checkAll = tibble()
 probs_checkAll = tibble()
 
-YEEERS = 18:18 #15:19  #12:19 #18:18
+YEEERS = 17:18 #15:19  #12:19 #18:18
 for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
@@ -119,7 +119,8 @@ for (s in YEEERS)
   # O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
   O2_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9)), nrow=27)
   O3_tilde = matrix(c(rep(0,9), rep(0,9), rep(1,9)), nrow=27)
-  X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  # X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
   probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, BSN_tilde, O2_tilde, O3_tilde, X_tilde)
   # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
   

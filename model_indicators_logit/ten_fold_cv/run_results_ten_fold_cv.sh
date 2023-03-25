@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N run_obs_indicators_results
+#$ -N run_ten_fold_cv_results
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
@@ -8,6 +8,6 @@
 
 #$ -o job_output/$JOB_NAME-$JOB_ID.log
 ## MORE RAM
-#$ -l m_mem_free=20G
+#$ -l m_mem_free=10G
 
-Rscript --vanilla results_obs.R
+Rscript --vanilla results_ten_fold_cv.R

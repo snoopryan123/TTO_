@@ -502,8 +502,14 @@ for(sss in YEEERS) # 12:19 # 18:18
 # ggsave(paste0("plots/plot_obs_results_", 2000+sss, "_probs_check", ".png"),
 #        probs_check_plot, width=12, height=12)
 
-
-
+# ################
+# xwoba_checkAll %>%
+#   group_by(s,tto) %>%
+#   summarise(
+#     xw_withinTTO_diff = max(xwM) - min(xwM),
+#     xw_mean = mean(xwM)
+#   ) %>%
+#   mutate(xwdiff = c(0,diff(xw_mean)))
 
 ################
 xwoba_check_plot_ALLYRS = xwoba_checkAll %>%

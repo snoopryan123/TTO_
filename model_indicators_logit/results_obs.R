@@ -61,12 +61,12 @@ for (s in YEEERS)
   
   ############### get t -> P(y=k|t,x) ##############
   logit <- function(p) { log(p/(1-p)) }
-  # X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
-  X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
+  X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+  # X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
   S_tilde = diag(27) ## cbind(1, 1:27)  
   probs_tilde = fit_to_posterior_probs(fit, S_tilde, X_tilde)
-  # x_tilde = c(logit(0.315), logit(0.315), 1, 0)
-  x_tilde = c(0.315, 0.315, 1, 0)
+  x_tilde = c(logit(0.315), logit(0.315), 1, 0)
+  # x_tilde = c(0.315, 0.315, 1, 0)
   
   smoothing_spl_df_0 = 6 ###
   probs_check = probs_tilde %>%

@@ -50,8 +50,8 @@ fit_to_posterior_probs <- function(fit,INCPT,S,O,X) {
 }
 
 ########################
-YRS = 2017
-source("A_getData.R") ### get observed data
+YRS = 2018
+source("model9_getData.R") ### get observed data
 
 ### import fit from rstan
 fit <- readRDS(paste0(output_folder, "fit_obs_model_lineyrs_",YRS-2000,"_.rds"))
@@ -61,54 +61,38 @@ alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
 beta_draws <- draws[,startsWith(colnames(draws), "beta")]
 eta_draws <- draws[,startsWith(colnames(draws), "eta")]
 
-##############) ##############) ##############
-neffs = summary(fit)$summary[, "n_eff"]
-print("the effective sample size across all parameters exceeds ")
-min(unname(neffs), na.rm=T)
-print("the mean effective sample size across all parameters exceeds ")
-mean(unname(neffs), na.rm=T)
-
 ############### get t -> P(y=k|t,x) ##############
 INCPT_tilde = cbind(rep(1,27))
 S_tilde = cbind(1:27) ## cbind(1, 1:27)
 O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
-# X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
-X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
+X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
 probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
 
 ###
 probs_tilde_TTOavg = probs_tilde %>%
-  mutate(
-    w = categories[k],
-    xw = p*w*1000,
-  ) %>%
   group_by(iter, c, tto) %>%
-  summarise(p = mean(p),
-            xw = mean(xw)) %>%
+  summarise(p = mean(p)) %>%
   group_by(iter,c) %>%
   mutate(diff_12 = p[2] - p[1],
-         diff_23 = p[3] - p[2],
-         diff_12_xw = xw[2] - xw[1],
-         diff_23_xw = xw[3] - xw[2]) %>%
+         diff_23 = p[3] - p[2]) %>%
   filter(tto == 1 | tto == 2) %>% 
   rename(diff = tto) %>%
-  ungroup() 
+  ungroup()
 probs_tilde_TTOavg 
 
-plot_category_prob_hists <- function(p_diff_df, l, u, xw=FALSE) {
+plot_category_prob_hists <- function(p_diff_df, l=-0.006, u=0.015) {
   p_diff_df2 = p_diff_df %>% group_by(c) %>% summarise(mean_p=mean(diff))
-  
   p_diff_df %>% ggplot() +
     # facet_wrap(~c,scales = "free") +
     facet_wrap(~c) +
     geom_histogram(aes(x=diff, y=..density..), fill="black", bins=50) +
     geom_vline(aes(xintercept=0), color="dodgerblue2", size=0.5) +
     geom_vline(data=p_diff_df2, aes(xintercept=mean_p), color="firebrick", size=0.5) +
-    scale_x_continuous(
-    breaks= if (xw) seq(-50,50,by=4) else seq(-0.02,0.02,by=0.01),
-    # limits=c(l-0.002, u+0.002)
+    scale_x_continuous(name="difference in probability",
+    breaks=seq(-0.02,0.02,by=0.01),
+    limits=c(l-0.002, u+0.002)
     ) +
-    xlab(if (xw) "difference in expected wOBA points" else "difference in probability") +
+    xlab("difference in probability") +
     # theme_update(text = element_text(size=12)) +
     theme(panel.spacing = unit(2, "lines")) +
     theme(axis.text.y = element_blank(),
@@ -135,35 +119,9 @@ plot_probs_avgTTOdiff23 = plot_category_prob_hists(
 )
 plot_probs_avgTTOdiff23
 
-plot_xw_avgTTOdiff12 = plot_category_prob_hists(
-  p_diff_df = probs_tilde_TTOavg %>% 
-    filter(diff == 1 & c != "out") %>%
-    select(c, diff_12_xw) %>%
-    rename(diff=diff_12_xw),
-  # u = 0.0125,
-  # l = -0.005
-  # l = -7,
-  # u = 14,
-  xw=TRUE,
-)
-plot_xw_avgTTOdiff12
-
-plot_xw_avgTTOdiff23 = plot_category_prob_hists(
-  p_diff_df = probs_tilde_TTOavg %>% 
-    filter(diff == 2 & c != "out") %>%
-    select(c, diff_23_xw) %>%
-    rename(diff=diff_23_xw),
-  xw=TRUE,
-)
-plot_xw_avgTTOdiff23
-
 ggsave(paste0("plots/tto_p_diff_12.png"), plot_probs_avgTTOdiff12, width=10, height=4)
 ggsave(paste0("plots/tto_p_diff_23.png"), plot_probs_avgTTOdiff23, width=10, height=4)
-ggsave(paste0("plots/tto_xw_diff_12.png"), plot_xw_avgTTOdiff12, width=10, height=4)
-ggsave(paste0("plots/tto_xw_diff_23.png"), plot_xw_avgTTOdiff23, width=10, height=4)
 
-
-############### get t -> xWOBA(t,x) ##############
 
 
 
@@ -187,8 +145,6 @@ xwoba_tilde_TTOavg = xwoba_tilde %>%
   rename(diff = tto) %>%
   ungroup()
 xwoba_tilde_TTOavg 
-
-
 
 plot_xwoba_diff_hist <- function(xw_diff) {
   xw_diff %>% ggplot() +
@@ -240,8 +196,7 @@ for (i in 1:length(hand_values)) {
   for (j in 1:length(home_values)) {
     hand = hand_values[i]
     home = home_values[j]
-    # X_tilde_hh = matrix( rep(c(logit(0.315), logit(0.315), hand, home), 27), nrow=27, byrow = TRUE)
-    X_tilde_hh = matrix( rep(c(0.315, 0.315, hand, home), 27), nrow=27, byrow = TRUE)
+    X_tilde_hh = matrix( rep(c(logit(0.315), logit(0.315), hand, home), 27), nrow=27, byrow = TRUE)
     probs_tilde_hh = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde_hh)
     xw_hh = probs_tilde_hh %>%
         group_by(t, iter) %>%
@@ -270,8 +225,7 @@ for (i in 1:length(bq_values)) {
   for (j in 1:length(pq_values)) {
     bq = bq_values[i]
     pq = pq_values[j]
-    # X_tilde_bqpq = matrix( rep(c(logit(bq), logit(pq), 1, 0), 27), nrow=27, byrow = TRUE)
-    X_tilde_bqpq = matrix( rep(c(bq, pq, 1, 0), 27), nrow=27, byrow = TRUE)
+    X_tilde_bqpq = matrix( rep(c(logit(bq), logit(pq), 1, 0), 27), nrow=27, byrow = TRUE)
     probs_tilde_bqpq = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde_bqpq)
     xw_bqpq = probs_tilde_bqpq %>%
       group_by(t, iter) %>%
@@ -395,6 +349,11 @@ data.frame(mean_probs_tto)
 ## triple from 1TTO to 2TTO increases in prob from 0.003291545 to 0.003666526
 ## double from 2TTO to 3TTO decreases in prob from 0.046110114 to 0.049469223
 
+
+
+
+
+
 fit_to_logOdds <- function(fit,INCPT,S,O,X) {
   draws=as.matrix(fit)
   alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
@@ -476,18 +435,8 @@ data.frame(mean_logOdds_tto)
 
 
 
-##############################################
-tto=3
-cat=4 # woba category idx
-catstr = category_strings[cat]
-print(paste0("the posterior mean of beta_{",tto,",",catstr,"} is "))
-mean(beta_draws[,paste0("beta[1,",cat,"]")])
-print("which translates to an increase in the probability of a single by ")
-(mean_prob_diffs %>% filter(c == catstr & diff == (tto-1) ))[[if (tto==2) "diff_12" else "diff_23"]]
-print("and an increase in xWOBA points by ")
-(mean_prob_diffs %>% filter(c == catstr & diff == (tto-1) ))[[if (tto==2) "diff_12" else "diff_23"]] * categories[cat] * 1000
 
-##############################################
+### 
 xwoba_tilde_TTOavg %>% 
   filter(diff == 1) %>%
   select(diff_12) %>%
@@ -496,6 +445,7 @@ xwoba_tilde_TTOavg %>%
             xwM = mean(xw),
             xwU = quantile(xw, 0.95),)
 
+### 
 xwoba_tilde_TTOavg %>% 
   filter(diff == 2) %>%
   select(diff_23) %>%
@@ -503,21 +453,5 @@ xwoba_tilde_TTOavg %>%
   summarise(xwL = quantile(xw, 0.05),
             xwM = mean(xw),
             xwU = quantile(xw, 0.95),)
-
-##############################################
-print(hh_results)
-
-##############################################
-AA = bqpq_results[2:4,2:4]
-print(AA)
-print("diff bt good and bad pitchers")
-mean(AA[,3] - AA[,1])
-(AA[2,3] - AA[2,1])
-print("diff bt good and bad batters")
-mean(AA[3,] - AA[1,])
-
-
-
-
 
 
