@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N model10_ten_fold_cv_AJ
+#$ -N tenFCV_indicator_logit
 #$ -j y
 #$ -m e -M ryguy123@sas.upenn.edu 
 
