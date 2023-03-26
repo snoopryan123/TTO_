@@ -17,7 +17,7 @@ fit_to_posterior_probs <- function(fit,S,X,probs_as_list=FALSE) {
   linpreds = list()
   for (k in 1:7) {
     print(k)
-    alpha_draws_k = alpha_incpt_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
+    alpha_draws_k = alpha_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
     linpred_k = S%*%t(alpha_draws_k) + X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
@@ -89,7 +89,6 @@ for (fold_num in 1:NUM_FOLDS) {
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ### cross entropy loss of our model
-  INCPT_test = INCPT[test_rows,]
   S_test = S[test_rows,]
   X_test = X[test_rows,]
   y_test = y[test_rows,]
