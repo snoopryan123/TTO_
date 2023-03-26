@@ -2,7 +2,7 @@
 ########################
 YRS = 2018
 IS_SIM = TRUE ### even though this is 10 fold cv and not a sim, we need this to be TRUE to get the code to work!
-source("../model9_getData.R") ### get observed data 
+source("../A_getData.R") ### get observed data 
 ########################
 
 ### observed base rates
