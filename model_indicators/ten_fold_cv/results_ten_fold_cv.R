@@ -2,8 +2,8 @@
 ########################
 YRS = 2018
 IS_SIM = TRUE ### even though this is 10 fold cv and not a sim, we need this to be TRUE to get the code to work!
-NUM_FOLDS = 10 #FIXME
 source("../A_getData.R") ### get observed data 
+NUM_FOLDS = 10 #FIXME
 ########################
 
 ### observed base rates
