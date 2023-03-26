@@ -10,21 +10,16 @@ base_rates = tibble(k=y[,1]) %>% group_by(k) %>% summarise(count=n()) %>% mutate
 base_rates
 write_csv(base_rates, "results/base_rates.csv")
 
-fit_to_posterior_probs <- function(fit,INCPT,S,O,X,probs_as_list=FALSE) {
+fit_to_posterior_probs <- function(fit,S,X,probs_as_list=FALSE) {
   draws=as.matrix(fit)
-  alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
-  alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
-  beta_draws = draws[,str_detect(colnames(draws), "^beta")] 
+  alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
   eta_draws = draws[,str_detect(colnames(draws), "^eta")]
   linpreds = list()
   for (k in 1:7) {
     print(k)
-    alpha_incpt_draws_k = alpha_incpt_draws[,endsWith(colnames(alpha_incpt_draws), paste0(k,"]"))]
-    alpha_slope_draws_k = alpha_slope_draws[,endsWith(colnames(alpha_slope_draws), paste0(k,"]"))]
-    beta_draws_k = beta_draws[,endsWith(colnames(beta_draws), paste0(k,"]"))] 
+    alpha_draws_k = alpha_incpt_draws[,endsWith(colnames(alpha_draws), paste0(k,"]"))]
     eta_draws_k = eta_draws[,endsWith(colnames(eta_draws), paste0(k,"]"))]
-    linpred_k = INCPT%*%t(alpha_incpt_draws_k) + S%*%t(alpha_slope_draws_k) + 
-                O%*%t(beta_draws_k) + X%*%t(eta_draws_k)
+    linpred_k = S%*%t(alpha_draws_k) + X%*%t(eta_draws_k)
     linpreds[[length(linpreds)+1]] = linpred_k
   }
   linpreds = lapply(linpreds, exp)
@@ -86,22 +81,19 @@ for (fold_num in 1:NUM_FOLDS) {
   cel_base_rates[fold_num] = base_rate_CEL_test$cel
   
   ### import fit from rstan
-  OUTPUT_FILE = paste0("job_output/", "fit_ten_fold_cv_", fold_num, "_model_bsnBL.rds")
+  OUTPUT_FILE = paste0("job_output/", "fit_ten_fold_cv_", fold_num, "_model_indicators.rds")
   fit <- readRDS(OUTPUT_FILE)
   draws <- as.matrix(fit)
 
-  alpha_incpt_draws <- draws[,startsWith(colnames(draws), "alpha_incpt")]
-  alpha_slope_draws <- draws[,startsWith(colnames(draws), "alpha_slope")]
-  beta_draws <- draws[,startsWith(colnames(draws), "beta")]
+  alpha_draws <- draws[,startsWith(colnames(draws), "alpha")]
   eta_draws <- draws[,startsWith(colnames(draws), "eta")]
   
   ### cross entropy loss of our model
   INCPT_test = INCPT[test_rows,]
   S_test = SPL[test_rows,]
-  O_test = O[test_rows,]
   X_test = X[test_rows,]
   y_test = y[test_rows,]
-  p_test = fit_to_posterior_probs(fit,INCPT_test,S_test,O_test,X_test,probs_as_list=TRUE)
+  p_test = fit_to_posterior_probs(fit,S_test,X_test,probs_as_list=TRUE)
   cel_test = cross_entropy_loss_posterior(p_test, y_test)
   cel_model[fold_num] = cel_test
 }
