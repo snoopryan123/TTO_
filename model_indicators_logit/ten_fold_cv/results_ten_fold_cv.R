@@ -90,7 +90,7 @@ for (fold_num in 1:NUM_FOLDS) {
   
   ### cross entropy loss of our model
   INCPT_test = INCPT[test_rows,]
-  S_test = SPL[test_rows,]
+  S_test = S[test_rows,]
   X_test = X[test_rows,]
   y_test = y[test_rows,]
   p_test = fit_to_posterior_probs(fit,S_test,X_test,probs_as_list=TRUE)
