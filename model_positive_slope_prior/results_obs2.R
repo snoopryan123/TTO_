@@ -72,8 +72,8 @@ mean(unname(neffs), na.rm=T)
 INCPT_tilde = cbind(rep(1,27))
 S_tilde = cbind(1:27) ## cbind(1, 1:27)
 O_tilde = matrix(c(rep(0,9), rep(1,9), rep(0,9), rep(0,9), rep(0,9), rep(1,9)), nrow=27)
-# X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
-X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
+X_tilde = matrix( rep(c(logit(0.315), logit(0.315), 1, 0), 27), nrow=27, byrow = TRUE)
+# X_tilde = matrix( rep(c(0.315, 0.315, 1, 0), 27), nrow=27, byrow = TRUE)
 probs_tilde = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde)
 
 ###
@@ -240,8 +240,8 @@ for (i in 1:length(hand_values)) {
   for (j in 1:length(home_values)) {
     hand = hand_values[i]
     home = home_values[j]
-    # X_tilde_hh = matrix( rep(c(logit(0.315), logit(0.315), hand, home), 27), nrow=27, byrow = TRUE)
-    X_tilde_hh = matrix( rep(c(0.315, 0.315, hand, home), 27), nrow=27, byrow = TRUE)
+    X_tilde_hh = matrix( rep(c(logit(0.315), logit(0.315), hand, home), 27), nrow=27, byrow = TRUE)
+    # X_tilde_hh = matrix( rep(c(0.315, 0.315, hand, home), 27), nrow=27, byrow = TRUE)
     probs_tilde_hh = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde_hh)
     xw_hh = probs_tilde_hh %>%
         group_by(t, iter) %>%

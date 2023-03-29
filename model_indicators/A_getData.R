@@ -46,9 +46,9 @@ nrow(games_in_which_pit_makes_it_to_3tto)
 D = games_in_which_pit_makes_it_to_3tto %>% left_join(D)
 
 # confounders matrix X 
-# logit <- function(p) { log(p/(1-p)) }
-# X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND))
-X <- as.matrix(D %>% select(BQ, PQ, HAND_MATCH, BAT_HOME_IND))
+logit <- function(p) { log(p/(1-p)) }
+X <- as.matrix(D %>% mutate(lBQ=logit(BQ), lPQ=logit(PQ)) %>% select(lBQ, lPQ, HAND_MATCH, BAT_HOME_IND))
+#####X <- as.matrix(D %>% select(BQ, PQ, HAND_MATCH, BAT_HOME_IND))
 # NO INTERCEPT and INCLUDE FIRST COLUMN
 change_factor_names <- function(s) { str_remove_all(str_remove_all(str_remove(s, "factor"), "\\("), "\\)") }
 # categorical dummies for BATTER_SEQ_NUM
