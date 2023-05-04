@@ -18,7 +18,7 @@ output_folder = './job_output/'
 
 ### make sure to get the value of YRS from some file, such as `config.R`
 ### here, set a default value of YRS = 2018
-if (!exists("YRS")) { YRS = 2018 } 
+if (!exists("YRS")) { YRS = 2017 } 
   
 ### load data D
 CHANGE_DIR = if (exists("IS_SIM")) { IS_SIM } else if (exists("IS_COMP")) { IS_COMP } else { FALSE }
@@ -33,6 +33,12 @@ D <- D %>% filter(BQ>0 & BQ<1 & PQ>0 & PQ<1)
 # only filter PIT_IS_BAT if not a SIM
 if (exists("IS_SIM")) { if (!IS_SIM) { D <- D %>% filter(!PIT_IS_BAT) } } else { D <- D %>% filter(!PIT_IS_BAT) }
 
+### dataset diagnostics
+print(paste0("Our ", unique(D$YEAR), " dataset consists of "))
+print(paste0(nrow(D), " plate appearances "))
+print(paste0(length(unique(D$BAT_ID)), " unique batters "))
+print(paste0(length(unique(D$PIT_ID)), " unique pitchers "))
+
 ### Remove Games in which the pitcher is pulled in 2TTO
 games_in_which_pit_makes_it_to_3tto = D %>%
   group_by(GAME_ID, PIT_ID) %>%
@@ -44,6 +50,7 @@ games_in_which_pit_makes_it_to_3tto = D %>%
   filter(last_bsn >= 18)
 nrow(D %>% distinct(GAME_ID, PIT_ID))
 nrow(games_in_which_pit_makes_it_to_3tto)
+(nrow(D %>% distinct(GAME_ID, PIT_ID)) - nrow(games_in_which_pit_makes_it_to_3tto))/nrow(D %>% distinct(GAME_ID, PIT_ID))*100
 D = games_in_which_pit_makes_it_to_3tto %>% left_join(D)
 
 # confounders matrix X 

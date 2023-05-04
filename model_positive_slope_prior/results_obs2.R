@@ -270,8 +270,8 @@ for (i in 1:length(bq_values)) {
   for (j in 1:length(pq_values)) {
     bq = bq_values[i]
     pq = pq_values[j]
-    # X_tilde_bqpq = matrix( rep(c(logit(bq), logit(pq), 1, 0), 27), nrow=27, byrow = TRUE)
-    X_tilde_bqpq = matrix( rep(c(bq, pq, 1, 0), 27), nrow=27, byrow = TRUE)
+    X_tilde_bqpq = matrix( rep(c(logit(bq), logit(pq), 1, 0), 27), nrow=27, byrow = TRUE)
+    # X_tilde_bqpq = matrix( rep(c(bq, pq, 1, 0), 27), nrow=27, byrow = TRUE)
     probs_tilde_bqpq = fit_to_posterior_probs(fit, INCPT_tilde, S_tilde, O_tilde, X_tilde_bqpq)
     xw_bqpq = probs_tilde_bqpq %>%
       group_by(t, iter) %>%
@@ -511,10 +511,22 @@ print(hh_results)
 AA = bqpq_results[2:4,2:4]
 print(AA)
 print("diff bt good and bad pitchers")
+min(AA[,3] - AA[,1])
 mean(AA[,3] - AA[,1])
+max(AA[,3] - AA[,1])
 (AA[2,3] - AA[2,1])
 print("diff bt good and bad batters")
+min(AA[3,] - AA[1,])
 mean(AA[3,] - AA[1,])
+max(AA[3,] - AA[1,])
+
+##############################################
+### base rates
+D %>%
+  group_by(EVENT_WOBA_19) %>%
+  summarise(count = n()) %>%
+  mutate(base_rate = count/sum(count))
+  
 
 
 

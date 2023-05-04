@@ -42,7 +42,7 @@ fit_to_posterior_probs <- function(fit,S,X) {
 ########################
 probs_checkAll = tibble()
 
-YEEERS = 12:19 #12:19 #18:18
+YEEERS = 17:18 #12:19 #18:18
 for (s in YEEERS)  
 {
   print("*****"); print(paste0("results: 20", s)); print("*****");
