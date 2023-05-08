@@ -5,7 +5,7 @@ source("A_getData.R") ### get observed data
 
 ###
 # df.exits.0 = D0 %>%
-df.exits.0 = D %>%
+df.exits.0 = D0 %>%
   group_by(GAME_ID, PIT_ID) %>%
   mutate(
     last = row_number() == n(),
@@ -42,16 +42,46 @@ df.exits = df.exits.0 %>%
     woba_prev123_bin = cut(woba_prev123, quantile(woba_prev123, 0:3/3)),
     woba_gameMean_bin = cut(woba_gameMean, quantile(woba_gameMean,0:6/6)),
     woba_gameMean_bin2 = cut(woba_gameMean, quantile(woba_gameMean,0:16/16)),
-  ) %>%
-  filter(tto <= 3)
+  ) #%>% filter(tto <= 3)
 df.exits
+
+##############################################################
+
+p2 = df.exits %>%
+  drop_na(pq_bin) %>%
+  mutate(pq_bin = paste0("pitcher quality bin ", pq_bin)) %>%
+  ggplot() +
+  facet_wrap(~pq_bin) +
+  geom_histogram(aes(x=pit_exit_idx, y=after_stat(density)), binwidth = 1) +
+  scale_x_continuous(breaks=seq(3,40,by=3)) +
+  geom_vline(aes(xintercept=9), linewidth=1) +
+  geom_vline(aes(xintercept=18), linewidth=1) +
+  geom_vline(aes(xintercept=27), linewidth=1) +
+  xlab("batter number t at which the starting pitcher exits")
+# p2
+ggsave("selection_bias_explore_plot_2.png", p2, width=15, height=5)
+
+p5 = df.exits %>%
+  drop_na(woba_gameMean_bin) %>%
+  mutate(woba_gameMean_bin = paste0("mean game wOBA ", woba_gameMean_bin)) %>%
+  ggplot() +
+  facet_wrap(~woba_gameMean_bin) +
+  # geom_histogram(aes(x=pit_exit_idx, y = (..count..)/sum(..count..)), binwidth = 1) +
+  geom_histogram(aes(x=pit_exit_idx, y = after_stat(density)), binwidth = 1) +
+  scale_x_continuous(breaks=seq(3,40,by=3)) +
+  geom_vline(aes(xintercept=9), linewidth=1) +
+  geom_vline(aes(xintercept=18), linewidth=1) +
+  geom_vline(aes(xintercept=27), linewidth=1) +
+  xlab("batter number t at which the starting pitcher exits")
+# p5
+ggsave("selection_bias_explore_plot_5.png", p5, width=15, height=5)
 
 ##############################################################
 
 p1 = df.exits %>%
   # filter(YEAR==2018) %>%
   ggplot() +
-  geom_histogram(aes(x=pit_exit_idx), binwidth = 1) +
+  geom_histogram(aes(x=pit_exit_idx, y=after_stat(density)), binwidth = 1) +
   scale_x_continuous(breaks=seq(3,40,by=3)) +
   geom_vline(aes(xintercept=9), linewidth=1) +
   geom_vline(aes(xintercept=18), linewidth=1) +
@@ -59,25 +89,12 @@ p1 = df.exits %>%
 # p1
 ggsave("selection_bias_explore_plot_1.png", p1, width=10, height=4)
 
-p2 = df.exits %>%
-  drop_na(pq_bin) %>%
-  mutate(pq_bin = paste0("pitcher quality bin ", pq_bin)) %>%
-  ggplot() +
-  facet_wrap(~pq_bin) +
-  geom_histogram(aes(x=pit_exit_idx), binwidth = 1) +
-  scale_x_continuous(breaks=seq(3,40,by=3)) +
-  geom_vline(aes(xintercept=9), linewidth=1) +
-  geom_vline(aes(xintercept=18), linewidth=1) +
-  xlab("batter number t at which the starting pitcher exits")
-# p2
-ggsave("selection_bias_explore_plot_2.png", p2, width=15, height=5)
-
 p3 = df.exits %>%
   drop_na(woba_prev_bin) %>%
   mutate(woba_prev_bin = paste0("previous at-bat wOBA ", woba_prev_bin)) %>%
   ggplot() +
   facet_wrap(~woba_prev_bin) +
-  geom_histogram(aes(x=pit_exit_idx), binwidth = 1) +
+  geom_histogram(aes(x=pit_exit_idx, y=after_stat(density)), binwidth = 1) +
   scale_x_continuous(breaks=seq(3,40,by=3)) +
   geom_vline(aes(xintercept=9), linewidth=1) +
   geom_vline(aes(xintercept=18), linewidth=1) +
@@ -90,7 +107,7 @@ p4 = df.exits %>%
   mutate(woba_prev123_bin = paste0("mean wOBA of previous 3 at-bats ", woba_prev123_bin)) %>%
   ggplot() +
   facet_wrap(~woba_prev123_bin) +
-  geom_histogram(aes(x=pit_exit_idx), binwidth = 1) +
+  geom_histogram(aes(x=pit_exit_idx, y=after_stat(density)), binwidth = 1) +
   scale_x_continuous(breaks=seq(3,40,by=3)) +
   geom_vline(aes(xintercept=9), linewidth=1) +
   geom_vline(aes(xintercept=18), linewidth=1) +
@@ -98,25 +115,12 @@ p4 = df.exits %>%
 # p4
 ggsave("selection_bias_explore_plot_4.png", p4, width=15, height=5)
 
-p5 = df.exits %>%
-  drop_na(woba_gameMean_bin) %>%
-  mutate(woba_gameMean_bin = paste0("mean game wOBA ", woba_gameMean_bin)) %>%
-  ggplot() +
-  facet_wrap(~woba_gameMean_bin) +
-  geom_histogram(aes(x=pit_exit_idx), binwidth = 1) +
-  scale_x_continuous(breaks=seq(3,40,by=3)) +
-  geom_vline(aes(xintercept=9), linewidth=1) +
-  geom_vline(aes(xintercept=18), linewidth=1) +
-  xlab("batter number t at which the starting pitcher exits")
-# p5
-ggsave("selection_bias_explore_plot_5.png", p5, width=15, height=5)
-
 p6 = df.exits %>%
   drop_na(woba_gameMean_bin2) %>%
   mutate(woba_gameMean_bin2 = paste0("mean game wOBA ", woba_gameMean_bin2)) %>%
   ggplot() +
   facet_wrap(~woba_gameMean_bin2) +
-  geom_histogram(aes(x=pit_exit_idx), binwidth = 1) +
+  geom_histogram(aes(x=pit_exit_idx, y=after_stat(density)), binwidth = 1) +
   scale_x_continuous(breaks=seq(3,40,by=3)) +
   geom_vline(aes(xintercept=9), linewidth=1) +
   geom_vline(aes(xintercept=18), linewidth=1) +

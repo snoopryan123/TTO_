@@ -101,9 +101,9 @@ plot_category_prob_hists <- function(p_diff_df, l, u, xw=FALSE) {
   p_diff_df %>% ggplot() +
     # facet_wrap(~c,scales = "free") +
     facet_wrap(~c) +
-    geom_histogram(aes(x=diff, y=..density..), fill="black", bins=50) +
-    geom_vline(aes(xintercept=0), color="dodgerblue2", size=0.5) +
-    geom_vline(data=p_diff_df2, aes(xintercept=mean_p), color="firebrick", size=0.5) +
+    geom_histogram(aes(x=diff, y=after_stat(density)), fill="black", bins=50) +
+    geom_vline(aes(xintercept=0), color="dodgerblue2", linewidth=0.5) +
+    geom_vline(data=p_diff_df2, aes(xintercept=mean_p), color="firebrick", linewidth=0.5) +
     scale_x_continuous(
     breaks= if (xw) seq(-50,50,by=4) else seq(-0.02,0.02,by=0.01),
     # limits=c(l-0.002, u+0.002)
@@ -117,7 +117,8 @@ plot_category_prob_hists <- function(p_diff_df, l, u, xw=FALSE) {
 
 plot_probs_avgTTOdiff12 = plot_category_prob_hists(
   probs_tilde_TTOavg %>% 
-    filter(diff == 1 & c != "out") %>%
+    # filter(diff == 1 & c != "out") %>%
+    filter(diff == 1) %>%
     select(c, diff_12) %>%
     rename(diff=diff_12),
   u = 0.0125,
@@ -127,7 +128,8 @@ plot_probs_avgTTOdiff12
 
 plot_probs_avgTTOdiff23 = plot_category_prob_hists(
   probs_tilde_TTOavg %>% 
-    filter(diff == 2 & c != "out") %>%
+    # filter(diff == 2 & c != "out") %>%
+    filter(diff == 2) %>%
     select(c, diff_23) %>%
     rename(diff=diff_23),
   u = 0.0125,
@@ -137,6 +139,7 @@ plot_probs_avgTTOdiff23
 
 plot_xw_avgTTOdiff12 = plot_category_prob_hists(
   p_diff_df = probs_tilde_TTOavg %>% 
+    # filter(diff == 1) %>%
     filter(diff == 1 & c != "out") %>%
     select(c, diff_12_xw) %>%
     rename(diff=diff_12_xw),
@@ -157,8 +160,10 @@ plot_xw_avgTTOdiff23 = plot_category_prob_hists(
 )
 plot_xw_avgTTOdiff23
 
-ggsave(paste0("plots/tto_p_diff_12.png"), plot_probs_avgTTOdiff12, width=10, height=4)
-ggsave(paste0("plots/tto_p_diff_23.png"), plot_probs_avgTTOdiff23, width=10, height=4)
+# ggsave(paste0("plots/tto_p_diff_12.png"), plot_probs_avgTTOdiff12, width=10, height=4)
+# ggsave(paste0("plots/tto_p_diff_23.png"), plot_probs_avgTTOdiff23, width=10, height=4)
+ggsave(paste0("plots/tto_p_diff_12.png"), plot_probs_avgTTOdiff12, width=10, height=6)
+ggsave(paste0("plots/tto_p_diff_23.png"), plot_probs_avgTTOdiff23, width=10, height=6)
 ggsave(paste0("plots/tto_xw_diff_12.png"), plot_xw_avgTTOdiff12, width=10, height=4)
 ggsave(paste0("plots/tto_xw_diff_23.png"), plot_xw_avgTTOdiff23, width=10, height=4)
 

@@ -1,15 +1,14 @@
 
 ########################
-source("sim_config_3.R")
+### get command line args 
+args = commandArgs(trailingOnly=TRUE)
+SIM_NUM = as.numeric(args[1])
 SIM_NO_PF = FALSE
-# for (SIM_NUM in 1:2) {
-# SIM_NUM = 2 #1 #2
-# YRS = 2018
 sim_noPf_str = ifelse(SIM_NO_PF, "A", "")
 underlying = "line"
 IS_SIM = TRUE
 ########################
-source("../model9_getData.R") ### get observed data 
+source("../A_getData.R") ### get observed data 
 
 fit_to_posterior_probs <- function(fit,INCPT,S,O,X,probs_as_list=FALSE) {
   draws=as.matrix(fit)
@@ -79,7 +78,7 @@ probs_checkAll = tibble()
 cel_model = numeric(25)
 cel_base_rates = numeric(25)
 # sss = 1
-for (s in 6:6) { # 1:1  # 6:6 # 1:25
+for (s in 1:225) { # 1:1  # 6:6 # 1:25
   print("*************************")
   print(paste0("sim number ", s))
   print("*************************")
@@ -355,37 +354,37 @@ for (s in 6:6) { # 1:1  # 6:6 # 1:25
 
 #################### parameter coverage stats over all sims #################### 
 
-# write_csv(tibble(cel_model_test=mean(cel_model)), paste0("plots/cel_model_test_sim",SIM_NUM,".csv"))
-# write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("plots/cel_base_rates_test_sim",SIM_NUM,".csv"))
-# 
-# beta_is_covered = beta_checkAll %>% 
-#   group_by(tto,c) %>%
-#   summarise(is_covered_95 = mean(is_covered_95), .groups = "drop") %>% relocate(is_covered_95, .after=c) 
-# write_csv(beta_is_covered, paste0("plots/beta_is_covered",SIM_NUM,".csv"))
-# 
-# eta_is_covered = eta_checkAll %>% 
-#   group_by(l_,c) %>%
-#   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-# write_csv(eta_is_covered, paste0("plots/eta_is_covered",SIM_NUM,".csv"))
-# 
-# alpha_incpt_is_covered = alpha_incpt_checkAll %>% 
-#   group_by(c) %>%
-#   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-# write_csv(alpha_incpt_is_covered, paste0("plots/alpha_incpt_is_covered",SIM_NUM,".csv"))
-# 
-# alpha_slope_is_covered = alpha_slope_checkAll %>% 
-#   group_by(c) %>%
-#   summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-# write_csv(alpha_slope_is_covered, paste0("plots/alpha_slope_is_covered",SIM_NUM,".csv"))
-# 
-# all_params_is_covered = bind_rows(
-#   beta_checkAll %>% select(s,c,is_covered_95) %>% mutate(param="beta"),
-#   eta_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="eta"),
-#   alpha_incpt_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_incpt"),
-#   alpha_slope_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_slope"),
-# ) %>%
-# summarise(is_covered_95 = mean(is_covered_95), .groups="drop") 
-# write_csv(all_params_is_covered, paste0("plots/all_params_is_covered",SIM_NUM,".csv"))
+write_csv(tibble(cel_model_test=mean(cel_model)), paste0("plots/cel_model_test_sim",SIM_NUM,".csv"))
+write_csv(tibble(cel_base_rates_test=mean(cel_base_rates)), paste0("plots/cel_base_rates_test_sim",SIM_NUM,".csv"))
+
+beta_is_covered = beta_checkAll %>%
+  group_by(tto,c) %>%
+  summarise(is_covered_95 = mean(is_covered_95), .groups = "drop") %>% relocate(is_covered_95, .after=c)
+write_csv(beta_is_covered, paste0("plots/beta_is_covered",SIM_NUM,".csv"))
+
+eta_is_covered = eta_checkAll %>%
+  group_by(l_,c) %>%
+  summarise(is_covered_95 = mean(is_covered_95), .groups="drop")
+write_csv(eta_is_covered, paste0("plots/eta_is_covered",SIM_NUM,".csv"))
+
+alpha_incpt_is_covered = alpha_incpt_checkAll %>%
+  group_by(c) %>%
+  summarise(is_covered_95 = mean(is_covered_95), .groups="drop")
+write_csv(alpha_incpt_is_covered, paste0("plots/alpha_incpt_is_covered",SIM_NUM,".csv"))
+
+alpha_slope_is_covered = alpha_slope_checkAll %>%
+  group_by(c) %>%
+  summarise(is_covered_95 = mean(is_covered_95), .groups="drop")
+write_csv(alpha_slope_is_covered, paste0("plots/alpha_slope_is_covered",SIM_NUM,".csv"))
+
+all_params_is_covered = bind_rows(
+  beta_checkAll %>% select(s,c,is_covered_95) %>% mutate(param="beta"),
+  eta_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="eta"),
+  alpha_incpt_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_incpt"),
+  alpha_slope_checkAll %>% select(s,c,is_covered_95)%>% mutate(param="alpha_slope"),
+) %>%
+summarise(is_covered_95 = mean(is_covered_95), .groups="drop")
+write_csv(all_params_is_covered, paste0("plots/all_params_is_covered",SIM_NUM,".csv"))
 
 #################### PLOTS #################### 
 
