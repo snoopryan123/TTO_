@@ -241,6 +241,9 @@ hand_values = c(0,1)
 home_values = c(0,1)
 rownames(hh_results) = paste0("hand ", hand_values)
 colnames(hh_results) = paste0("home ", home_values)
+hh_results_se = hh_results
+hh_results_L = hh_results
+hh_results_U = hh_results
 for (i in 1:length(hand_values)) {
   for (j in 1:length(home_values)) {
     hand = hand_values[i]
@@ -251,14 +254,34 @@ for (i in 1:length(hand_values)) {
     xw_hh = probs_tilde_hh %>%
         group_by(t, iter) %>%
         mutate(w = categories[k]) %>%
-        summarise(xw = sum(p*w*1000)) %>%
-        summarise(xw = mean(xw)) %>%
-        summarise(xw = mean(xw))
+        mutate(xw = p*w*1000) %>%
+        summarise(
+          xw_ = sum(xw)
+        ) %>%
+        group_by(t) %>%
+        summarise(
+          xw_se = sd(xw_),
+          xw_L = quantile(xw_, .025),
+          xw = mean(xw_),
+          # xw = quantile(xw_, 0.5),
+          xw_U = quantile(xw_, .975),
+        ) %>%
+        summarise(
+          xw_se = mean(xw_se),
+          xw_L = mean(xw_L),
+          xw = mean(xw),
+          xw_U = mean(xw_U)
+        )
     hh_results[i,j] = xw_hh$xw
+    hh_results_se[i,j] = xw_hh$xw_se
+    hh_results_L[i,j] = xw_hh$xw_L
+    hh_results_U[i,j] = xw_hh$xw_U
   }
 }
-
 print(hh_results)
+print(hh_results_se*2)
+# print(hh_results_L)
+# print(hh_results_U)
 write_csv(data.frame(hh_results), "plots/hand_home_results.csv")
 
 ### BQ vs. PQ
@@ -271,6 +294,7 @@ pq_values = quantile(D$PQ, probs = c(.05, .25, .50, .75, .95))
 bqpq_results = matrix(nrow=length(bq_values),ncol=length(pq_values))
 rownames(bqpq_results) = paste0("BQ ", names(bq_values))
 colnames(bqpq_results) = paste0("PQ ", names(pq_values))
+bqpq_results_se = bqpq_results
 for (i in 1:length(bq_values)) {
   for (j in 1:length(pq_values)) {
     bq = bq_values[i]
@@ -281,18 +305,50 @@ for (i in 1:length(bq_values)) {
     xw_bqpq = probs_tilde_bqpq %>%
       group_by(t, iter) %>%
       mutate(w = categories[k]) %>%
-      summarise(xw = sum(p*w*1000)) %>%
-      summarise(xw = mean(xw)) %>%
-      summarise(xw = mean(xw))
+      mutate(xw = p*w*1000) %>%
+      summarise(
+        xw_ = sum(xw)
+      ) %>%
+      group_by(t) %>%
+      summarise(
+        xw_se = sd(xw_),
+        xw = mean(xw_),
+      ) %>%
+      summarise(
+        xw_se = mean(xw_se),
+        xw = mean(xw),
+      )
     bqpq_results[i,j] = xw_bqpq$xw
+    bqpq_results_se[i,j] = xw_bqpq$xw_se
   }
 }
-
 print(bqpq_results)
+print(bqpq_results_se*2)
+#########################
+print(bqpq_results[2:4,2:4])
+print((bqpq_results_se*2)[2:4,2:4])
 # print(bqpq_results[2:4,2:4])
 write_csv(data.frame(bqpq_results), "plots/bq_pq_results.csv")
 
+### example pitchers ###
+pq_values
+D$PQ
 
+### good pitcher
+D %>%
+  filter(DATE >= "2017-09-01" & YEAR == 2017) %>% 
+  mutate(xx = abs(PQ - pq_values[2])) %>% 
+  arrange(xx) %>%
+  slice_head(n=5) %>%
+  distinct(PIT_ID)
+
+### median pitcher
+D %>%
+  filter(DATE >= "2017-09-01" & YEAR == 2017) %>% 
+  mutate(xx = abs(PQ - pq_values[3])) %>% 
+  arrange(xx) %>%
+  slice_head(n=5) %>%
+  distinct(PIT_ID)
 
 
 ##########################

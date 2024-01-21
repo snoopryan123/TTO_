@@ -352,6 +352,34 @@ for (s in 1:225) { # 1:1  # 6:6 # 1:25
     mutate(ci_95_length = xw_U95 - xw_L95) 
 }
 
+#################### PLOTS #################### 
+
+for (sss in 25:50) {
+  xwoba_check_plot_post = xwoba_checkAll %>%
+    filter(s == sss) %>%
+    ggplot(aes(x=t)) +
+    geom_errorbar(aes(ymin=xw_L95, ymax=xw_U95), width = 0.5) +
+    geom_errorbar(aes(ymin=xw_L50, ymax=xw_U50), width = 0.25, size=1) +
+    geom_point(aes(y=xwM), col="black", size=2, stroke=1, shape=21, fill="white") +
+    geom_point(aes(y=xw_true), col="firebrick", size=5, shape=18) +
+    geom_vline(aes(xintercept =  9), size=0.5, color="gray50") + #1.2
+    geom_vline(aes(xintercept = 18), size=0.5, color="gray50") +
+    ylab("wOBA") +
+    theme(axis.text = element_text(size = 37.5), 
+          axis.title = element_text(size = 45),
+          title = element_text(size = 45)) +
+    labs(title= paste(ifelse(SIM_NUM==1,"first", ifelse(SIM_NUM==2, "second", "third")), "simulation study") ) +
+    scale_y_continuous(name="wOBA", breaks=seq(0,1000,by=20),
+                       limits = c(min(xwoba_checkAll$xw_L95)-5, max(xwoba_checkAll$xw_U95)+5))  +
+    scale_x_continuous(name="batter sequence number, t", breaks=seq(0,27,3))
+  xwoba_check_plot_post
+  ggsave(paste0("plots/plot_sim", SIM_NUM, sim_noPf_str, "_s", sss, "_xwoba_check_post_paper", ".png"),
+         xwoba_check_plot_post, width=10, height=8) #5)
+}
+
+
+
+
 #################### parameter coverage stats over all sims #################### 
 
 write_csv(tibble(cel_model_test=mean(cel_model)), paste0("plots/cel_model_test_sim",SIM_NUM,".csv"))
