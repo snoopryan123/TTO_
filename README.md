@@ -10,3 +10,4 @@
 * same process but in the folder `TTO_/model_pitcher_varying_decay` to use the model with pitcher-varying slopes
 * same process but in the folder `TTO_/model_indicators` to use the indicator model (indicator at each batter sequence number 1,...,27)
 * simulation study in `TTO_/model_positive_slope_prior/sims` 
+
