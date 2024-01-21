@@ -1,5 +1,5 @@
 
-# Reproducing the results from _A Bayesian Analysis of the Time Through the Order Penalty_ (`TTO`):
+# Reproducing the results from _A Bayesian analysis of the time through the order penalty in baseball_ (`TTO`):
 
 ### Get data:
 * download `retro_final_PA_1990-2020d.csv` (which was compiled in `TTO_/data_wrangling`), and `TTO_dataset_410.csv` and `TTO_dataset_510.csv` (which were compiled in `TTO_/data/create_design_matrix4_10.R` and `TTO_/data/create_design_matrix5_10.R`), from `https://upenn.app.box.com/v/retrosheet-pa-1990-2000`, and store these datasets in`TTO_/data`
