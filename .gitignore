@@ -7,6 +7,9 @@ data_wrangling/.Rhistory
 *.RDataTmp 
 *.DS_Store
 
+!data/retro_final_PA_1990-2020d.csv
+
+
 *.jpg
 *.JPEG
 *.png
